@@ -51,14 +51,7 @@ export interface EffectiveInjury {
 
 /** Conduction variants (§5.2). `wpw` adds a delta wave; `hyperkalemia` is a
  * BeatOverrides preset (narrow tall T) used by the case library. */
-export type ConductionSpec =
-  | 'normal'
-  | 'lbbb'
-  | 'rbbb'
-  | 'paced'
-  | 'lvh'
-  | 'lvh-strain'
-  | 'wpw';
+export type ConductionSpec = 'normal' | 'lbbb' | 'rbbb' | 'paced' | 'lvh' | 'lvh-strain' | 'wpw';
 
 /** Optional per-beat overrides applied on top of the base morphology. */
 export interface BeatOverrides {
@@ -108,10 +101,12 @@ export const A_P = 0.12;
 /** Global QRS gain, calibrated by tests for §2.2 ranges. */
 export const A_QRS = 1.6;
 /** T amplitude, calibrated for §2.3 ranges. */
-export const A_T = 0.65;
+export const A_T = 0.5;
 
 const U_P = normalize([0.35, 0.85, -0.15]);
-const U_T = normalize([0.7, 0.45, -0.25]);
+// T axis tilted more anterior than §2.3's (0.70,0.45,−0.25) so T(V5) ≤ 0.6
+// while T(V2) ≥ 0.3 — calibrated by tests (§9.2).
+const U_T = normalize([0.65, 0.45, -0.4]);
 
 interface QrsComponent {
   mu: number;
@@ -125,7 +120,8 @@ function normalQrs(): QrsComponent[] {
   return [
     { mu: 12, sigma: 7, dir: normalize([-0.55, 0.15, -0.6]), gain: 0.22 },
     { mu: 40, sigma: 12, dir: normalize([0.72, 0.62, 0.3]), gain: 1.0 },
-    { mu: 70, sigma: 8, dir: normalize([-0.3, -0.45, 0.65]), gain: 0.28 },
+    // Basal σ 8→6 so its tail does not bleed past the J point (§9 sanity).
+    { mu: 70, sigma: 6, dir: normalize([-0.3, -0.45, 0.65]), gain: 0.28 },
   ];
 }
 
@@ -197,7 +193,9 @@ function discordantSt(params: BeatParams): Vec3 {
 }
 
 /** QRS duration (ms) for fiducials, per variant (§2.2, §5.2). */
-export function qrsDurationMs(params: Pick<BeatParams, 'conduction' | 'ventricularOrigin'>): number {
+export function qrsDurationMs(
+  params: Pick<BeatParams, 'conduction' | 'ventricularOrigin'>,
+): number {
   if (params.ventricularOrigin) return 140;
   switch (params.conduction) {
     case 'lbbb':
@@ -237,10 +235,7 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
   }
   // Ectopic ventricular beat (PVC/AIVR): single wide bizarre component (§5.1).
   if (params.ventricularOrigin) {
-    h = add(
-      h,
-      scale(params.ventricularOrigin, A_QRS * 1.2 * gaussian(tauMs, 55, 25)),
-    );
+    h = add(h, scale(params.ventricularOrigin, A_QRS * 1.2 * gaussian(tauMs, 55, 25)));
   }
 
   // Paced spike (§5.2): 2 ms, arbitrary direction.
@@ -255,10 +250,7 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
     // Necrosis: initial forces opposite to d (§3.4).
     if (inj.qLoss > 0) {
       h = add(h, scale(d, -inj.qLoss * 0.9 * A_QRS * gaussian(tauMs, 18, 9)));
-      h = add(
-        h,
-        scale(d, -inj.qLoss * 0.35 * A_QRS * gaussian(tauMs, 40, 12)),
-      );
+      h = add(h, scale(d, -inj.qLoss * 0.35 * A_QRS * gaussian(tauMs, 40, 12)));
     }
     // Terminal QRS distortion: injury vector ramps in from τ=60 (§3.4).
     if (inj.terminalDistortion > 0) {
@@ -292,10 +284,7 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
     vJFull = add(vJFull, scale(stVector, s.sJ));
     v40Full = add(v40Full, scale(stVector, s.s40));
     vJnFull = add(vJnFull, scale(stVector, s.sJn));
-    vPeakFull = add(
-      vPeakFull,
-      add(scale(stVector, s.sT), scale(d, inj.hyperacuteT * aT)),
-    );
+    vPeakFull = add(vPeakFull, add(scale(stVector, s.sT), scale(d, inj.hyperacuteT * aT)));
     // T inversion displaces the T-peak vector (§3.5).
     if (inj.tInversion > 0) {
       const ti = Math.min(1, inj.tInversion);
@@ -312,10 +301,7 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
   // PR-segment depression (overrides; pericarditis) — small negative bump
   // along −û_P just before QRS.
   if (params.overrides?.prDepression) {
-    h = add(
-      h,
-      scale(U_P, -params.overrides.prDepression * gaussian(tauMs, -15, 25)),
-    );
+    h = add(h, scale(U_P, -params.overrides.prDepression * gaussian(tauMs, -15, 25)));
   }
 
   // ST-T contribution via Hermite spline (§2.3).
@@ -332,10 +318,7 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
 
   // J notch (early repolarization override).
   if (params.overrides?.jNotch) {
-    h = add(
-      h,
-      scale(uT, params.overrides.jNotch * gaussian(tauMs, jAtMs + 15, 12)),
-    );
+    h = add(h, scale(uT, params.overrides.jNotch * gaussian(tauMs, jAtMs + 15, 12)));
   }
 
   return h;
