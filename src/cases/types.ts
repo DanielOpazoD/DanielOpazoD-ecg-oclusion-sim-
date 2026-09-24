@@ -18,13 +18,30 @@ export interface CaseExpected {
   negativeFindings: string[];
   /** Honest explanation when omi=true but rules miss it. */
   rulesMiss?: string;
+  /** Short Spanish diagnosis (quiz answer). */
+  diagnosis?: string;
+  /** Exactly 3 plausible wrong diagnoses for the quiz. */
+  distractors?: string[];
 }
+
+/** Case categories (docs/CASES.md §Grupos). */
+export type CaseCategory =
+  | 'oclusion'
+  | 'ritmo'
+  | 'ectopia'
+  | 'bloqueo-av'
+  | 'conduccion'
+  | 'ventricular'
+  | 'marcapasos'
+  | 'electrolitos'
+  | 'estructural';
 
 /** One case of the library (docs/CASES.md). */
 export interface CaseDefinition {
   /** e.g. 'A01'. */
   id: string;
-  group: 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
+  group: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N';
+  category: CaseCategory;
   /** Spanish title. */
   title: string;
   difficulty: 1 | 2 | 3;

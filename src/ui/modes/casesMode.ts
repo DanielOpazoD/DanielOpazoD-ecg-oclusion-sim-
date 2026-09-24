@@ -9,6 +9,14 @@ const GROUP_NAMES: Record<CaseDefinition['group'], string> = {
   D: 'Imitadores',
   E: 'Seriados (dinámica)',
   F: 'Adquisición y artefactos',
+  G: 'Ritmo supraventricular',
+  H: 'Ectopia',
+  I: 'Bloqueo AV',
+  J: 'Conducción intraventricular',
+  K: 'Ventriculares y paro',
+  L: 'Marcapasos',
+  M: 'Electrolitos, fármacos y QT',
+  N: 'Estructural y otros',
 };
 
 /** Left sidebar: grouped case browser with blind-mode toggle. */

@@ -5,6 +5,7 @@ export const GROUP_B: CaseDefinition[] = [
   {
     id: 'B01',
     group: 'B',
+    category: 'oclusion',
     title: 'T hiperagudas DA',
     difficulty: 3,
     vignette: {
@@ -53,6 +54,7 @@ export const GROUP_B: CaseDefinition[] = [
   {
     id: 'B02',
     group: 'B',
+    category: 'oclusion',
     title: 'De Winter',
     difficulty: 3,
     vignette: {
@@ -102,6 +104,7 @@ export const GROUP_B: CaseDefinition[] = [
   {
     id: 'B03',
     group: 'B',
+    category: 'oclusion',
     title: 'STE sutil V2–V3: Smith 4v positivo',
     difficulty: 3,
     vignette: {
@@ -147,6 +150,7 @@ export const GROUP_B: CaseDefinition[] = [
   {
     id: 'B04',
     group: 'B',
+    category: 'oclusion',
     title: 'Posterior sin V7–V9',
     difficulty: 2,
     vignette: {
@@ -192,6 +196,7 @@ export const GROUP_B: CaseDefinition[] = [
   {
     id: 'B05',
     group: 'B',
+    category: 'oclusion',
     title: 'Aslanger',
     difficulty: 3,
     vignette: {
@@ -237,6 +242,7 @@ export const GROUP_B: CaseDefinition[] = [
   {
     id: 'B06',
     group: 'B',
+    category: 'oclusion',
     title: 'Inferior sutil con aVL recíproca',
     difficulty: 2,
     vignette: {
@@ -283,6 +289,7 @@ export const GROUP_B: CaseDefinition[] = [
   {
     id: 'B07',
     group: 'B',
+    category: 'oclusion',
     title: 'Lateral sutil / OM',
     difficulty: 3,
     vignette: {
@@ -330,6 +337,7 @@ export const GROUP_B: CaseDefinition[] = [
   {
     id: 'B08',
     group: 'B',
+    category: 'oclusion',
     title: 'LBBB + Sgarbossa modificado',
     difficulty: 3,
     vignette: {
@@ -372,6 +380,7 @@ export const GROUP_B: CaseDefinition[] = [
   {
     id: 'B09',
     group: 'B',
+    category: 'oclusion',
     title: 'Marcapasos + oclusión',
     difficulty: 3,
     vignette: {
@@ -414,6 +423,7 @@ export const GROUP_B: CaseDefinition[] = [
   {
     id: 'B10',
     group: 'B',
+    category: 'oclusion',
     title: 'BRD + STE anteroseptal',
     difficulty: 2,
     vignette: {
@@ -457,6 +467,7 @@ export const GROUP_B: CaseDefinition[] = [
   {
     id: 'B11',
     group: 'B',
+    category: 'oclusion',
     title: 'Distorsión terminal con STE sutil',
     difficulty: 3,
     vignette: {
@@ -502,6 +513,7 @@ export const GROUP_B: CaseDefinition[] = [
   {
     id: 'B12',
     group: 'B',
+    category: 'oclusion',
     title: 'Wellens A tras dolor resuelto',
     difficulty: 3,
     vignette: {
@@ -547,6 +559,7 @@ export const GROUP_B: CaseDefinition[] = [
   {
     id: 'B13',
     group: 'B',
+    category: 'oclusion',
     title: 'Wellens B',
     difficulty: 3,
     vignette: {
@@ -591,6 +604,7 @@ export const GROUP_B: CaseDefinition[] = [
   {
     id: 'B14',
     group: 'B',
+    category: 'oclusion',
     title: 'Pseudonormalización (reoclusión)',
     difficulty: 3,
     vignette: {

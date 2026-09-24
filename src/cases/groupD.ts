@@ -6,6 +6,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D01',
     group: 'D',
+    category: 'oclusion',
     title: 'Repolarización precoz',
     difficulty: 2,
     vignette: {
@@ -51,6 +52,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D02',
     group: 'D',
+    category: 'oclusion',
     title: 'Pericarditis',
     difficulty: 2,
     vignette: {
@@ -95,6 +97,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D03',
     group: 'D',
+    category: 'oclusion',
     title: 'HVI con strain',
     difficulty: 2,
     vignette: {
@@ -137,6 +140,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D04',
     group: 'D',
+    category: 'oclusion',
     title: 'LBBB sin isquemia',
     difficulty: 2,
     vignette: {
@@ -175,6 +179,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D05',
     group: 'D',
+    category: 'oclusion',
     title: 'Hiperpotasemia',
     difficulty: 2,
     vignette: {
@@ -215,6 +220,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D06',
     group: 'D',
+    category: 'oclusion',
     title: 'Brugada tipo 1',
     difficulty: 3,
     vignette: {
@@ -257,6 +263,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D07',
     group: 'D',
+    category: 'oclusion',
     title: 'Takotsubo',
     difficulty: 3,
     vignette: {
@@ -300,6 +307,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D08',
     group: 'D',
+    category: 'oclusion',
     title: 'Miocarditis',
     difficulty: 2,
     vignette: {
@@ -344,6 +352,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D09',
     group: 'D',
+    category: 'oclusion',
     title: 'Embolia pulmonar',
     difficulty: 3,
     vignette: {
@@ -385,6 +394,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D10',
     group: 'D',
+    category: 'oclusion',
     title: 'Aneurisma VI (STE persistente)',
     difficulty: 3,
     vignette: {
@@ -433,6 +443,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D11',
     group: 'D',
+    category: 'oclusion',
     title: 'Hipotermia (Osborn)',
     difficulty: 2,
     vignette: {
@@ -474,6 +485,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D12',
     group: 'D',
+    category: 'oclusion',
     title: 'WPW',
     difficulty: 2,
     vignette: {
@@ -512,6 +524,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D13',
     group: 'D',
+    category: 'oclusion',
     title: 'Atleta',
     difficulty: 2,
     vignette: {
@@ -551,6 +564,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D14',
     group: 'D',
+    category: 'oclusion',
     title: 'Inversión LA‑RA',
     difficulty: 1,
     vignette: {

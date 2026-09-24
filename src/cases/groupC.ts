@@ -5,6 +5,7 @@ export const GROUP_C: CaseDefinition[] = [
   {
     id: 'C01',
     group: 'C',
+    category: 'oclusion',
     title: 'STD difusa + STE aVR por demanda',
     difficulty: 2,
     vignette: {
@@ -43,6 +44,7 @@ export const GROUP_C: CaseDefinition[] = [
   {
     id: 'C02',
     group: 'C',
+    category: 'oclusion',
     title: 'Tronco común subtotal',
     difficulty: 3,
     vignette: {
@@ -85,6 +87,7 @@ export const GROUP_C: CaseDefinition[] = [
   {
     id: 'C03',
     group: 'C',
+    category: 'oclusion',
     title: 'NSTEMI verdadero, STD lateral',
     difficulty: 2,
     vignette: {
@@ -125,6 +128,7 @@ export const GROUP_C: CaseDefinition[] = [
   {
     id: 'C04',
     group: 'C',
+    category: 'oclusion',
     title: 'Isquemia en TSV',
     difficulty: 2,
     vignette: {

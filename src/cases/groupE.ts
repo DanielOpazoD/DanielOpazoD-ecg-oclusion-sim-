@@ -5,6 +5,7 @@ export const GROUP_E: CaseDefinition[] = [
   {
     id: 'E01',
     group: 'E',
+    category: 'oclusion',
     title: 'Serie DA: evolución de la oclusión',
     difficulty: 3,
     vignette: {
@@ -51,6 +52,7 @@ export const GROUP_E: CaseDefinition[] = [
   {
     id: 'E02',
     group: 'E',
+    category: 'oclusion',
     title: 'Reperfusión exitosa',
     difficulty: 3,
     vignette: {
@@ -98,6 +100,7 @@ export const GROUP_E: CaseDefinition[] = [
   {
     id: 'E03',
     group: 'E',
+    category: 'oclusion',
     title: 'Reoclusión',
     difficulty: 3,
     vignette: {
@@ -146,6 +149,7 @@ export const GROUP_E: CaseDefinition[] = [
   {
     id: 'E04',
     group: 'E',
+    category: 'oclusion',
     title: 'Multivaso Aslanger dinámico',
     difficulty: 3,
     vignette: {
