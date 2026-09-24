@@ -89,6 +89,7 @@ function median(xs: number[]): number {
 function dominantBeat(
   ecg: Ecg12,
   lead: LeadId,
+  source: 'clean' | 'acquired',
 ): { wave: Float32Array; qrsOnset: number; j: number; tEnd: number; pOnset: number } | null {
   // Dominant morphology: most frequent non-PVC type (escape/aivr rhythms are
   // measured on their own beats, §8).
@@ -103,12 +104,13 @@ function dominantBeat(
   const fs = ecg.fs;
   const pre = msToSamples(220, fs);
   const post = msToSamples(700, fs);
+  const sig = source === 'acquired' ? ecg.leads[lead] : ecg.clean[lead];
   const segs: number[][] = [];
   for (const b of beats) {
     const start = b.qrsOnset - pre;
-    if (start < 0 || b.qrsOnset + post > ecg.clean[lead].length) continue;
+    if (start < 0 || b.qrsOnset + post > sig.length) continue;
     const seg: number[] = [];
-    for (let i = 0; i < pre + post; i++) seg.push(ecg.clean[lead][start + i]!);
+    for (let i = 0; i < pre + post; i++) seg.push(sig[start + i]!);
     segs.push(seg);
   }
   if (segs.length === 0) return null;
@@ -121,9 +123,9 @@ function dominantBeat(
   return { wave, qrsOnset: pre, j: pre + jMed, tEnd: pre + tMed, pOnset: pre - pMed };
 }
 
-function measureLead(ecg: Ecg12, lead: LeadId): LeadMeasurement {
+function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): LeadMeasurement {
   const fs = ecg.fs;
-  const dom = dominantBeat(ecg, lead);
+  const dom = dominantBeat(ecg, lead, source);
   if (!dom) {
     return {
       baseline: 0,
@@ -277,9 +279,9 @@ function measureLead(ecg: Ecg12, lead: LeadId): LeadMeasurement {
  * Measure the whole ECG (§8). Averages the dominant sinus beats per lead,
  * then derives intervals, rates and frontal axes.
  */
-export function measureEcg(ecg: Ecg12): Measurements {
+export function measureEcg(ecg: Ecg12, source: 'clean' | 'acquired' = 'clean'): Measurements {
   const perLead = {} as Record<LeadId, LeadMeasurement>;
-  for (const id of LEAD_IDS) perLead[id] = measureLead(ecg, id);
+  for (const id of LEAD_IDS) perLead[id] = measureLead(ecg, id, source);
 
   const counts = new Map<string, number>();
   for (const b of ecg.beats) {

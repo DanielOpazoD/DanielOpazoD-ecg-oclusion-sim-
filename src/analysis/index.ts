@@ -61,12 +61,15 @@ export interface AnalyzeOptions {
   leadsAvailable?: LeadId[];
   /** Default: 'normal'. */
   conduction?: ConductionSpec;
+  /** Signal to measure: 'clean' ground truth (default) or 'acquired'
+   *  (post noise/filters — noise and filters are a display layer). */
+  source?: 'clean' | 'acquired';
 }
 
 /** Run the full analysis on an ECG (§8). */
 export function analyzeEcg(ecg: Ecg12, opts: AnalyzeOptions = {}): AnalysisReport {
   const ctx: RuleContext = {
-    measurements: measureEcg(ecg),
+    measurements: measureEcg(ecg, opts.source ?? 'clean'),
     patient: { sex: opts.sex ?? 'M', age: opts.age ?? 60 },
     leadsAvailable: opts.leadsAvailable ?? [...LEAD_IDS],
     conduction: opts.conduction ?? 'normal',
