@@ -4,7 +4,7 @@
  * Usage: `npx tsx tools/dump-cases.ts [caseId ...]`
  */
 import { generateEcg } from '../src/engine/index.js';
-import { measureEcg } from '../src/analysis/index.js';
+import { analyzeEcg, measureEcg } from '../src/analysis/index.js';
 import { CASES } from '../src/cases/index.js';
 
 const LEADS = ['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'] as const;
@@ -24,4 +24,11 @@ for (const c of CASES) {
   console.log('R     ' + LEADS.map((l) => f(m.perLead[l].rAmp)).join(''));
   console.log('S     ' + LEADS.map((l) => f(-m.perLead[l].sAmp)).join(''));
   console.log('T     ' + LEADS.map((l) => f(m.perLead[l].tAmp)).join(''));
+  const rep = analyzeEcg(ecg, {
+    sex: c.vignette.sex,
+    age: c.vignette.age,
+    conduction: c.scenario.conduction,
+  });
+  const pos = rep.findings.filter((x) => x.positive).map((x) => x.id);
+  console.log(`POS   ${pos.join(', ') || '—'}`);
 }
