@@ -70,10 +70,8 @@ export const GROUP_L: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['pacing', 'wide-qrs', 'sgarbossa', 'sgarbossa-modified', 'barcelona'],
-      negativeFindings: ['stemi-udmi4'],
-      rulesMiss:
-        'El QRS marcapaseado produce discordancia ST/T que los criterios de Sgarbossa/Barcelona leen como lesión; no hay isquemia real.',
+      positiveFindings: ['pacing', 'wide-qrs'],
+      negativeFindings: ['stemi-udmi4', 'sgarbossa', 'sgarbossa-modified', 'barcelona'],
       diagnosis: 'Marcapasos ventricular VVI',
       distractors: ['Marcapasos auricular AAI', 'Marcapasos dual DDD', 'Ritmo idioventricular'],
     },
@@ -115,10 +113,8 @@ export const GROUP_L: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['pacing', 'wide-qrs', 'sgarbossa', 'sgarbossa-modified', 'barcelona'],
-      negativeFindings: ['stemi-udmi4'],
-      rulesMiss:
-        'El QRS marcapaseado produce discordancia ST/T que los criterios de Sgarbossa/Barcelona leen como lesión; no hay isquemia real.',
+      positiveFindings: ['pacing', 'wide-qrs'],
+      negativeFindings: ['stemi-udmi4', 'sgarbossa', 'sgarbossa-modified', 'barcelona'],
       diagnosis: 'Marcapasos dual DDD',
       distractors: [
         'Marcapasos ventricular VVI',

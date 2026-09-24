@@ -368,7 +368,9 @@ function discordantSt(params: BeatParams): Vec3 {
   switch (params.conduction) {
     case 'lbbb':
     case 'paced':
-      return scale(normalize([-0.68, 0.27, -0.68]), 0.15 * A_QRS);
+      // ~5% of S: discordant J in V1–V3 stays <1 mm so a paced/LBBB baseline
+      // cannot reach Sgarbossa concordant-STE or discordant-STE thresholds.
+      return scale(normalize([-0.68, 0.27, -0.68]), 0.05 * A_QRS);
     case 'lvh-strain':
       // Tilted -x so lateral I/aVL/V5-V6 carry the strain depression (case D03).
       return scale(normalize([-0.8, -0.5, -0.35]), 0.11 * A_QRS * 1.8);
