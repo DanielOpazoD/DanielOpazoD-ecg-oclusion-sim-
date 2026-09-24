@@ -124,8 +124,10 @@ Coeficientes (`s_J, s_40, s_jn, s_T`) por forma:
 `st` es la **magnitud pre‑shape del vector de lesión** expresada en la derivación de
 referencia (`refLead`): el motor escala `d` para que `ℓ_refLead · stVector = st` mV.
 La elevación resultante en J en `refLead` es `ST_J = st·s_J` (p. ej. `straight` ⇒ 0.9·st).
-`tGain` (opcional, por defecto `shape.s_T`; el territorio `posterior` usa 0.05) es la
-ganancia del vector de lesión en el punto T‑pico, desacoplada de la morfología del ST.
+`tGain` (opcional, por defecto `shape.s_T`) es la ganancia del vector de lesión en
+el punto T‑pico, desacoplada de la morfología del ST. El territorio `posterior` usa
+`tGain = −0.15`: como el vector ST apunta hacia atrás, una ganancia negativa mantiene
+la T **positiva** en V1–V3 (espejo de la T hiperaguda posterior).
 
 ### 3.3 T hiperaguda
 `hyperacuteT ∈ [0, 2.5]` añade `0.5·hyperacuteT·a_T·d` al punto T pico (coeficiente
@@ -137,7 +139,9 @@ que además recentra el pico y la hace **simétrica**. Objetivo:
 ### 3.4 Necrosis (onda Q) y distorsión terminal
 - `qLoss ∈ [0, 1]`: resta fuerzas iniciales en dirección `d`: añade una gaussiana
   `−qLoss·0.9·a_QRS·g(τ; 18, 9)·d` (Q patológica ≥ 40 ms / ≥ 25 % R en derivaciones que miran
-  la lesión) y atenúa la pared libre en la misma dirección (`R` pierde amplitud).
+  la lesión) y atenúa el componente medio `−qLoss·0.8·a_QRS·g(τ; 40, 12)·d`, suficiente
+  para complejos QS (coeficiente calibrado 0.35→0.8). El `qLoss` estático de la fuente
+  actúa como suelo sobre la evolución del timeline (`max(eff, src.qLoss)`).
 - `terminalDistortion ∈ [0, 1]`: el vector de lesión empieza a sumarse desde `τ = 60 ms`
   con rampa, elevando el punto J respecto a R (J/R ≥ 0.5 en qR; pérdida de S en RS) [68,69].
 
@@ -166,7 +170,7 @@ positivo en `junction` y negativo en `Tpico`); con `tInversion → 1` Wellens B 
 Los vectores se **ajustan por test** hasta que cada territorio cumple su patrón esperado (ver §9).
 Ajustes ya calibrados: `anteroseptal` con Y −0.30 (genera STD inferior recíproca),
 `inferior-rca` con Z 0.10 (ST V1 ≥ 0), `inferior-lcx` rotada a +X (aVL ≈ isoeléctrica).
-`posterior` lleva `tGain = 0.05` (STD V1–V3 con T terminal positiva, no invertida).
+`posterior` lleva `tGain = −0.15` (ver §3.2: STD V1–V3 con T terminal positiva).
 
 ## 5. Ritmo y conducción
 
@@ -265,21 +269,21 @@ Reglas (`rules/*.ts`), cada una devuelve `Finding { id, label, positive, score?,
 
 | id | regla | ref |
 |---|---|---|
-| `stemi-udmi4` | STE en J en 2 contiguas: V2–V3 ≥ 2.0 mm (H ≥ 40), 2.5 (H < 40), 1.5 (M); otras ≥ 1.0 mm; V7–V9 ≥ 0.5; V3R–V4R ≥ 0.5 (1.0 en H < 30) | [1] |
-| `posterior-std` | STD máxima en V1–V4 (≥ 0.5 mm) con T terminal positiva, sin STE anterior | [46,47] |
-| `de-winter` | STD ascendente ≥ 1 mm en J en ≥ 2 de V2–V5 + T alta simétrica; STE aVR 0.5–1 mm | [36,37] |
-| `hyperacute-t` | score medio ≥ 0.7 en 2 contiguas (área T/QRS y simetría normalizados) | [27] |
-| `aslanger` | STE III sin II/aVF, STD en ≥ 1 de V4–V6 con T positiva/terminal positiva, ST V1 > ST V2 | [45] |
+| `stemi-udmi4` | STE en J en 2 contiguas: V2–V3 ≥ 2.0 mm (H ≥ 40), 2.5 (H < 40), 1.5 (M); otras ≥ 1.0 mm; V7–V9 ≥ 0.5; V3R–V4R ≥ 0.5 (1.0 en H < 30). No aplicable en LBBB/marcapasos (usar Sgarbossa/BARCELONA); BRD sí aplica. Solo usa V7–V9/V3R–V4R si están en `leadsAvailable` | [1] |
+| `posterior-std` | STD máxima en V1–V4 (≥ 0.5 mm) con T terminal positiva, sin STE anterior; excluida si ≥ 2 derivaciones fuera del espejo (II/III/aVF/V5–V6/I/aVL) tienen STD ≥ 0.5 mm (STD subendocárdica difusa) | [46,47] |
+| `de-winter` | STD ≥ 0.4 mm en J en ≥ 2 de V2–V5 + T ≥ 8 mm (la T hiperaguda opera como discriminador de la pendiente ascendente); STE aVR ≥ 0.2 mm | [36,37] |
+| `hyperacute-t` | por derivación `s = 0.75·min(tQrsAreaRatio/1.5, 1) + 0.25·tSym`, puertas: T ≥ 5 mm, `tWidth50` ≥ 90 ms (T estrecha de hiperpotasemia excluida), ratio ≥ 4.0 (≈2× basal); positiva si la media del mejor par contiguo ≥ 0.7 | [27] |
+| `aslanger` | STE III ≥ 0.3 mm y III > II y III > aVF, STD en ≥ 1 de V4–V6 con T terminal positiva, ST V1 > ST V2 | [45] |
 | `rv-involvement` | STE V4R ≥ 1 mm (o V1 con STE III > II) en IAM inferior | [48,49] |
-| `avr-diffuse-std` | STD ≥ 1 mm en ≥ 6 derivaciones + STE aVR ≥ 1 mm | [51,52] |
-| `south-african-flag` | STE I, aVL, V2 + STD III | [55] |
-| `reciprocal-avl` | STE inferior + STD aVL ≥ 0.5 mm | [70] |
-| `sgarbossa` / `sgarbossa-modified` / `barcelona` | en LBBB/paced: concordante ≥ 1, STD V1–V3 ≥ 1, discordante ≥ 5; ST/S ≤ −0.25; BARCELONA: concordante ≥ 1 o discordante ≥ 1 con |QRS| ≤ 6 mm | [61,62,63] |
-| `smith-3v` / `smith-4v` | fórmulas con umbrales 23.4 / 18.2 | [66,67] |
-| `terminal-qrs-distortion` | J/R ≥ 0.5 en qR o pérdida de S en RS en V2–V3 | [68] |
+| `avr-diffuse-std` | STD ≥ 1 mm en ≥ 5 derivaciones + STE aVR ≥ 0.5 mm (umbrales relajados vs el libro ≥ 6 / ≥ 1) | [51,52] |
+| `south-african-flag` | STE I ≥ 0.5, aVL ≥ 0.5, V2 ≥ 0.3 + STD III ≤ −0.5 mm | [55] |
+| `reciprocal-avl` | STE inferior ≥ 0.3 mm + STD aVL ≤ −0.3 mm | [70] |
+| `sgarbossa` / `sgarbossa-modified` / `barcelona` | en LBBB/paced: concordante ≥ 1, STD V1–V3 ≥ 1, discordante ≥ 5; modificado: discordante ≥ 25 % de la S (ST/S ≥ 0.25); BARCELONA: concordante ≥ 1 o discordante ≥ 1 con |QRS| ≤ 6 mm | [61,62,63] |
+| `smith-3v` / `smith-4v` | fórmulas con umbrales 23.4 / 18.2; aplicables solo con QRS estrecho, conducción normal, sin STD inferior y R(V3) ≥ 0.15 mV (sin QS) | [66,67] |
+| `terminal-qrs-distortion` | J/R ≥ 0.5 en V2–V3 con ST(J) ≥ 0.3 mm y R ≥ 0.2 mV (QS excluido); no aplicable en LBBB/marcapasos | [68] |
 | `wellens` | T bifásica (A) o profunda simétrica (B) en V2–V4 sin STE, con QRS estrecho | [38,39] |
-| `pathological-q` | Q ≥ 40 ms o ≥ 25 % R en 2 contiguas | [1] |
-| `omi-composite` | positivo si `stemi-udmi4` o cualquiera de: de‑winter, hyperacute‑t, posterior‑std, aslanger, sgarbossa‑modified, barcelona, smith‑4v ≥ 18.2, south‑african‑flag, terminal‑qrs‑distortion + STE sutil | [5,6,9] |
+| `pathological-q` | Q ≥ 40 ms o ≥ 25 % R en 2 contiguas, con R ≥ 3 mm y q ≥ 0.8 mm (descarta dips septales fisiológicos); o complejo QS (R < 1.5 mm, profundidad ≥ 1.5 mm durante ≥ 40 ms). No evaluado en LBBB/marcapasos | [1] |
+| `omi-composite` | positivo si `stemi-udmi4` o cualquiera de: de‑winter, hyperacute‑t, posterior‑std, aslanger, sgarbossa‑modified, barcelona, smith‑4v ≥ 18.2, south‑african‑flag, terminal‑qrs‑distortion, wellens (lesión crítica reperfundida = equivalente OMI). Un STEMI técnico solo‑anterior con smith‑4v aplicable y < 18.2 se reprime (RP, no OMI) | [5,6,9,66,67] |
 
 Todas las reglas tienen tests con casos positivos y negativos construidos con el propio motor.
 
