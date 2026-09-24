@@ -29,6 +29,7 @@ const REF: Record<string, LeadId> = {
   'inferior-lcx': 'II',
   posterior: 'V8',
   rv: 'V4R',
+  rvot: 'V2',
   subendocardial: 'aVR',
 };
 

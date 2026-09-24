@@ -71,6 +71,10 @@ export interface Scenario {
   acquisition?: AcquisitionSpec & { placement?: Placement };
   /** Per-beat overrides (§2 helpers). */
   beatOverrides?: BeatOverrides;
+  /** Seeded inter-individual jitter (§patient-parameters). ON by default
+   * when `seed` is defined and non-zero; set `false` to force baseline
+   * morphology (acceptance tests rely on `defaultScenario` having it off). */
+  variability?: boolean;
 }
 
 /** Fiducial points of one beat, as sample indices (§8 input). */
@@ -102,10 +106,28 @@ export function defaultScenario(): Scenario {
     rhythm: { type: 'sinus', hrBpm: 70 },
     conduction: 'normal',
     sources: [],
+    // Baseline morphology must be reproducible for acceptance tests.
+    variability: false,
   };
 }
 
 const U_P = normalize([0.35, 0.85, -0.15]);
+
+/** Seeded per-patient morphology jitter (§patient-parameters): a dedicated
+ * PRNG stream (independent of the signal/noise rng) draws global QRS gain,
+ * frontal-axis rotation, T gain, PR and QT scale. */
+function patientVariability(seed: number): NonNullable<BeatParams['patient']> & {
+  prMs: number;
+} {
+  const rng = createRng((seed * 2654435761) % 2147483647);
+  return {
+    qrsGain: rng.uniform(0.85, 1.15),
+    axisRotDeg: rng.uniform(-12, 12),
+    tGain: rng.uniform(0.85, 1.15),
+    prMs: rng.uniform(140, 190),
+    qtScale: rng.uniform(0.95, 1.05),
+  };
+}
 
 /**
  * Generate the full ECG for `scenario` evaluated at `tMin` (default
@@ -117,6 +139,8 @@ export function generateEcg(scenario: Scenario, tMin?: number): Ecg12 {
   const t = tMin ?? scenario.tMin ?? scenario.tMinStart ?? 0;
   const n = Math.round(scenario.durationS * fs);
   const rng = createRng(scenario.seed);
+  const patient =
+    (scenario.variability ?? true) && scenario.seed ? patientVariability(scenario.seed) : undefined;
 
   // Resolve effective injuries at time t (§3, §6).
   const system = createLeadSystem(scenario.acquisition?.placement ?? 'standard');
@@ -165,7 +189,7 @@ export function generateEcg(scenario: Scenario, tMin?: number): Ecg12 {
   for (const beat of beats) {
     const ventricular = beat.type === 'pvc' || beat.type === 'aivr' || beat.type === 'escape';
     const params: BeatParams = {
-      prMs: beat.prMs > 0 ? beat.prMs : 160,
+      prMs: beat.prMs > 0 ? beat.prMs : (patient?.prMs ?? 160),
       rrMs: beat.rrMs,
       conduction:
         scenario.conduction === 'paced' || beat.type === 'paced' ? 'paced' : scenario.conduction,
@@ -174,6 +198,7 @@ export function generateEcg(scenario: Scenario, tMin?: number): Ecg12 {
         ? { ventricularOrigin: normalize([-0.6, -0.6, 0.4]) }
         : {}),
       ...(scenario.beatOverrides ? { overrides: scenario.beatOverrides } : {}),
+      ...(patient ? { patient } : {}),
     };
     const dur = qrsDurationMs(params);
     const start = beat.tMs - params.prMs - 90; // cover P
@@ -191,7 +216,7 @@ export function generateEcg(scenario: Scenario, tMin?: number): Ecg12 {
     }
     const qrsOnset = Math.round((beat.tMs / 1000) * fs);
     const qtc = scenario.beatOverrides?.qtc ?? 400;
-    const qtMs = qtc * Math.sqrt(beat.rrMs / 1000);
+    const qtMs = qtc * (patient?.qtScale ?? 1) * Math.sqrt(beat.rrMs / 1000);
     fiducials.push({
       pOnset: qrsOnset - Math.round((params.prMs / 1000) * fs),
       qrsOnset,

@@ -49,7 +49,9 @@ export const TERRITORIES: readonly Territory[] = [
   },
   {
     id: 'high-lateral',
-    direction: normalize([0.8, -0.5, -0.25]),
+    // Rotated away from the apex (−z lowered, −y raised) so a D1 lesion does
+    // not drag STE across V3–V5 (§9 case A07 calibration).
+    direction: normalize([0.2, -0.8, -0.3]),
     looksAt: ['I', 'aVL', 'V2'],
     artery: 'D1 / OM alta',
     profile: 'transmural',
@@ -93,6 +95,15 @@ export const TERRITORIES: readonly Territory[] = [
     direction: normalize([-0.7, 0.4, -0.55]),
     looksAt: ['V1', 'V3R', 'V4R', 'III'],
     artery: 'CD proximal',
+    profile: 'transmural',
+  },
+  {
+    id: 'rvot',
+    // Right ventricular outflow tract: points at V1–V2 with almost no
+    // lateral or inferior projection (Brugada-type coved pattern).
+    direction: normalize([-0.65, -0.3, -0.72]),
+    looksAt: ['V1', 'V2'],
+    artery: 'RVOT',
     profile: 'transmural',
   },
   {

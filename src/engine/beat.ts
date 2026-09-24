@@ -83,6 +83,17 @@ export interface BeatParams {
   rrMs: number;
   /** QTc target in ms (default 400). */
   qtcMs?: number;
+  /** Seeded inter-individual jitter (§patient-parameters): all optional. */
+  patient?: {
+    /** Global QRS amplitude gain ∈ [0.85, 1.15]. */
+    qrsGain?: number;
+    /** Frontal QRS axis rotation about z in degrees ∈ [−12, 12]. */
+    axisRotDeg?: number;
+    /** T-wave amplitude gain ∈ [0.85, 1.15]. */
+    tGain?: number;
+    /** QT scale ∈ [0.95, 1.05]. */
+    qtScale?: number;
+  };
   /** Conduction variant (§5.2). */
   conduction: ConductionSpec;
   /** Ectopic ventricular origin direction for PVC/AIVR beats (§5.1). */
@@ -198,7 +209,8 @@ function discordantSt(params: BeatParams): Vec3 {
     case 'paced':
       return scale(normalize([-0.68, 0.27, -0.68]), 0.15 * A_QRS);
     case 'lvh-strain':
-      return scale(normalize([-0.72, -0.62, -0.3]), 0.08 * A_QRS * 1.8);
+      // Tilted -x so lateral I/aVL/V5-V6 carry the strain depression (case D03).
+      return scale(normalize([-0.8, -0.5, -0.35]), 0.11 * A_QRS * 1.8);
     default:
       return [0, 0, 0];
   }
@@ -229,10 +241,16 @@ export function qrsDurationMs(
  */
 export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
   const qtc = params.overrides?.qtc ?? params.qtcMs ?? 400;
-  const qtMs = qtc * Math.sqrt(params.rrMs / 1000); // Bazett inverse (§2.3)
+  const qtMs = qtc * (params.patient?.qtScale ?? 1) * Math.sqrt(params.rrMs / 1000); // Bazett inverse (§2.3)
   const baseQtMs = 430; // J(90) + T-end(340) control-point span
   const qtScale = qtMs / baseQtMs;
-  const aT = A_T * (params.overrides?.aTScale ?? 1);
+  const aT = A_T * (params.overrides?.aTScale ?? 1) * (params.patient?.tGain ?? 1);
+  const qrsGain = A_QRS * (params.patient?.qrsGain ?? 1);
+  // Seeded frontal-axis jitter: rotate the whole QRS about the z axis.
+  const rot = ((params.patient?.axisRotDeg ?? 0) * Math.PI) / 180;
+  const cosR = Math.cos(rot);
+  const sinR = Math.sin(rot);
+  const rotZ = (v: Vec3): Vec3 => [v[0] * cosR - v[1] * sinR, v[0] * sinR + v[1] * cosR, v[2]];
   const uT = tDirection(params);
 
   let h: Vec3 = [0, 0, 0];
@@ -243,11 +261,11 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
 
   // --- QRS (§2.2, §5.2) ---
   for (const c of qrsComponents(params)) {
-    h = add(h, scale(c.dir, A_QRS * c.gain * gaussian(tauMs, c.mu, c.sigma)));
+    h = add(h, scale(rotZ(c.dir), qrsGain * c.gain * gaussian(tauMs, c.mu, c.sigma)));
   }
   // Ectopic ventricular beat (PVC/AIVR): single wide bizarre component (§5.1).
   if (params.ventricularOrigin) {
-    h = add(h, scale(params.ventricularOrigin, A_QRS * 1.2 * gaussian(tauMs, 55, 25)));
+    h = add(h, scale(params.ventricularOrigin, qrsGain * 1.2 * gaussian(tauMs, 55, 25)));
   }
 
   // Paced spike (§5.2): 2 ms, arbitrary direction.
@@ -289,6 +307,8 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
 
   let vJFull: Vec3 = discordantSt(params);
   let v40Full: Vec3 = scale(uT, 0.02);
+  // LVH strain: discordant STD persists through the ST segment, not only at J.
+  if (params.conduction === 'lvh-strain') v40Full = add(v40Full, discordantSt(params));
   let vJnFull: Vec3 = scale(uT, 0.1);
   let vPeakFull: Vec3 = scale(uT, aT);
   const vEnd: Vec3 = [0, 0, 0];
