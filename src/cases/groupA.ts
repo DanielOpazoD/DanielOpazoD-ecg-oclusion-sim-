@@ -47,7 +47,7 @@ export const GROUP_A: CaseDefinition[] = [
       'Descartar el infarto por troponina inicial negativa.',
       'No registrar la evolución en los primeros minutos.',
     ],
-    refs: [1, 5, 7],
+    refs: [1, 70, 59],
   },
   {
     id: 'A02',
@@ -90,7 +90,7 @@ export const GROUP_A: CaseDefinition[] = [
       'Atribuir la disnea a otra causa y demorar la angiografía.',
       'No repetir el ECG ante síntomas persistentes.',
     ],
-    refs: [1, 5],
+    refs: [1, 70],
   },
   {
     id: 'A03',
@@ -135,7 +135,7 @@ export const GROUP_A: CaseDefinition[] = [
       'Administrar nitratos o diuréticos ante la hipotensión del VD.',
       'Interpretar la bradicardia como efecto vagal benigno.',
     ],
-    refs: [48, 54],
+    refs: [71, 19, 84],
   },
   {
     id: 'A04',
@@ -180,7 +180,7 @@ export const GROUP_A: CaseDefinition[] = [
       'Atribuir los síntomas a un proceso gastrointestinal.',
       'Olvidar las derivaciones derechas en todo IAM inferior.',
     ],
-    refs: [48, 54],
+    refs: [54, 55, 84],
   },
   {
     id: 'A05',
@@ -226,7 +226,7 @@ export const GROUP_A: CaseDefinition[] = [
       'Asumir que todo IAM inferior es de CD sin analizar los vectores.',
       'No registrar derivaciones posteriores ante STD precordial.',
     ],
-    refs: [48, 49],
+    refs: [84, 69, 19],
   },
   {
     id: 'A06',
@@ -278,7 +278,7 @@ export const GROUP_A: CaseDefinition[] = [
       'Confundir el patrón con una taquicardia ventricular o un artefacto.',
       'Esperar al resultado de troponina para activar.',
     ],
-    refs: [68, 25],
+    refs: [26, 25, 24],
   },
   {
     id: 'A07',
@@ -367,7 +367,7 @@ export const GROUP_A: CaseDefinition[] = [
       'Interpretar la suma de territorios como pericarditis difusa.',
       'No considerar la anatomía wraparound de la DA.',
     ],
-    refs: [48, 5],
+    refs: [70, 5],
   },
   {
     id: 'A09',
@@ -410,7 +410,7 @@ export const GROUP_A: CaseDefinition[] = [
       'No registrar las derivaciones posteriores ante la sospecha.',
       'Concluir normalidad tras un ECG de 12 derivaciones sin lesión evidente.',
     ],
-    refs: [46, 5],
+    refs: [52, 53, 33],
   },
   {
     id: 'A10',
@@ -453,6 +453,6 @@ export const GROUP_A: CaseDefinition[] = [
       'Descartar isquemia por la frecuencia de ectopía post-ROSC.',
       'Demorar la angiografía esperando estabilización completa.',
     ],
-    refs: [2, 12],
+    refs: [82, 2],
   },
 ];

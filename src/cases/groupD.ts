@@ -46,7 +46,7 @@ export const GROUP_D: CaseDefinition[] = [
       'STE técnico en V2–V3 no es oclusión si hay J-notch y concavidad.',
       'Activar el código en un joven sano por un umbral aislado.',
     ],
-    refs: [66, 67, 75],
+    refs: [66, 67, 80],
   },
   {
     id: 'D02',
@@ -90,7 +90,7 @@ export const GROUP_D: CaseDefinition[] = [
       'Confundir el STE difuso con una OMI extenso.',
       'Omitir la auscultación del roce pericárdico.',
     ],
-    refs: [75, 17],
+    refs: [69, 88, 19],
   },
   {
     id: 'D03',
@@ -132,7 +132,7 @@ export const GROUP_D: CaseDefinition[] = [
       'Interpretar la discordancia del strain como isquemia.',
       'No ponderar el tamaño del QRS al valorar el ST.',
     ],
-    refs: [76, 16],
+    refs: [78, 33],
   },
   {
     id: 'D04',
@@ -170,7 +170,7 @@ export const GROUP_D: CaseDefinition[] = [
       'Diagnosticar isquemia por la discordancia fisiológica del LBBB.',
       'No aplicar los criterios específicos en pacientes sintomáticos.',
     ],
-    refs: [61, 62],
+    refs: [61, 62, 60],
   },
   {
     id: 'D05',
@@ -210,7 +210,7 @@ export const GROUP_D: CaseDefinition[] = [
       'Confundir la T hiperkalémica con la hiperaguda isquémica.',
       'No pedir ionograma ante un ECG con T picudas.',
     ],
-    refs: [77, 27],
+    refs: [77],
   },
   {
     id: 'D06',
@@ -252,7 +252,7 @@ export const GROUP_D: CaseDefinition[] = [
       'Confundir el patrón Brugada con un STE anteroseptal.',
       'No retirar la colocación alta de electrodos antes de descartar artefacto.',
     ],
-    refs: [78, 80],
+    refs: [79, 33],
   },
   {
     id: 'D07',
@@ -295,7 +295,7 @@ export const GROUP_D: CaseDefinition[] = [
       'Asumir oclusión solo por el contexto emocional sin descartarla.',
       'Olvidar el seguimiento del QTc en takotsubo.',
     ],
-    refs: [74, 5],
+    refs: [74, 75],
   },
   {
     id: 'D08',
@@ -337,7 +337,7 @@ export const GROUP_D: CaseDefinition[] = [
       'Interpretar el STE difuso como oclusión multivaso.',
       'No pedir RM cardiaca en la sospecha de miocarditis.',
     ],
-    refs: [75, 17],
+    refs: [72, 88],
   },
   {
     id: 'D09',
@@ -378,7 +378,7 @@ export const GROUP_D: CaseDefinition[] = [
       'Interpretar el patrón VD como infarto septal.',
       'No pedir angio-TC ante la sospecha de TEP.',
     ],
-    refs: [80, 5],
+    refs: [76],
   },
   {
     id: 'D10',
@@ -426,7 +426,7 @@ export const GROUP_D: CaseDefinition[] = [
       'Confundir el STE persistente con una reoclusión aguda.',
       'No comparar con ECGs anteriores del paciente.',
     ],
-    refs: [104, 5],
+    refs: [104, 105, 83],
   },
   {
     id: 'D11',
@@ -467,7 +467,7 @@ export const GROUP_D: CaseDefinition[] = [
       'Interpretar la onda J como lesión isquémica.',
       'No medir la temperatura central en el paciente encontrado.',
     ],
-    refs: [82, 5],
+    refs: [33, 88],
   },
   {
     id: 'D12',
@@ -505,7 +505,7 @@ export const GROUP_D: CaseDefinition[] = [
       'Confundir la onda delta con una onda Q patológica.',
       'Interpretar la discordancia de WPW como OMI.',
     ],
-    refs: [80, 19],
+    refs: [33, 19],
   },
   {
     id: 'D13',
@@ -544,7 +544,7 @@ export const GROUP_D: CaseDefinition[] = [
       'Activar el código por un umbral de STE aislado en un asintomático.',
       'No contextualizar la FC baja con el perfil deportivo.',
     ],
-    refs: [81, 75],
+    refs: [81, 80],
   },
   {
     id: 'D14',
@@ -584,6 +584,6 @@ export const GROUP_D: CaseDefinition[] = [
       'Diagnosticar IAM lateral sin verificar la colocación.',
       'No repetir el ECG tras corregir los electrodos.',
     ],
-    refs: [99, 106],
+    refs: [98, 106],
   },
 ];

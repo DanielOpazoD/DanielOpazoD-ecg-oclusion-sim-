@@ -46,7 +46,7 @@ export const GROUP_E: CaseDefinition[] = [
       'Basar la decisión en un único ECG precoz.',
       'No registrar el tiempo desde el inicio del dolor.',
     ],
-    refs: [22, 23],
+    refs: [22, 23, 105],
   },
   {
     id: 'E02',
@@ -93,7 +93,7 @@ export const GROUP_E: CaseDefinition[] = [
       'Interpretar la AIVR como taquicardia ventricular maligna.',
       'No evaluar la resolución del STE tras el procedimiento.',
     ],
-    refs: [28, 71],
+    refs: [28, 30, 29],
   },
   {
     id: 'E03',
@@ -141,7 +141,7 @@ export const GROUP_E: CaseDefinition[] = [
       'Interpretar la normalización de la T como mejoría.',
       'No repetir el ECG ante la recurrencia del dolor.',
     ],
-    refs: [71, 72],
+    refs: [30, 32],
   },
   {
     id: 'E04',

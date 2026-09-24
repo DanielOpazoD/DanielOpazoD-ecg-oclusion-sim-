@@ -17,7 +17,7 @@ export interface ViewState {
 }
 
 export type Mode = 'cases' | 'lab' | 'quiz';
-export type PanelTab = 'clinical' | 'findings' | 'measurements' | 'teaching' | 'lab';
+export type PanelTab = 'clinical' | 'findings' | 'measurements' | 'teaching' | 'lab' | 'reveal';
 
 export interface QuizState {
   order: string[];
@@ -55,6 +55,13 @@ export interface AppState {
   panelTab: PanelTab;
   /** Analysis signal source. */
   analysisSource: 'clean' | 'acquired';
+  /** Case ids whose verdict was revealed while blind mode is on. */
+  revealedCaseIds: string[];
+}
+
+/** True when diagnosis content must be hidden (quiz, or blind + not yet revealed). */
+export function isBlind(s: AppState): boolean {
+  return s.mode === 'quiz' || (s.blind && !s.revealedCaseIds.includes(s.caseId ?? ''));
 }
 
 const savedTheme = (globalThis.localStorage?.getItem('omilab.theme') ?? 'dark') as 'dark' | 'light';
@@ -87,6 +94,7 @@ export const store = createStore<AppState>({
   },
   panelTab: 'findings',
   analysisSource: 'clean',
+  revealedCaseIds: [],
 });
 
 export function setTheme(theme: 'dark' | 'light'): void {

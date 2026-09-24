@@ -43,7 +43,7 @@ export const GROUP_F: CaseDefinition[] = [
       'Diagnosticar STD causada por el filtro como isquemia.',
       'No cambiar a filtro diagnóstico (0.05 Hz) para el registro.',
     ],
-    refs: [33, 99],
+    refs: [99, 106],
   },
   {
     id: 'F02',
@@ -90,7 +90,7 @@ export const GROUP_F: CaseDefinition[] = [
       'Leer el trazado ruidoso sin repetir con el paciente en reposo.',
       'Ignorar el canal limpio cuando está disponible.',
     ],
-    refs: [99, 106],
+    refs: [106, 91],
   },
   {
     id: 'F03',
@@ -130,7 +130,7 @@ export const GROUP_F: CaseDefinition[] = [
       'Diagnosticar patología sin verificar la posición de electrodos.',
       'No repetir el registro con la colocación correcta.',
     ],
-    refs: [99, 106],
+    refs: [98, 33],
   },
   {
     id: 'F04',
@@ -176,6 +176,6 @@ export const GROUP_F: CaseDefinition[] = [
       'Confundir la interferencia con arritmia o morfología anómala.',
       'No valorar el efecto del filtro LP sobre la amplitud real del QRS.',
     ],
-    refs: [33, 99],
+    refs: [106, 99],
   },
 ];

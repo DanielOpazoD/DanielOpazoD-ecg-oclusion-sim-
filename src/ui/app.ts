@@ -1,7 +1,7 @@
 import { generateEcg, type Ecg12 } from '../engine/index.js';
 import { analyzeEcg, type AnalysisReport } from '../analysis/index.js';
 import { getCase, CASES } from '../cases/index.js';
-import { store, setTheme, type AppState } from './state/appState.js';
+import { store, setTheme, isBlind, type AppState } from './state/appState.js';
 import { renderEcg } from './ecg/renderer.js';
 import { Monitor } from './ecg/monitor.js';
 import { renderVectorView } from './ecg/vectorView.js';
@@ -166,9 +166,16 @@ export function mount(root: HTMLElement): void {
             ]
           : [
               ['clinical', 'Clínica'],
-              ['findings', 'Hallazgos'],
-              ['measurements', 'Medidas'],
-              ['teaching', 'Docencia'],
+              ...(!isBlind(s)
+                ? ([
+                    ['findings', 'Hallazgos'],
+                    ['measurements', 'Medidas'],
+                    ['teaching', 'Docencia'],
+                  ] as Array<[typeof s.panelTab, string]>)
+                : ([
+                    ['measurements', 'Medidas'],
+                    ['reveal', 'Revelar'],
+                  ] as Array<[typeof s.panelTab, string]>)),
             ];
     const effectiveTab = tabs.some(([t]) => t === s.panelTab) ? s.panelTab : tabs[0]![0];
     panelTabs.innerHTML = '';
@@ -176,7 +183,15 @@ export function mount(root: HTMLElement): void {
       const b = document.createElement('button');
       b.setAttribute('aria-selected', String(t === effectiveTab));
       b.textContent = label;
-      b.addEventListener('click', () => store.update({ panelTab: t }));
+      b.addEventListener('click', () => {
+        if (t === 'reveal') {
+          const cur = store.get();
+          const revealed = cur.caseId ? [...cur.revealedCaseIds, cur.caseId] : cur.revealedCaseIds;
+          store.update({ revealedCaseIds: revealed, panelTab: 'findings' });
+        } else {
+          store.update({ panelTab: t });
+        }
+      });
       panelTabs.appendChild(b);
     }
     panelBody.innerHTML = '';
@@ -224,7 +239,7 @@ export function mount(root: HTMLElement): void {
     renderRightPanel();
     timelineBar(timelineEl, render);
     renderVectorView(vectorCanvas, s.scenario, report?.measurements ?? null, {
-      labeled: !(s.mode === 'quiz' || s.blind),
+      labeled: !isBlind(s),
     });
   };
 

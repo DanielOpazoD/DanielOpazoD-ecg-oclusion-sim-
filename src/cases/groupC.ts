@@ -38,7 +38,7 @@ export const GROUP_C: CaseDefinition[] = [
       'Activar el código infarto en toda STD difusa sin valorar el contexto.',
       'No corregir la causa desencadenante (anemia, taquicardia).',
     ],
-    refs: [52, 53],
+    refs: [56, 57, 37],
   },
   {
     id: 'C02',
@@ -80,7 +80,7 @@ export const GROUP_C: CaseDefinition[] = [
       'Asumir que la STD difusa es solo demanda ante un paciente inestable.',
       'Administrar betabloqueo o vasodilatadores en shock.',
     ],
-    refs: [53, 5],
+    refs: [56, 57, 53],
   },
   {
     id: 'C03',
@@ -120,7 +120,7 @@ export const GROUP_C: CaseDefinition[] = [
       'Relajar la vigilancia cuando el dolor remite.',
       'No seriar ECG y troponina en NSTEMI de alto riesgo.',
     ],
-    refs: [53, 9],
+    refs: [53, 11, 12],
   },
   {
     id: 'C04',
@@ -159,6 +159,6 @@ export const GROUP_C: CaseDefinition[] = [
       'Diagnosticar isquemia coronaria sin valorar el ritmo.',
       'No reevaluar el segmento ST una vez controlada la frecuencia.',
     ],
-    refs: [52, 5],
+    refs: [56, 57],
   },
 ];

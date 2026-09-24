@@ -1,6 +1,6 @@
 import type { TimelineEvent } from '../../engine/index.js';
 import { effectiveSource } from '../../engine/index.js';
-import { store } from '../state/appState.js';
+import { store, isBlind } from '../state/appState.js';
 
 /** Phase label from effective injury fractions at tMin. */
 export function phaseLabel(
@@ -53,7 +53,7 @@ export function timelineBar(el: HTMLElement, onChange: () => void): void {
         state.playing ? '⏸' : '▶'
       }</button>
       <strong class="mono">t = ${state.tMin.toFixed(0)} min</strong>
-      ${state.mode === 'quiz' || state.blind ? '' : `<span class="badge muted">${phaseLabel(state.scenario, state.tMin)}</span>`}
+      ${isBlind(state) ? '' : `<span class="badge muted">${phaseLabel(state.scenario, state.tMin)}</span>`}
       <span>${
         state.mode === 'quiz' || state.blind
           ? ''
@@ -68,7 +68,7 @@ export function timelineBar(el: HTMLElement, onChange: () => void): void {
         <select id="tl-speed">
           ${[1, 5, 20].map((v) => `<option value="${v}" ${v === state.playSpeedMinPerS ? 'selected' : ''}>×${v}</option>`).join('')}
         </select></label>
-      ${state.mode === 'quiz' || state.blind ? '' : '<button id="tl-rep">+ Reperfusión</button><button id="tl-reocc">+ Reoclusión</button>'}
+      ${isBlind(state) ? '' : '<button id="tl-rep">+ Reperfusión</button><button id="tl-reocc">+ Reoclusión</button>'}
     </div>
     <input type="range" id="tl-range" min="0" max="${MAX_MIN}" step="1" value="${state.tMin}" aria-label="Tiempo en minutos">`;
 

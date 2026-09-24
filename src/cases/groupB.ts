@@ -48,7 +48,7 @@ export const GROUP_B: CaseDefinition[] = [
       'Las T hiperagudas se confunden con repolarización precoz o hiperpotasemia.',
       'Leer el ECG aislado sin seriado en un paciente sintomático.',
     ],
-    refs: [22, 23, 26, 27],
+    refs: [22, 23, 31],
   },
   {
     id: 'B02',
@@ -187,7 +187,7 @@ export const GROUP_B: CaseDefinition[] = [
       'Interpretar el STD V1–V3 como isquemia subendocárdica anterior.',
       'No registrar derivaciones adicionales pese a la sospecha.',
     ],
-    refs: [46, 5],
+    refs: [53, 52],
   },
   {
     id: 'B05',
@@ -232,7 +232,7 @@ export const GROUP_B: CaseDefinition[] = [
       'Requerir el patrón completo en las 12 derivaciones; basta el núcleo inferior + STD lateral.',
       'Confundirlo con un NSTEMI sin oclusión.',
     ],
-    refs: [51, 45],
+    refs: [51, 84],
   },
   {
     id: 'B06',
@@ -278,7 +278,7 @@ export const GROUP_B: CaseDefinition[] = [
       'Esperar un STE ≥1 mm para sospechar la oclusión.',
       'No valorar la onda T inferior en relación con el complejo QRS.',
     ],
-    refs: [70, 5],
+    refs: [69, 5, 23],
   },
   {
     id: 'B07',
@@ -325,7 +325,7 @@ export const GROUP_B: CaseDefinition[] = [
       'Descartar isquemia por la intermitencia del dolor.',
       'No repetir el ECG durante un nuevo episodio.',
     ],
-    refs: [5, 57],
+    refs: [5, 7, 37],
   },
   {
     id: 'B08',
@@ -409,7 +409,7 @@ export const GROUP_B: CaseDefinition[] = [
       'Descartar OMI porque el ritmo sea de marcapasos.',
       'No valorar la proporción discordante ST/S.',
     ],
-    refs: [62, 64],
+    refs: [65, 62],
   },
   {
     id: 'B10',
@@ -452,7 +452,7 @@ export const GROUP_B: CaseDefinition[] = [
       'Atribuir el bloqueo a una causa degenerativa estable.',
       'Demorar la angiografía por la estabilidad aparente.',
     ],
-    refs: [65, 5],
+    refs: [39, 5],
   },
   {
     id: 'B11',
@@ -497,7 +497,7 @@ export const GROUP_B: CaseDefinition[] = [
       'Medir solo el STE sin valorar la morfología terminal del QRS.',
       'Clasificar el ECG como normal por ausencia de elevación franca.',
     ],
-    refs: [25, 68],
+    refs: [25, 24, 18],
   },
   {
     id: 'B12',
@@ -542,7 +542,7 @@ export const GROUP_B: CaseDefinition[] = [
       'Dar de alta con prueba de esfuerzo tras un ECG «tranquilizador».',
       'No relacionar la historia de dolor reciente con el patrón T.',
     ],
-    refs: [55, 72],
+    refs: [48, 49, 50],
   },
   {
     id: 'B13',
@@ -586,7 +586,7 @@ export const GROUP_B: CaseDefinition[] = [
       'Esperar a que el STE aparezca antes de actuar.',
       'Interpretar las T negativas profundas como cambios crónicos.',
     ],
-    refs: [55, 72],
+    refs: [48, 50],
   },
   {
     id: 'B14',
@@ -635,6 +635,6 @@ export const GROUP_B: CaseDefinition[] = [
       'Tomar la T «normalizada» como mejoría.',
       'No disponer del ECG previo en la historia.',
     ],
-    refs: [71, 72],
+    refs: [30, 29, 32],
   },
 ];

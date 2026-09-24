@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { bib } from '../ui/data/bibliography.js';
 import { CASES, getCase } from './index.js';
 import { generateEcg } from '../engine/index.js';
 import { analyzeEcg } from '../analysis/index.js';
@@ -32,6 +33,13 @@ describe('case library metadata', () => {
     const ecgLeak = /\b(STE|STD|ST\b|onda[s]? T|T hiperagud|Q patol|V[1-9]|aVL|aVR|aVF|derivaci)/i;
     for (const c of CASES) {
       expect(ecgLeak.test(c.vignette.history), c.id).toBe(false);
+    }
+  });
+  it('every cited ref resolves in the bibliography', () => {
+    for (const c of CASES) {
+      for (const n of c.refs) {
+        expect(bib(n), `${c.id} ref ${n}`).toBeDefined();
+      }
     }
   });
 });
