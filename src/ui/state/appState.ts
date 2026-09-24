@@ -1,5 +1,6 @@
 import type { Scenario } from '../../engine/index.js';
 import { defaultScenario } from '../../engine/index.js';
+import { getCase } from '../../cases/index.js';
 import { createStore } from './store.js';
 
 /** View and display options. */
@@ -66,13 +67,18 @@ export function isBlind(s: AppState): boolean {
 
 const savedTheme = (globalThis.localStorage?.getItem('omilab.theme') ?? 'dark') as 'dark' | 'light';
 
+// Casos mode opens on a real case (A01) instead of the bare default scenario.
+const initialCase = getCase('A01');
+
 export const store = createStore<AppState>({
   mode: 'cases',
   blind: false,
-  caseId: null,
-  scenario: defaultScenario(),
-  tMin: 0,
-  patient: { sex: 'M', age: 60 },
+  caseId: initialCase?.id ?? null,
+  scenario: initialCase ? structuredClone(initialCase.scenario) : defaultScenario(),
+  tMin: initialCase?.ecgAtMin ?? 0,
+  patient: initialCase
+    ? { sex: initialCase.vignette.sex, age: initialCase.vignette.age }
+    : { sex: 'M', age: 60 },
   view: {
     speedMmS: 25,
     gainMmMv: 10,

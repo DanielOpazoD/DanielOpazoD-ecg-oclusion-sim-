@@ -6,6 +6,20 @@ import { phaseLabel } from './panels/timelineBar.js';
 import { formatReport } from './export.js';
 import { analyzeEcg } from '../analysis/index.js';
 import { generateEcg, defaultScenario } from '../engine/index.js';
+import { store } from './state/appState.js';
+import { getCase } from '../cases/index.js';
+
+describe('initial app state', () => {
+  it('opens Casos mode on case A01 with its scenario and tMin', () => {
+    const s = store.get();
+    const a01 = getCase('A01')!;
+    expect(s.mode).toBe('cases');
+    expect(s.caseId).toBe('A01');
+    expect(s.tMin).toBe(a01.ecgAtMin);
+    expect(s.scenario).toEqual(a01.scenario);
+    expect(s.patient).toEqual({ sex: a01.vignette.sex, age: a01.vignette.age });
+  });
+});
 
 describe('store', () => {
   it('get/set/update/subscribe', () => {
