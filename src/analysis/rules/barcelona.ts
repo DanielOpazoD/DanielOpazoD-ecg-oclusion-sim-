@@ -5,7 +5,7 @@ import { finding, stJmm, type Rule } from './types.js';
  * or any ST deviation (STE or STD) ≥ 1 mm in a lead with |QRS| ≤ 6 mm.
  */
 export const barcelona: Rule = (ctx) => {
-  const applicable = ctx.conduction === 'lbbb' || ctx.conduction === 'paced';
+  const applicable = ctx.qrsContext === 'lbbb' || ctx.qrsContext === 'paced';
   const m = ctx.measurements.perLead;
   const leads = [
     'I',

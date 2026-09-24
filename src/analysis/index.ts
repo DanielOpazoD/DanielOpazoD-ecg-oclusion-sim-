@@ -73,6 +73,37 @@ export interface AnalyzeOptions {
   source?: 'clean' | 'acquired';
 }
 
+/** Derive the QRS context from the schedule truth first, then the declared
+ *  conduction. ≥50% paced/ventricular beats wins over the declared conduction. */
+function qrsContextOf(ecg: Ecg12, conduction: ConductionSpec): RuleContext['qrsContext'] {
+  const beats = ecg.schedule?.beats ?? [];
+  if (beats.length > 0) {
+    const paced = beats.filter(
+      (b) => b.pacedSpike === 'ventricular' || b.pacedSpike === 'both',
+    ).length;
+    if (paced >= beats.length / 2) return 'paced';
+    const ventricular = beats.filter((b) => b.ventricular).length;
+    if (ventricular >= beats.length / 2) return 'ventricular';
+  }
+  if (conduction === 'lbbb') return 'lbbb';
+  if (conduction === 'paced') return 'paced';
+  if (conduction === 'rbbb' || conduction === 'rbbb-lafb' || conduction === 'rbbb-lpfb')
+    return 'rbbb';
+  return 'narrow';
+}
+
+/** Mark a finding non-applicable (preserves id/label/leads/refs). */
+function notApplicable(f: Finding): Finding {
+  const out = {
+    ...f,
+    positive: false,
+    rationale:
+      'No aplicable: QRS ancho de origen ventricular / BRI / estimulado — use criterios de Sgarbossa/Barcelona.',
+  };
+  delete out.score;
+  return out;
+}
+
 /** Run the full analysis on an ECG (§8). */
 export function analyzeEcg(ecg: Ecg12, opts: AnalyzeOptions = {}): AnalysisReport {
   const source = opts.source ?? 'clean';
@@ -92,8 +123,18 @@ export function analyzeEcg(ecg: Ecg12, opts: AnalyzeOptions = {}): AnalysisRepor
     patient: { sex: opts.sex ?? 'M', age: opts.age ?? 60 },
     leadsAvailable: opts.leadsAvailable ?? [...LEAD_IDS],
     conduction: opts.conduction ?? 'normal',
+    qrsContext: qrsContextOf(ecg, opts.conduction ?? 'normal'),
   };
-  const omiFindings = RULES.map((r) => r(ctx));
+  const wide = ['lbbb', 'paced', 'ventricular'].includes(ctx.qrsContext);
+  const omiFindings = RULES.map((r) => {
+    const f = r(ctx);
+    // ST-based OMI rules are not applicable over LBBB / paced / ventricular
+    // QRS — the Sgarbossa family owns those contexts (they read qrsContext).
+    if (wide && !['sgarbossa', 'sgarbossa-modified', 'barcelona'].includes(f.id)) {
+      return notApplicable(f);
+    }
+    return f;
+  });
   const findings = [...omiFindings, ...GENERAL.map((r) => r(ctx))];
   const omi = omiComposite(omiFindings);
   return { measurements: ctx.measurements, delineation: ctx.delineation, findings, omi };

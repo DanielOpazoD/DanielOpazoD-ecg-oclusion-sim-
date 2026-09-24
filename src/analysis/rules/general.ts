@@ -38,17 +38,35 @@ export const rrIrregular: Rule = (ctx) => {
 };
 export const wideQrs: Rule = (ctx) => {
   const qrs = ctx.delineation.qrsMs;
+  // Fall back to the fiducial measurement only when the delineator withdrew
+  // the metric (same fallback pattern as pr-short).
+  const ok = qrs !== null ? qrs >= 120 : ctx.measurements.qrsWide;
   return finding(
     'wide-qrs',
     'QRS ancho',
-    qrs !== null && qrs >= 120,
+    ok,
     [],
     { qrs: qrs ?? 0 },
-    qrs !== null && qrs >= 120 ? `QRS ${qrs.toFixed(0)} ms (≥120 ms).` : 'QRS no alcanza 120 ms.',
+    ok
+      ? qrs !== null
+        ? `QRS ${qrs.toFixed(0)} ms (≥120 ms).`
+        : 'QRS ancho según medición fiducial (delineación no disponible).'
+      : 'QRS no alcanza 120 ms.',
     [],
   );
 };
 export const bundleBranchMorphology: Rule = (ctx) => {
+  if (ctx.qrsContext === 'paced' || ctx.qrsContext === 'ventricular') {
+    return finding(
+      'bundle-branch-morphology',
+      'Morfología de bloqueo de rama',
+      false,
+      ['V1', 'V6'],
+      { rbbb: 0, lbbb: 0 },
+      'QRS ancho estimulado/ventricular.',
+      [],
+    );
+  }
   const qrs = ctx.delineation.qrsMs ?? 0;
   const rbbb =
     qrs >= 120 &&
@@ -160,14 +178,19 @@ export const qtcShort: Rule = (ctx) => {
 };
 export const axisDeviation: Rule = (ctx) => {
   const a = ctx.delineation.axisDeg.qrs;
-  const ok = a !== null && (a < -30 || a > 90);
+  const wide = ['lbbb', 'paced', 'ventricular'].includes(ctx.qrsContext);
+  const ok = !wide && a !== null && (a < -30 || a > 90);
   return finding(
     'axis-deviation',
     a !== null && a < -30 ? 'Desviación axial izquierda' : 'Desviación axial derecha',
     ok,
     ['I', 'aVF'],
     { axis: a ?? 0 },
-    ok ? `Eje QRS ${a.toFixed(0)}°.` : 'Eje QRS dentro del rango habitual.',
+    wide
+      ? 'No aplicable en BRI / ritmo estimulado o ventricular.'
+      : ok
+        ? `Eje QRS ${a.toFixed(0)}°.`
+        : 'Eje QRS dentro del rango habitual.',
     [],
   );
 };
@@ -175,16 +198,19 @@ export const lvhVoltage: Rule = (ctx) => {
   const sok = mmOf(ctx, 'V1', 'sAmp') + Math.max(mmOf(ctx, 'V5', 'rAmp'), mmOf(ctx, 'V6', 'rAmp'));
   const cornell = mmOf(ctx, 'aVL', 'rAmp') + mmOf(ctx, 'V3', 'sAmp');
   const lim = ctx.patient.sex === 'M' ? 28 : 20;
-  const ok = sok >= 35 || cornell > lim;
+  const wide = ['lbbb', 'paced', 'ventricular'].includes(ctx.qrsContext);
+  const ok = !wide && (sok >= 35 || cornell > lim);
   return finding(
     'lvh-voltage',
     'Voltaje de HVI',
     ok,
     ['V1', 'V5', 'V6', 'aVL'],
     { sokolow: sok, cornell, threshold: lim },
-    ok
-      ? 'Voltajes compatibles con hipertrofia ventricular izquierda.'
-      : 'Voltajes no alcanzan criterios de HVI.',
+    wide
+      ? 'No aplicable en BRI / ritmo estimulado o ventricular.'
+      : ok
+        ? 'Voltajes compatibles con hipertrofia ventricular izquierda.'
+        : 'Voltajes no alcanzan criterios de HVI.',
     [],
   );
 };

@@ -28,6 +28,10 @@ export interface RuleContext {
   leadsAvailable: readonly LeadId[];
   /** Conduction variant (for Sgarbossa family). */
   conduction: ConductionSpec;
+  /** QRS context derived from the schedule (paced/ventricular beats) and the
+   *  declared conduction. Wide-complex contexts disable plain ST/OMI rules —
+   *  only Sgarbossa-family criteria apply. */
+  qrsContext: 'narrow' | 'rbbb' | 'lbbb' | 'paced' | 'ventricular';
 }
 
 export type Rule = (ctx: RuleContext) => Finding;

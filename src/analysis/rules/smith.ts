@@ -1,5 +1,6 @@
 import { finding, st60mm, mmOf, type Rule, type Finding, type RuleContext } from './types.js';
 import { stemiUdmi4 } from './stemi-udmi4.js';
+import { terminalQrsDistortion } from './terminal-qrs-distortion.js';
 
 /**
  * Smith formulas (§8, [66,67]): differentiate subtle anterior OMI from
@@ -20,11 +21,21 @@ function smithCommon(ctx: RuleContext): {
   // Not applicable by definition when UDMI4 STEMI criteria are already met —
   // the score is still computed and exposed for teaching.
   const stemiMet = stemiUdmi4(ctx).positive;
+  // Stated applicability: ≥1 mm STE in V2–V4, no anterior Q waves, no
+  // anterior ST depression and no terminal QRS distortion.
+  const antSte = Math.max(st60mm(ctx, 'V2'), st60mm(ctx, 'V3'), st60mm(ctx, 'V4'));
+  const antQ = (['V2', 'V3', 'V4'] as const).some((l) => mmOf(ctx, l, 'qAmp') >= 1);
+  const antStd = Math.min(st60mm(ctx, 'V2'), st60mm(ctx, 'V3'), st60mm(ctx, 'V4'));
+  const tqd = terminalQrsDistortion(ctx).positive;
   const applicable =
     !stemiMet &&
     !m.qrsWide &&
     ctx.conduction === 'normal' &&
     m.perLead['V3'].rAmp >= 0.15 &&
+    antSte >= 1 &&
+    !antQ &&
+    antStd > -0.5 &&
+    !tqd &&
     Math.min(st60mm(ctx, 'II'), st60mm(ctx, 'III'), st60mm(ctx, 'aVF')) > -0.5;
   return { ste60v3, qtc: m.qtcBazett, rv4, qrsv2, applicable };
 }
