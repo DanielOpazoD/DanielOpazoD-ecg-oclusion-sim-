@@ -184,7 +184,7 @@ export function longQtOverrides(): BeatOverrides {
 
 /** Short QT. */
 export function shortQtOverrides(): BeatOverrides {
-  return { qtc: 330 };
+  return { qtc: 315 };
 }
 
 // ---------------------------------------------------------------------------
