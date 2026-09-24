@@ -55,9 +55,11 @@ export const GROUP_F: CaseDefinition[] = [
       seed: 602,
       durationS: 5,
       rhythm: { type: 'sinus', hrBpm: 85 },
+      variability: false,
       conduction: 'normal',
       sources: [
-        { territory: 'anterior', st: 0.06, refLead: 'V3', shape: 'concave', hyperacuteT: 2.0 },
+        { territory: 'anterior', st: 0.06, refLead: 'V3', shape: 'concave', hyperacuteT: 0.45 },
+        { territory: 'anteroseptal', st: 0.02, refLead: 'V2', shape: 'concave', hyperacuteT: 1.2 },
       ],
       acquisition: { emg: { sigmaMv: 0.06 }, baselineWander: { amplitudeMv: 0.3, hz: 0.3 } },
       timeline: [{ atMin: 0, kind: 'occlusion' }],

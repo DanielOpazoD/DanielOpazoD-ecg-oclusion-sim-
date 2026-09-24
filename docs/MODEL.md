@@ -159,18 +159,22 @@ positivo en `junction` y negativo en `Tpico`); con `tInversion → 1` Wellens B 
 | `anteroseptal` | norm(−0.10, −0.30, −0.93) | V1–V4, aVR | DA proximal (pre‑S1) |
 | `anterior` | norm(0.30, 0.20, −0.90) | V2–V5 | DA media |
 | `anteroapical` | norm(0.55, 0.45, −0.65) | V3–V6, II | DA distal |
-| `high-lateral` | norm(0.80, −0.50, −0.25) | I, aVL, V2 | D1 / OM alta (South African flag) |
+| `high-lateral` | norm(0.20, −0.80, −0.30) | I, aVL, V2 | D1 / OM alta (South African flag) |
 | `lateral` | norm(0.90, 0.20, 0.30) | I, aVL, V5–V6 | CX / OM |
 | `inferior-rca` | norm(−0.15, 0.95, 0.10) | II, III (>II), aVF | CD |
 | `inferior-lcx` | norm(0.75, 0.55, 0.35) | II (≥III), aVF, V5–V6 | CX |
 | `posterior` | norm(0.30, 0.20, 0.93) | V7–V9; STD V1–V3 | CX / CD‑DP |
 | `rv` | norm(−0.70, 0.40, −0.55) | V1, V3R–V4R, III | CD proximal |
+| `rvot` | norm(−0.65, −0.30, −0.72) | V1, V2 | RVOT (patrón coved tipo Brugada; sin lesión vascular) |
 | `subendocardial` | norm(−0.60, −0.55, 0.45) (profile subendocardial) | STD difusa, STE aVR | demanda / TCI / 3 vasos |
 
 Los vectores se **ajustan por test** hasta que cada territorio cumple su patrón esperado (ver §9).
 Ajustes ya calibrados: `anteroseptal` con Y −0.30 (genera STD inferior recíproca),
 `inferior-rca` con Z 0.10 (ST V1 ≥ 0), `inferior-lcx` rotada a +X (aVL ≈ isoeléctrica).
 `posterior` lleva `tGain = −0.15` (ver §3.2: STD V1–V3 con T terminal positiva).
+`high-lateral` rotada a norm(0.20, −0.80, −0.30) (lejos del ápex): una lesión de D1
+no arrastra STE por V3–V5. `rvot` apunta a V1–V2 con proyección casi nula en lateral
+e inferior: produce el patrón coved con T negativa limitada a V1–V2 (caso D06).
 
 ## 5. Ritmo y conducción
 
@@ -247,6 +251,15 @@ luego `hyperacuteT` y `st` suben con las rampas de oclusión desplazadas a t_O.
 Orden de operaciones: dipolo → proyección con `LeadSystem` (colocación) → suma de ruido →
 filtros. La señal "verdad" (sin ruido ni filtros) queda disponible para el análisis y para el modo
 docente "quitar ruido".
+
+## 7.5 Parámetros del paciente (`scenario.variability`)
+
+Jitter interindividual **determinista por `seed`** (PRNG propio independiente del stream de
+señal/ruido, `seed·2654435761`): ganancia global QRS ∈ [0.85, 1.15], rotación del eje frontal
+QRS ∈ [−12°, +12°] alrededor del eje z, ganancia de T ∈ [0.85, 1.15], PR ∈ [140, 190] ms y
+escala QT ∈ [0.95, 1.05]. Activo por defecto cuando `seed` es distinto de 0; `variability: false`
+o `seed` indefinida/0 ⇒ morfología basal exacta. `defaultScenario()` lleva `variability: false`
+para que los tests de aceptación sigan bit-idénticos.
 
 ## 8. Análisis (`src/analysis`)
 

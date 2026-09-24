@@ -267,7 +267,7 @@ export const GROUP_A: CaseDefinition[] = [
       durationS: 5,
       rhythm: { type: 'sinus', hrBpm: 85 },
       conduction: 'normal',
-      sources: [{ territory: 'high-lateral', st: 0.15, refLead: 'aVL', shape: 'straight' }],
+      sources: [{ territory: 'high-lateral', st: 0.14, refLead: 'aVL', shape: 'straight' }],
       timeline: [{ atMin: 0, kind: 'occlusion' }],
     },
     ecgAtMin: 50,

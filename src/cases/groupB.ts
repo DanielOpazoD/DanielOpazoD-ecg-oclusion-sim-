@@ -20,9 +20,11 @@ export const GROUP_B: CaseDefinition[] = [
       seed: 201,
       durationS: 5,
       rhythm: { type: 'sinus', hrBpm: 85 },
+      variability: false,
       conduction: 'normal',
       sources: [
-        { territory: 'anterior', st: 0.06, refLead: 'V3', shape: 'concave', hyperacuteT: 2.0 },
+        { territory: 'anterior', st: 0.06, refLead: 'V3', shape: 'concave', hyperacuteT: 0.45 },
+        { territory: 'anteroseptal', st: 0.02, refLead: 'V2', shape: 'concave', hyperacuteT: 1.2 },
       ],
       timeline: [{ atMin: 0, kind: 'occlusion' }],
     },
@@ -64,7 +66,7 @@ export const GROUP_B: CaseDefinition[] = [
       sources: [
         {
           territory: 'anterior',
-          st: -0.15,
+          st: -0.3,
           refLead: 'V3',
           shape: 'depression-upsloping',
           hyperacuteT: 1.6,
@@ -186,7 +188,7 @@ export const GROUP_B: CaseDefinition[] = [
       rhythm: { type: 'sinus', hrBpm: 98 },
       conduction: 'normal',
       sources: [
-        { territory: 'inferior-rca', st: 0.2, refLead: 'III', shape: 'straight' },
+        { territory: 'inferior-rca', st: 0.3, refLead: 'III', shape: 'straight' },
         { territory: 'subendocardial', st: -0.22, refLead: 'V5', shape: 'straight' },
       ],
     },
@@ -226,7 +228,7 @@ export const GROUP_B: CaseDefinition[] = [
       rhythm: { type: 'sinus', hrBpm: 74 },
       conduction: 'normal',
       sources: [
-        { territory: 'inferior-rca', st: 0.1, refLead: 'III', shape: 'concave', hyperacuteT: 3.0 },
+        { territory: 'inferior-rca', st: 0.1, refLead: 'III', shape: 'concave', hyperacuteT: 0.9 },
       ],
       timeline: [{ atMin: 0, kind: 'occlusion' }],
     },
@@ -235,8 +237,10 @@ export const GROUP_B: CaseDefinition[] = [
       omi: true,
       activateCathLab: true,
       culprit: 'CD media',
-      positiveFindings: ['reciprocal-avl', 'hyperacute-t'],
-      negativeFindings: ['stemi-udmi4'],
+      positiveFindings: ['reciprocal-avl'],
+      negativeFindings: ['stemi-udmi4', 'hyperacute-t'],
+      rulesMiss:
+        'Oclusión inferior sutil con STD recíproca en aVL sola: ninguna regla OMI implementada capta la recíproca aislada (hyperacute-t exige T/QRS≥4 en 2 derivadas contiguas, umbral que T de 5–6.5 mm inferiores no alcanzan). Falso negativo deliberado.',
     },
     angiography: 'CD media',
     teachingPoints: [

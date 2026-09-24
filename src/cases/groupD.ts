@@ -21,9 +21,9 @@ export const GROUP_D: CaseDefinition[] = [
       rhythm: { type: 'sinus', hrBpm: 62 },
       conduction: 'normal',
       sources: [
-        { territory: 'anterior', st: 0.4, refLead: 'V3', shape: 'concave', hyperacuteT: 0 },
+        { territory: 'anterior', st: 0.45, refLead: 'V3', shape: 'concave', hyperacuteT: 0 },
       ],
-      beatOverrides: { jNotchMv: 0.06, aTScale: 1.3, qtc: 380, rScale: 1.4 },
+      beatOverrides: { jNotchMv: 0.06, aTScale: 1.05, qtc: 380, rScale: 1.4 },
     },
     expected: {
       omi: false,
@@ -58,6 +58,7 @@ export const GROUP_D: CaseDefinition[] = [
       seed: 402,
       durationS: 5,
       rhythm: { type: 'sinus', hrBpm: 78 },
+      variability: false,
       conduction: 'normal',
       sources: [
         { territory: 'anterior', st: 0.05, refLead: 'V3', shape: 'concave' },
@@ -97,6 +98,7 @@ export const GROUP_D: CaseDefinition[] = [
       durationS: 5,
       rhythm: { type: 'sinus', hrBpm: 84 },
       conduction: 'lvh-strain',
+      beatOverrides: { aTScale: 1.45 },
       sources: [],
     },
     expected: {
@@ -199,9 +201,7 @@ export const GROUP_D: CaseDefinition[] = [
       durationS: 5,
       rhythm: { type: 'sinus', hrBpm: 75 },
       conduction: 'normal',
-      sources: [
-        { territory: 'anteroseptal', st: 0.2, refLead: 'V1', shape: 'convex', tInversion: 1 },
-      ],
+      sources: [{ territory: 'rvot', st: 0.3, refLead: 'V2', shape: 'convex', tInversion: 1 }],
       acquisition: { placement: 'v1v2-high' },
     },
     expected: {
@@ -349,10 +349,10 @@ export const GROUP_D: CaseDefinition[] = [
       sources: [
         {
           territory: 'anterior',
-          st: 0.08,
+          st: 0.1,
           refLead: 'V3',
           shape: 'straight',
-          qLoss: 1,
+          qLoss: 0.6,
           tInversion: 0.3,
         },
       ],

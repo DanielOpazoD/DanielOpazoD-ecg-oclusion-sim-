@@ -18,9 +18,11 @@ export const GROUP_E: CaseDefinition[] = [
       seed: 501,
       durationS: 5,
       rhythm: { type: 'sinus', hrBpm: 90 },
+      variability: false,
       conduction: 'normal',
       sources: [
-        { territory: 'anterior', st: 0.3, refLead: 'V3', shape: 'straight', hyperacuteT: 1.5 },
+        { territory: 'anterior', st: 0.3, refLead: 'V3', shape: 'straight', hyperacuteT: 0.45 },
+        { territory: 'anteroseptal', st: 0.02, refLead: 'V2', shape: 'straight', hyperacuteT: 1.2 },
       ],
       timeline: [{ atMin: 0, kind: 'occlusion' }],
     },
@@ -141,7 +143,7 @@ export const GROUP_E: CaseDefinition[] = [
       rhythm: { type: 'sinus', hrBpm: 100 },
       conduction: 'normal',
       sources: [
-        { territory: 'inferior-rca', st: 0.2, refLead: 'III', shape: 'straight' },
+        { territory: 'inferior-rca', st: 0.3, refLead: 'III', shape: 'straight' },
         { territory: 'subendocardial', st: -0.22, refLead: 'V5', shape: 'straight' },
       ],
       timeline: [{ atMin: 0, kind: 'occlusion' }],
