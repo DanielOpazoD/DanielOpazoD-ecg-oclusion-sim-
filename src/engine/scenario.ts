@@ -1,13 +1,7 @@
 import type { Vec3 } from './math/vec3.js';
 import { normalize, scale } from './math/vec3.js';
 import { createRng } from './math/random.js';
-import {
-  LEAD_IDS,
-  createLeadSystem,
-  projectDipole,
-  type LeadId,
-  type Placement,
-} from './leads.js';
+import { LEAD_IDS, createLeadSystem, projectDipole, type LeadId, type Placement } from './leads.js';
 import { territoryById } from './territories.js';
 import {
   generateBeatDipole,
@@ -18,19 +12,9 @@ import {
   type ConductionSpec,
   type ShapeName,
 } from './beat.js';
-import {
-  generateBeatSchedule,
-  type BeatEvent,
-  type RhythmSpec,
-} from './rhythm.js';
+import { generateBeatSchedule, type BeatEvent, type RhythmSpec } from './rhythm.js';
 import { effectiveSource, type TimelineEvent } from './timeline.js';
-import {
-  addNoise,
-  highPass,
-  lowPass,
-  type AcquisitionSpec,
-} from './acquisition.js';
-
+import { addNoise, highPass, lowPass, type AcquisitionSpec } from './acquisition.js';
 
 /**
  * Scenario assembly: `Scenario` → `Ecg12` (MODEL.md §0, §6, §7).
@@ -175,15 +159,12 @@ export function generateEcg(scenario: Scenario, tMin?: number): Ecg12 {
   const fiducials: Fiducials[] = [];
 
   for (const beat of beats) {
-    const ventricular =
-      beat.type === 'pvc' || beat.type === 'aivr' || beat.type === 'escape';
+    const ventricular = beat.type === 'pvc' || beat.type === 'aivr' || beat.type === 'escape';
     const params: BeatParams = {
       prMs: beat.prMs > 0 ? beat.prMs : 160,
       rrMs: beat.rrMs,
       conduction:
-        scenario.conduction === 'paced' || beat.type === 'paced'
-          ? 'paced'
-          : scenario.conduction,
+        scenario.conduction === 'paced' || beat.type === 'paced' ? 'paced' : scenario.conduction,
       injuries,
       ...(ventricular && beat.type !== 'escape'
         ? { ventricularOrigin: normalize([-0.6, -0.6, 0.4]) }
@@ -242,7 +223,7 @@ export function generateEcg(scenario: Scenario, tMin?: number): Ecg12 {
   const leads = {} as Record<LeadId, Float32Array>;
   const acq = scenario.acquisition ?? {};
   for (const id of LEAD_IDS) {
-    let s = Float32Array.from(clean[id]);
+    let s: Float32Array = Float32Array.from(clean[id]);
     addNoise(s, acq, fs, rng);
     if (acq.lowPassHz) s = lowPass(s, fs, acq.lowPassHz);
     if (acq.highPassHz) s = highPass(s, fs, acq.highPassHz, acq.highPassMode ?? 'zero-phase');
