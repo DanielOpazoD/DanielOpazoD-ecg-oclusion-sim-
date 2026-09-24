@@ -1,4 +1,5 @@
+import './ui/styles/base.css';
+import { mount } from './ui/app.js';
+
 const app = document.querySelector<HTMLDivElement>('#app');
-if (app) {
-  app.textContent = 'Simulador de ECG — en construcción';
-}
+if (app) mount(app);
