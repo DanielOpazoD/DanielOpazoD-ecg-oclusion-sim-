@@ -225,7 +225,23 @@ export function delineate(input: DelineationInput, opts: { windowS?: number } = 
     intervalBins.set(bin, (intervalBins.get(bin) ?? 0) + 1);
   }
   const dominantBin = [...intervalBins.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0];
-  const dominantP = dominantBin && dominantBin[1] >= 2 ? dominantBin[0] * 0.05 : null;
+  // In complete AV block every other P may fall inside the ventricular mask,
+  // so the surviving histogram can be centred on 2×PP. Prefer the smallest
+  // well-supported bin when the dominant one looks like a multiple of it.
+  const sortedBins = [...intervalBins.entries()].sort((a, b) => a[0] - b[0]);
+  let chosenBin = dominantBin;
+  if (dominantBin) {
+    for (const [bin, count] of sortedBins) {
+      if (bin >= dominantBin[0]) break;
+      if (count < 3) continue;
+      const ratio = dominantBin[0] / bin;
+      if (Math.abs(ratio - Math.round(ratio)) < 0.15 && Math.round(ratio) >= 2) {
+        chosenBin = [bin, count];
+        break;
+      }
+    }
+  }
+  const dominantP = chosenBin && chosenBin[1] >= 2 ? chosenBin[0] * 0.05 : null;
   let atrialRateBpm =
     dominantP !== null &&
     dominantP > 0 &&

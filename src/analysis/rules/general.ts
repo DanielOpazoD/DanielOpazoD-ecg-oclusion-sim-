@@ -207,7 +207,7 @@ export const peakedT: Rule = (ctx) => {
   const good = precordial.filter(
     (l) =>
       mmOf(ctx, l, 'tAmp') >= 10 &&
-      ctx.measurements.perLead[l].tSym >= 0.65 &&
+      ctx.measurements.perLead[l].tSym >= 0.4 &&
       ctx.measurements.perLead[l].tWidth50Ms <= 90,
   );
   return finding(
@@ -224,7 +224,11 @@ export const peakedT: Rule = (ctx) => {
 };
 export const uWave: Rule = (ctx) => {
   const good = precordial.filter(
-    (l) => ['V2', 'V3'].includes(l) && ctx.measurements.perLead[l].uAmp >= 0.1,
+    (l) =>
+      ['V2', 'V3'].includes(l) &&
+      ctx.measurements.perLead[l].uAmp >= 0.1 &&
+      ctx.measurements.perLead[l].uAmp >= 0.35 * ctx.measurements.perLead[l].tAmp &&
+      ctx.measurements.perLead[l].tAmp > 0,
   );
   return finding(
     'u-wave',
