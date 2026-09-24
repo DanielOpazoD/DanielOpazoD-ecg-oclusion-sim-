@@ -37,11 +37,7 @@ export interface BeatEvent {
  * Generate the beat train for `durationS` seconds (§5.1).
  * Deterministic given `rng`.
  */
-export function generateBeatSchedule(
-  spec: RhythmSpec,
-  durationS: number,
-  rng: Rng,
-): BeatEvent[] {
+export function generateBeatSchedule(spec: RhythmSpec, durationS: number, rng: Rng): BeatEvent[] {
   const endMs = durationS * 1000;
   const beats: BeatEvent[] = [];
   const push = (tMs: number, type: BeatType, hasP: boolean, prMs: number, rrMs: number) => {
@@ -62,8 +58,7 @@ export function generateBeatSchedule(
         const s = t / 1000;
         const mod = hrv ? 1 + 0.03 * Math.sin(2 * Math.PI * 0.25 * s) : 1;
         const rr = baseRr * mod * (1 + 0.015 * rng.gaussian());
-        const pr =
-          spec.type === 'av-block-1' ? spec.prMs : 160 + 20 * rng.gaussian();
+        const pr = spec.type === 'av-block-1' ? spec.prMs : 160 + 20 * rng.gaussian();
         push(t, spec.type === 'paced-rhythm' ? 'paced' : 'sinus', true, pr, prevRr);
         t += rr;
         prevRr = rr;

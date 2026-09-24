@@ -50,9 +50,7 @@ export function effectiveSource(
   events: readonly TimelineEvent[],
   tMin: number,
 ): EffectiveSource {
-  const evs = events
-    .filter((e) => e.atMin <= tMin)
-    .sort((a, b) => a.atMin - b.atMin);
+  const evs = events.filter((e) => e.atMin <= tMin).sort((a, b) => a.atMin - b.atMin);
   if (evs.length === 0) {
     return {
       st: m.st,
@@ -103,10 +101,7 @@ export function effectiveSource(
   return cur;
 }
 
-function findOccBefore(
-  evs: readonly TimelineEvent[],
-  repT: number,
-): number | undefined {
+function findOccBefore(evs: readonly TimelineEvent[], repT: number): number | undefined {
   let occ: number | undefined;
   for (const e of evs) {
     if (e.atMin >= repT) break;
