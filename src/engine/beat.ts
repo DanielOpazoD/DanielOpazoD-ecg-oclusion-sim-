@@ -53,9 +53,22 @@ export interface EffectiveInjury {
   profile: 'transmural' | 'subendocardial';
 }
 
-/** Conduction variants (§5.2). `wpw` adds a delta wave; `hyperkalemia` is a
- * BeatOverrides preset (narrow tall T) used by the case library. */
-export type ConductionSpec = 'normal' | 'lbbb' | 'rbbb' | 'paced' | 'lvh' | 'lvh-strain' | 'wpw';
+/** Conduction variants (§5.2). `wpw` adds a delta wave; electrolyte presets
+ * are BeatOverrides helpers used by the case library. */
+export type ConductionSpec =
+  | 'normal'
+  | 'lbbb'
+  | 'rbbb'
+  | 'irbbb'
+  | 'lafb'
+  | 'lpfb'
+  | 'rbbb-lafb'
+  | 'rbbb-lpfb'
+  | 'rvh'
+  | 'paced'
+  | 'lvh'
+  | 'lvh-strain'
+  | 'wpw';
 
 /** Optional per-beat overrides applied on top of the base morphology. */
 export interface BeatOverrides {
@@ -73,14 +86,39 @@ export interface BeatOverrides {
   osbornMv?: number;
   /** Multiplier on the free-wall QRS amplitude (e.g. low voltage). */
   rScale?: number;
+  /** U-wave amplitude in mV along +û_T, σ 40, centred 180 ms after the T
+   *  peak (hypokalaemia). */
+  uWaveMv?: number;
+  /** Extra flat ST length before the T in ms: positive delays the T without
+   *  changing its width (hypocalcaemia +80, hypercalcaemia −40). */
+  stSegmentMs?: number;
+  /** Digoxin "scooped" ST: downsloping depression along −û_T over J→T onset. */
+  stSagMv?: number;
+  /** Electrical alternans 0–0.5: QRS+T amplitude alternates ± on odd beats
+   *  (requires `BeatParams.beatIndex`). */
+  alternans?: number;
+  /** P amplitude scale (hyperK flattening 0.2; LAE 1.4). */
+  pWaveScale?: number;
+  /** P duration scale (LAE widening). */
+  pDurationScale?: number;
+  /** Widens all QRS components' σ (hyperK 1.4). */
+  qrsWidthScale?: number;
 }
 
 /** Parameters needed to evaluate one beat's dipole trajectory. */
 export interface BeatParams {
-  /** PR interval in ms (positions the P wave, §2.1). */
-  prMs: number;
-  /** RR interval in ms (Bazett QT scaling, §2.3). */
-  rrMs: number;
+  /** QT interval target in ms for this beat (computed in scenario.ts via
+   *  the RR-memory model, §repolarization). */
+  qtMs: number;
+  /** Position of this beat in the schedule (electrical alternans). */
+  beatIndex?: number;
+  /** Explicit frontal-axis override in degrees, applied to the normal
+   *  template only (`Scenario.axisDeg`). */
+  axisDeg?: number;
+  /** Per-beat QRS-axis rotation about z (torsades, degrees). */
+  axisRotDeg?: number;
+  /** Per-beat amplitude envelope (torsades). */
+  ampScale?: number;
   /** QTc target in ms (default 400). */
   qtcMs?: number;
   /** Seeded inter-individual jitter (§patient-parameters): all optional. */
@@ -107,6 +145,46 @@ export interface BeatParams {
 /** Hyperkalemia override preset: narrow, tall, symmetric T (case D05/D12). */
 export function hyperkalemiaOverrides(): BeatOverrides {
   return { aTScale: 1.5, tSigmaScale: 0.6 };
+}
+
+/** Hypokalaemia: flat T + U wave + mild scooped ST. */
+export function hypokalemiaOverrides(): BeatOverrides {
+  return { aTScale: 0.45, uWaveMv: 0.12, stSagMv: 0.05 };
+}
+
+/** Hypocalcaemia: long flat ST, normal T width. */
+export function hypocalcemiaOverrides(): BeatOverrides {
+  return { stSegmentMs: 80 };
+}
+
+/** Hypercalcaemia: short ST segment. */
+export function hypercalcemiaOverrides(): BeatOverrides {
+  return { stSegmentMs: -40 };
+}
+
+/** Digoxin effect: scooped ST, short QT, smaller T. */
+export function digoxinOverrides(): BeatOverrides {
+  return { stSagMv: 0.12, qtc: 360, aTScale: 0.6 };
+}
+
+/** Severe hyperkalaemia: tall narrow T, flattened P, wide QRS. */
+export function severeHyperkalemiaOverrides(): BeatOverrides {
+  return { aTScale: 1.7, tSigmaScale: 0.55, pWaveScale: 0.15, qrsWidthScale: 1.5 };
+}
+
+/** Low voltage. */
+export function lowVoltageOverrides(): BeatOverrides {
+  return { rScale: 0.4, aTScale: 0.5 };
+}
+
+/** Long QT. */
+export function longQtOverrides(): BeatOverrides {
+  return { qtc: 520 };
+}
+
+/** Short QT. */
+export function shortQtOverrides(): BeatOverrides {
+  return { qtc: 330 };
 }
 
 // ---------------------------------------------------------------------------
@@ -144,12 +222,87 @@ function normalQrs(): QrsComponent[] {
   ];
 }
 
+/** Rotate all components about z so the gain/σ-weighted net frontal axis
+ * equals `targetDeg` (measured from +x toward +y; 0 = left, 90 = inferior).
+ * Ported from ECG Lab v1.3 morphology.ts rotate-to-net-axis idea. */
+function rotateToFrontalAxis(comps: QrsComponent[], targetDeg: number): QrsComponent[] {
+  let nx = 0;
+  let ny = 0;
+  for (const c of comps) {
+    nx += c.dir[0] * c.gain * c.sigma;
+    ny += c.dir[1] * c.gain * c.sigma;
+  }
+  const rot = (targetDeg * Math.PI) / 180 - Math.atan2(ny, nx);
+  const cosR = Math.cos(rot);
+  const sinR = Math.sin(rot);
+  return comps.map((c) => ({
+    ...c,
+    dir: [c.dir[0] * cosR - c.dir[1] * sinR, c.dir[0] * sinR + c.dir[1] * cosR, c.dir[2]] as Vec3,
+  }));
+}
+
 /** QRS components per conduction variant (§5.2). */
 function qrsComponents(params: BeatParams): QrsComponent[] {
   const rScale = params.overrides?.rScale ?? 1;
+  const widthScale = params.overrides?.qrsWidthScale ?? 1;
+  const scaleSigma = (comps: QrsComponent[]) =>
+    comps.map((c) => ({ ...c, sigma: c.sigma * widthScale }));
   switch (params.conduction) {
-    case 'normal':
-      return normalQrs().map((c) => ({ ...c, gain: c.gain * rScale }));
+    case 'normal': {
+      const comps = normalQrs().map((c) => ({ ...c, gain: c.gain * rScale }));
+      return scaleSigma(
+        params.axisDeg !== undefined ? rotateToFrontalAxis(comps, params.axisDeg) : comps,
+      );
+    }
+    case 'irbbb':
+      // Small terminal rightward vector: rSR' in V1, QRS 100–110.
+      return scaleSigma([
+        ...normalQrs().map((c) => ({ ...c, gain: c.gain * rScale })),
+        { mu: 85, sigma: 12, dir: normalize([-0.8, 0.1, -0.55]), gain: 0.3 },
+      ]);
+    case 'lafb':
+      return scaleSigma(
+        rotateToFrontalAxis(
+          normalQrs().map((c) => ({ ...c, gain: c.gain * rScale })),
+          -50,
+        ),
+      );
+    case 'lpfb':
+      return scaleSigma(
+        rotateToFrontalAxis(
+          normalQrs().map((c) => ({ ...c, gain: c.gain * rScale })),
+          110,
+        ),
+      );
+    case 'rbbb-lafb':
+      return scaleSigma(
+        rotateToFrontalAxis(
+          [
+            ...normalQrs().map((c) => ({ ...c, gain: c.gain * rScale })),
+            { mu: 85, sigma: 18, dir: normalize([-0.8, 0.1, -0.55]), gain: 0.55 },
+          ],
+          -50,
+        ),
+      );
+    case 'rbbb-lpfb':
+      return scaleSigma(
+        rotateToFrontalAxis(
+          [
+            ...normalQrs().map((c) => ({ ...c, gain: c.gain * rScale })),
+            { mu: 85, sigma: 18, dir: normalize([-0.8, 0.1, -0.55]), gain: 0.55 },
+          ],
+          110,
+        ),
+      );
+    case 'rvh':
+      // Right axis + dominant R in V1 (right-anterior mid component).
+      return scaleSigma([
+        ...rotateToFrontalAxis(
+          normalQrs().map((c) => ({ ...c, gain: c.gain * rScale })),
+          110,
+        ),
+        { mu: 35, sigma: 14, dir: normalize([-0.75, 0.1, -0.65]), gain: 0.6 },
+      ]);
     case 'lbbb':
       // Terminal vector leftward-superior-posterior so V1–V3 are negative
       // (deep S) and V5–V6 positive — matching real LBBB discordance.
@@ -171,20 +324,24 @@ function qrsComponents(params: BeatParams): QrsComponent[] {
       ];
     case 'lvh':
     case 'lvh-strain':
-      return normalQrs().map((c, i) => ({
-        ...c,
-        gain: i === 1 ? c.gain * 1.8 * rScale : c.gain,
-      }));
+      return scaleSigma(
+        normalQrs().map((c, i) => ({
+          ...c,
+          gain: i === 1 ? c.gain * 1.8 * rScale : c.gain,
+        })),
+      );
     case 'wpw':
-      return [
+      return scaleSigma([
         { mu: 8, sigma: 18, dir: normalize([0.4, 0.3, -0.7]), gain: 0.35 },
         ...normalQrs().map((c) => ({ ...c, gain: c.gain * rScale * 0.85 })),
-      ];
+      ]);
   }
 }
 
 /** Effective T direction per conduction variant (§5.2 discordance). */
 function tDirection(params: BeatParams): Vec3 {
+  // Ventricular beats: T discordant to their own QRS axis.
+  if (params.ventricularOrigin) return normalize(scale(params.ventricularOrigin, -0.9));
   switch (params.conduction) {
     case 'lbbb':
     case 'paced':
@@ -197,6 +354,9 @@ function tDirection(params: BeatParams): Vec3 {
     }
     case 'lvh-strain':
       return normalize(add(U_T, scale(normalize([0.72, 0.62, 0.3]), -0.9)));
+    case 'rvh':
+      // RVH strain: T inverts in the right precordials (away from V1).
+      return normalize(add(U_T, scale(normalize([0.55, -0.1, 0.8]), 0.9)));
     default:
       return U_T;
   }
@@ -204,6 +364,7 @@ function tDirection(params: BeatParams): Vec3 {
 
 /** Discordant ST offset at J (§5.2, ≈ 0.10–0.15 × S). */
 function discordantSt(params: BeatParams): Vec3 {
+  if (params.ventricularOrigin) return scale(params.ventricularOrigin, -0.18 * A_QRS);
   switch (params.conduction) {
     case 'lbbb':
     case 'paced':
@@ -218,21 +379,42 @@ function discordantSt(params: BeatParams): Vec3 {
 
 /** QRS duration (ms) for fiducials, per variant (§2.2, §5.2). */
 export function qrsDurationMs(
-  params: Pick<BeatParams, 'conduction' | 'ventricularOrigin'>,
+  params: Pick<BeatParams, 'conduction' | 'ventricularOrigin' | 'overrides'>,
 ): number {
-  if (params.ventricularOrigin) return 140;
-  switch (params.conduction) {
-    case 'lbbb':
-      return 150;
-    case 'paced':
-      return 150;
-    case 'rbbb':
-      return 125;
-    case 'wpw':
-      return 110;
-    default:
-      return 90;
+  const w = params.overrides?.qrsWidthScale ?? 1;
+  let base: number;
+  if (params.ventricularOrigin) base = 140;
+  else {
+    switch (params.conduction) {
+      case 'lbbb':
+      case 'paced':
+        base = 150;
+        break;
+      case 'rbbb':
+        base = 125;
+        break;
+      case 'irbbb':
+        base = 105;
+        break;
+      case 'rbbb-lafb':
+      case 'rbbb-lpfb':
+        base = 130;
+        break;
+      case 'lafb':
+      case 'lpfb':
+        base = 100;
+        break;
+      case 'rvh':
+        base = 95;
+        break;
+      case 'wpw':
+        base = 110;
+        break;
+      default:
+        base = 90;
+    }
   }
+  return base * w;
 }
 
 /**
@@ -240,14 +422,19 @@ export function qrsDurationMs(
  * Pure function; deterministic.
  */
 export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
-  const qtc = params.overrides?.qtc ?? params.qtcMs ?? 400;
-  const qtMs = qtc * (params.patient?.qtScale ?? 1) * Math.sqrt(params.rrMs / 1000); // Bazett inverse (§2.3)
+  const qtMs = params.qtMs; // RR-adapted QT, computed upstream (§repolarization)
   const baseQtMs = 430; // J(90) + T-end(340) control-point span
   const qtScale = qtMs / baseQtMs;
-  const aT = A_T * (params.overrides?.aTScale ?? 1) * (params.patient?.tGain ?? 1);
-  const qrsGain = A_QRS * (params.patient?.qrsGain ?? 1);
-  // Seeded frontal-axis jitter: rotate the whole QRS about the z axis.
-  const rot = ((params.patient?.axisRotDeg ?? 0) * Math.PI) / 180;
+  // Electrical alternans: odd beats attenuate QRS+T by ±overrides.alternans.
+  const alt =
+    params.overrides?.alternans && params.beatIndex !== undefined
+      ? 1 + (params.beatIndex % 2 === 1 ? 1 : -1) * params.overrides.alternans
+      : 1;
+  const ampScale = (params.ampScale ?? 1) * alt;
+  const aT = A_T * (params.overrides?.aTScale ?? 1) * (params.patient?.tGain ?? 1) * ampScale;
+  const qrsGain = A_QRS * (params.patient?.qrsGain ?? 1) * ampScale;
+  // Seeded frontal-axis jitter + per-beat torsades rotation about z.
+  const rot = (((params.patient?.axisRotDeg ?? 0) + (params.axisRotDeg ?? 0)) * Math.PI) / 180;
   const cosR = Math.cos(rot);
   const sinR = Math.sin(rot);
   const rotZ = (v: Vec3): Vec3 => [v[0] * cosR - v[1] * sinR, v[0] * sinR + v[1] * cosR, v[2]];
@@ -255,11 +442,8 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
 
   let h: Vec3 = [0, 0, 0];
 
-  // --- P wave (§2.1): gaussian centered at −PR + 55, σ 22 ---
-  const prEff = params.conduction === 'wpw' ? Math.min(params.prMs, 90) : params.prMs;
-  h = add(h, scale(U_P, A_P * gaussian(tauMs, -prEff + 55, 22)));
-
-  // --- QRS (§2.2, §5.2) ---
+  // --- QRS (§2.2, §5.2) --- (P waves are separate atrial events; see
+  // generatePDipole / scenario.ts)
   for (const c of qrsComponents(params)) {
     h = add(h, scale(rotZ(c.dir), qrsGain * c.gain * gaussian(tauMs, c.mu, c.sigma)));
   }
@@ -268,12 +452,7 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
     h = add(h, scale(params.ventricularOrigin, qrsGain * 1.2 * gaussian(tauMs, 55, 25)));
   }
 
-  // Paced spike (§5.2): 2 ms, arbitrary direction.
-  if (params.conduction === 'paced') {
-    h = add(h, scale([0.4, 0.8, -0.4], 1.2 * gaussian(tauMs, -2, 0.8)));
-  }
-
-  // --- Injuries (§3) ---
+  // --- Injuries (§3) --- (pacing spikes are schedule events; scenario.ts)
   let maxHyper = 0;
   for (const inj of params.injuries) {
     const { direction: d, stVector } = inj;
@@ -296,14 +475,17 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
   // --- ST-T (§2.3 control points + §3.1–3.5 modifications) ---
   const jAtMs = qrsDurationMs(params);
   const widen = (1 + 0.25 * maxHyper) * (params.overrides?.tSigmaScale ?? 1);
+  // Extra flat ST length (calcium): shifts T onset/peak/end without changing
+  // the T width.
+  const stShift = params.overrides?.stSegmentMs ?? 0;
   // Base control times relative to J (§2.3); T segment widened by hyperacuteT
   // (§3.3 — implemented as stretching the post-junction time axis, which also
   // recentres the peak and symmetrizes T; deviation noted vs analytic σ).
   const tJ = 0;
   const t40 = 40;
-  const tJn = 110;
-  const tPeak = 110 + (220 - 110) * widen;
-  const tEnd = 110 + (340 - 110) * widen;
+  const tJn = 110 + stShift;
+  const tPeak = 110 + stShift + (220 - 110) * widen;
+  const tEnd = 110 + stShift + (340 - 110) * widen;
 
   let vJFull: Vec3 = discordantSt(params);
   let v40Full: Vec3 = scale(uT, 0.02);
@@ -342,6 +524,18 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
     h = add(h, scale(U_P, -params.overrides.prDepressionMv * gaussian(tauMs, -15, 25)));
   }
 
+  // Digoxin-style scooped ST: smooth downsloping sag along −û_T from J to T
+  // onset (peak sag just before the T takes off).
+  const sagMv = params.overrides?.stSagMv;
+  const sagSpan = Math.max(80, tJn * qtScale + jAtMs - (jAtMs - 10));
+  if (sagMv && tauMs > jAtMs - 10 && tauMs < tJn * qtScale + jAtMs) {
+    // The scoop is steepest early: the sag reaches its floor by ~60% of the
+    // ST plateau and stays down into the T upslope.
+    const u = Math.min(1, (Math.max(0, tauMs - (jAtMs - 10)) / sagSpan) * 1.6);
+    const sag = u * u * (3 - 2 * u); // smoothstep: scooped descent into the T
+    h = add(h, scale(uT, -sagMv * sag));
+  }
+
   // ST-T contribution via Hermite spline (§2.3).
   const stt = hermiteVec3([
     [tJ * qtScale + jAtMs, vJFull],
@@ -352,6 +546,14 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
   ]);
   if (tauMs >= jAtMs - 20 && tauMs <= tEnd * qtScale + jAtMs + 60) {
     h = add(h, stt(tauMs));
+  }
+
+  // U wave (hypokalaemia): broad gaussian along +û_T, 180 ms after T peak.
+  if (params.overrides?.uWaveMv) {
+    h = add(
+      h,
+      scale(uT, params.overrides.uWaveMv * gaussian(tauMs, tPeak * qtScale + jAtMs + 180, 40)),
+    );
   }
 
   // J notch (early repolarization override).
@@ -365,4 +567,27 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
   }
 
   return h;
+}
+
+/** Atrial dipole for one P event (§2.1). `tauMs` counts from P onset.
+ * `kind`: sinus along +û_P (σ 22, peak +55 ms); ectopic rotates û_P ~40°;
+ * retrograde is −û_P, narrower (σ 18). `gain` defaults to A_P; `durationScale`
+ * widens the gaussian (LAE). */
+export function generatePDipole(
+  tauMs: number,
+  kind: 'sinus' | 'ectopic' | 'retrograde',
+  gain = A_P,
+  durationScale = 1,
+): Vec3 {
+  if (kind === 'retrograde') {
+    return scale(U_P, -gain * gaussian(tauMs, 50, 18 * durationScale));
+  }
+  if (kind === 'ectopic') {
+    const rot = (40 * Math.PI) / 180;
+    const cosR = Math.cos(rot);
+    const sinR = Math.sin(rot);
+    const d: Vec3 = [U_P[0] * cosR - U_P[1] * sinR, U_P[0] * sinR + U_P[1] * cosR, U_P[2]];
+    return scale(d, gain * gaussian(tauMs, 50, 20 * durationScale));
+  }
+  return scale(U_P, gain * gaussian(tauMs, 55, 22 * durationScale));
 }
