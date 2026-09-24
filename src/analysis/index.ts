@@ -1,0 +1,98 @@
+import type { Ecg12, LeadId, ConductionSpec } from '../engine/index.js';
+import { LEAD_IDS } from '../engine/index.js';
+import { measureEcg, type Measurements } from './measure.js';
+import type { Finding, RuleContext } from './rules/types.js';
+import { stemiUdmi4 } from './rules/stemi-udmi4.js';
+import { posteriorStd } from './rules/posterior-std.js';
+import { deWinter } from './rules/de-winter.js';
+import { hyperacuteT } from './rules/hyperacute-t.js';
+import { aslanger } from './rules/aslanger.js';
+import { rvInvolvement } from './rules/rv-involvement.js';
+import { avrDiffuseStd } from './rules/avr-diffuse-std.js';
+import { southAfricanFlag } from './rules/south-african-flag.js';
+import { reciprocalAvl } from './rules/reciprocal-avl.js';
+import { sgarbossa } from './rules/sgarbossa.js';
+import { sgarbossaModified } from './rules/sgarbossa-modified.js';
+import { barcelona } from './rules/barcelona.js';
+import { smith3v, smith4v } from './rules/smith.js';
+import { terminalQrsDistortion } from './rules/terminal-qrs-distortion.js';
+import { wellens } from './rules/wellens.js';
+import { pathologicalQ } from './rules/pathological-q.js';
+import { omiComposite } from './rules/omi-composite.js';
+
+/**
+ * Analysis entry point (MODEL.md §8): measurements + rule findings.
+ */
+
+/** All rules in evaluation order. */
+const RULES = [
+  stemiUdmi4,
+  posteriorStd,
+  deWinter,
+  hyperacuteT,
+  aslanger,
+  rvInvolvement,
+  avrDiffuseStd,
+  southAfricanFlag,
+  reciprocalAvl,
+  sgarbossa,
+  sgarbossaModified,
+  barcelona,
+  smith3v,
+  smith4v,
+  terminalQrsDistortion,
+  wellens,
+  pathologicalQ,
+];
+
+/** Full analysis report. */
+export interface AnalysisReport {
+  measurements: Measurements;
+  findings: Finding[];
+  /** Composite OMI verdict (§8 `omi-composite`). */
+  omi: Finding;
+}
+
+/** Options: patient demographics and which extra leads were acquired. */
+export interface AnalyzeOptions {
+  sex?: 'M' | 'F';
+  age?: number;
+  /** Default: all leads the engine produced. */
+  leadsAvailable?: LeadId[];
+  /** Default: 'normal'. */
+  conduction?: ConductionSpec;
+}
+
+/** Run the full analysis on an ECG (§8). */
+export function analyzeEcg(ecg: Ecg12, opts: AnalyzeOptions = {}): AnalysisReport {
+  const ctx: RuleContext = {
+    measurements: measureEcg(ecg),
+    patient: { sex: opts.sex ?? 'M', age: opts.age ?? 60 },
+    leadsAvailable: opts.leadsAvailable ?? [...LEAD_IDS],
+    conduction: opts.conduction ?? 'normal',
+  };
+  const findings = RULES.map((r) => r(ctx));
+  const omi = omiComposite(findings);
+  return { measurements: ctx.measurements, findings, omi };
+}
+
+export { measureEcg, mm } from './measure.js';
+export type { Measurements, LeadMeasurement } from './measure.js';
+export type { Finding, RuleContext } from './rules/types.js';
+export * from './rules/stemi-udmi4.js';
+export * from './rules/posterior-std.js';
+export * from './rules/de-winter.js';
+export * from './rules/hyperacute-t.js';
+export * from './rules/aslanger.js';
+export * from './rules/rv-involvement.js';
+export * from './rules/avr-diffuse-std.js';
+export * from './rules/south-african-flag.js';
+export * from './rules/reciprocal-avl.js';
+export * from './rules/sgarbossa.js';
+export * from './rules/sgarbossa-modified.js';
+export * from './rules/barcelona.js';
+export * from './rules/smith.js';
+export * from './rules/terminal-qrs-distortion.js';
+export * from './rules/wellens.js';
+export * from './rules/pathological-q.js';
+export { omiComposite } from './rules/omi-composite.js';
