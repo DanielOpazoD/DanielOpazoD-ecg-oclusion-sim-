@@ -1,4 +1,5 @@
 import { finding, st60mm, mmOf, type Rule, type Finding, type RuleContext } from './types.js';
+import { stemiUdmi4 } from './stemi-udmi4.js';
 
 /**
  * Smith formulas (§8, [66,67]): differentiate subtle anterior OMI from
@@ -16,7 +17,11 @@ function smithCommon(ctx: RuleContext): {
   const ste60v3 = st60mm(ctx, 'V3');
   const rv4 = mmOf(ctx, 'V4', 'rAmp');
   const qrsv2 = mmOf(ctx, 'V2', 'rAmp') + mmOf(ctx, 'V2', 'sAmp');
+  // Not applicable by definition when UDMI4 STEMI criteria are already met —
+  // the score is still computed and exposed for teaching.
+  const stemiMet = stemiUdmi4(ctx).positive;
   const applicable =
+    !stemiMet &&
     !m.qrsWide &&
     ctx.conduction === 'normal' &&
     m.perLead['V3'].rAmp >= 0.15 &&
