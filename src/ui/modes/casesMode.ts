@@ -24,21 +24,29 @@ export function renderCaseBrowser(el: HTMLElement, onSelect: (c: CaseDefinition)
   });
   el.appendChild(toggle);
 
-  const groups: CaseDefinition['group'][] = ['A', 'B', 'C', 'D', 'E', 'F'];
-  let n = 0;
-  for (const g of groups) {
-    const h = document.createElement('div');
-    h.className = 'group-h';
-    h.textContent = state.blind ? `Serie ${g}` : `${g} — ${GROUP_NAMES[g]}`;
-    el.appendChild(h);
-    for (const c of CASES.filter((x) => x.group === g)) {
-      n++;
+  // Blind (quiz or modo ciego): flat numbered list — no groups, titles or dots.
+  if (state.mode === 'quiz' || state.blind) {
+    CASES.forEach((c, n) => {
       const b = document.createElement('button');
       b.className = 'case-item';
       b.setAttribute('aria-current', String(state.caseId === c.id));
-      b.innerHTML = state.blind
-        ? `Caso ${n} <span class="dots">${'●'.repeat(c.difficulty)}</span>`
-        : `${c.id} · ${escapeHtml(c.title)} <span class="dots">${'●'.repeat(c.difficulty)}</span>`;
+      b.textContent = `Caso ${n + 1}`;
+      b.addEventListener('click', () => onSelect(c));
+      el.appendChild(b);
+    });
+    return;
+  }
+  const groups: CaseDefinition['group'][] = ['A', 'B', 'C', 'D', 'E', 'F'];
+  for (const g of groups) {
+    const h = document.createElement('div');
+    h.className = 'group-h';
+    h.textContent = `${g} — ${GROUP_NAMES[g]}`;
+    el.appendChild(h);
+    for (const c of CASES.filter((x) => x.group === g)) {
+      const b = document.createElement('button');
+      b.className = 'case-item';
+      b.setAttribute('aria-current', String(state.caseId === c.id));
+      b.innerHTML = `${c.id} · ${escapeHtml(c.title)} <span class="dots">${'●'.repeat(c.difficulty)}</span>`;
       b.addEventListener('click', () => onSelect(c));
       el.appendChild(b);
     }

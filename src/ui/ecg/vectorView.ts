@@ -1,6 +1,7 @@
 import type { Scenario, Vec3 } from '../../engine/index.js';
 import { territoryById } from '../../engine/index.js';
 import type { Measurements } from '../../analysis/measure.js';
+import { TERRITORY_LABELS, enumLabel } from '../labels.js';
 
 /**
  * Physics view: frontal (X/Y) and horizontal (X/Z) planes with hexaxial
@@ -10,6 +11,7 @@ export function renderVectorView(
   canvas: HTMLCanvasElement,
   scenario: Scenario,
   measurements: Measurements | null,
+  opts?: { labeled?: boolean },
 ): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -55,32 +57,18 @@ export function renderVectorView(
     );
   }
 
-  // ST injury vectors: direction × |st|.
-  for (const src of scenario.sources) {
+  // ST injury vectors: direction × |st|. Labels hidden in quiz/blind mode.
+  const labeled = opts?.labeled ?? true;
+  scenario.sources.forEach((src, i) => {
     const dir =
       src.direction ?? (src.territory ? territoryById(src.territory).direction : undefined);
-    if (!dir) continue;
+    if (!dir) return;
     const mag = Math.min(Math.abs(src.st) * 30, Math.min(half, h) * 0.38);
     const sign = src.st >= 0 ? 1 : -1;
-    arrowVec(
-      ctx,
-      half / 2,
-      h / 2,
-      project(dir, 'frontal'),
-      mag * sign,
-      danger,
-      src.territory ?? 'src',
-    );
-    arrowVec(
-      ctx,
-      half + half / 2,
-      h / 2,
-      project(dir, 'horizontal'),
-      mag * sign,
-      danger,
-      src.territory ?? 'src',
-    );
-  }
+    const name = labeled ? enumLabel(TERRITORY_LABELS, src.territory ?? `fuente ${i + 1}`) : '';
+    arrowVec(ctx, half / 2, h / 2, project(dir, 'frontal'), mag * sign, danger, name);
+    arrowVec(ctx, half + half / 2, h / 2, project(dir, 'horizontal'), mag * sign, danger, name);
+  });
 }
 
 type Plane = 'frontal' | 'horizontal';
@@ -186,6 +174,8 @@ function arrowVec(
   ctx.lineTo(ax + uy * ah * 0.5, ay + ux * ah * 0.5);
   ctx.closePath();
   ctx.fill();
-  ctx.font = '8px system-ui';
-  ctx.fillText(label, x2 + 4, y2);
+  if (label) {
+    ctx.font = '8px system-ui';
+    ctx.fillText(label, x2 + 4, y2);
+  }
 }

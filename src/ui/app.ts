@@ -223,14 +223,16 @@ export function mount(root: HTMLElement): void {
     renderEcgCanvas();
     renderRightPanel();
     timelineBar(timelineEl, render);
-    renderVectorView(vectorCanvas, s.scenario, report?.measurements ?? null);
+    renderVectorView(vectorCanvas, s.scenario, report?.measurements ?? null, {
+      labeled: !(s.mode === 'quiz' || s.blind),
+    });
   };
 
   // --- Header buttons ------------------------------------------------------
   for (const b of root.querySelectorAll<HTMLButtonElement>('.mode-tabs button')) {
     b.addEventListener('click', () => {
       const mode = b.dataset.mode as AppState['mode'];
-      store.update({ mode, playing: false });
+      store.update({ mode, playing: false, ...(mode === 'lab' ? { panelTab: 'lab' } : {}) });
     });
   }
   root.querySelector('#btn-theme')!.addEventListener('click', () => {

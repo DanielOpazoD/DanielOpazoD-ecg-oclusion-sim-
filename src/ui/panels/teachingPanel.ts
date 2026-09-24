@@ -14,7 +14,7 @@ export function teachingPanel(el: HTMLElement, c: CaseDefinition | null): void {
       <ul>${c.teachingPoints.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>
       ${c.pitfalls?.length ? `<h3>Errores frecuentes</h3><ul>${c.pitfalls.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>` : ''}
       <button id="reveal-angio" class="danger">Revelar angiografía</button>
-      <p id="angio" hidden class="mono" style="margin-top:8px">🫀 ${escapeHtml(c.angiography)}</p>
+      <p id="angio" hidden class="mono" style="margin-top:8px">Angiografía: ${escapeHtml(c.angiography)}</p>
     </div>
     <div class="card">
       <h3>Referencias</h3>
@@ -23,11 +23,7 @@ export function teachingPanel(el: HTMLElement, c: CaseDefinition | null): void {
           .map((n) => {
             const b = bib(n);
             if (!b) return `<li>[${n}]</li>`;
-            return `<li value="${n}">${
-              b.url
-                ? `<a href="${b.url}" target="_blank" rel="noreferrer" style="color:var(--accent)">`
-                : ''
-            }${escapeHtml(b.text)}${b.url ? '</a>' : ''}</li>`;
+            return `<li value="${n}">${renderRefHtml(b)}</li>`;
           })
           .join('')}
       </ol>
@@ -44,4 +40,20 @@ export function teachingPanel(el: HTMLElement, c: CaseDefinition | null): void {
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/** Ref text → HTML: *journal* becomes <em>; trailing DOI/URL becomes the only <a>. */
+export function renderRefHtml(b: { text: string; url?: string }): string {
+  const urlRe = /(https?:\/\/\S+)$/;
+  const m = b.text.match(urlRe);
+  let body = b.text;
+  let link = '';
+  if (m) {
+    body = b.text.slice(0, m.index).trim();
+    link = ` <a href="${m[1]}" target="_blank" rel="noopener" style="color:var(--accent)">${m[1]}</a>`;
+  } else if (b.url) {
+    link = ` <a href="${b.url}" target="_blank" rel="noopener" style="color:var(--accent)">${b.url}</a>`;
+  }
+  const em = escapeHtml(body).replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  return `${em}${link}`;
 }

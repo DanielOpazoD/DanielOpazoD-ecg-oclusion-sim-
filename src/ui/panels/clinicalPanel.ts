@@ -1,4 +1,5 @@
 import type { CaseDefinition } from '../../cases/types.js';
+import { store } from '../state/appState.js';
 import type { AppState } from '../state/appState.js';
 
 /** Vignette card: patient badge, history, vitals, troponin, onset time. */
@@ -18,7 +19,12 @@ export function clinicalPanel(el: HTMLElement, c: CaseDefinition | null, state: 
       <p>${escapeHtml(v.history)}</p>
       ${v.vitals ? `<p class="mono">Constantes: ${escapeHtml(v.vitals)}</p>` : ''}
       ${v.troponin ? `<p class="mono">Troponina: ${escapeHtml(v.troponin)}</p>` : ''}
+      <button id="open-lab" style="margin-top:8px">Abrir en laboratorio</button>
     </div>`;
+  el.querySelector('#open-lab')?.addEventListener('click', () => {
+    // Keep the case scenario + tMin; just switch to lab mode.
+    store.update({ mode: 'lab', panelTab: 'lab', playing: false });
+  });
 }
 
 function escapeHtml(s: string): string {

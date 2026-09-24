@@ -53,19 +53,22 @@ export function timelineBar(el: HTMLElement, onChange: () => void): void {
         state.playing ? '⏸' : '▶'
       }</button>
       <strong class="mono">t = ${state.tMin.toFixed(0)} min</strong>
-      <span class="badge muted">${phaseLabel(state.scenario, state.tMin)}</span>
-      <span>${evs
-        .slice()
-        .sort((a, b) => a.atMin - b.atMin)
-        .map((e) => `${KIND_LABEL[e.kind]} @${e.atMin}'`)
-        .join(' · ')}</span>
+      ${state.mode === 'quiz' || state.blind ? '' : `<span class="badge muted">${phaseLabel(state.scenario, state.tMin)}</span>`}
+      <span>${
+        state.mode === 'quiz' || state.blind
+          ? ''
+          : evs
+              .slice()
+              .sort((a, b) => a.atMin - b.atMin)
+              .map((e) => `${KIND_LABEL[e.kind]} @${e.atMin}'`)
+              .join(' · ')
+      }</span>
       <span style="flex:1"></span>
       <label>velocidad
         <select id="tl-speed">
           ${[1, 5, 20].map((v) => `<option value="${v}" ${v === state.playSpeedMinPerS ? 'selected' : ''}>×${v}</option>`).join('')}
         </select></label>
-      <button id="tl-rep">+ Reperfusión</button>
-      <button id="tl-reocc">+ Reoclusión</button>
+      ${state.mode === 'quiz' || state.blind ? '' : '<button id="tl-rep">+ Reperfusión</button><button id="tl-reocc">+ Reoclusión</button>'}
     </div>
     <input type="range" id="tl-range" min="0" max="${MAX_MIN}" step="1" value="${state.tMin}" aria-label="Tiempo en minutos">`;
 

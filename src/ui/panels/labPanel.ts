@@ -1,6 +1,14 @@
 import type { InjurySource, Placement, RhythmSpec, ConductionSpec } from '../../engine/index.js';
 import { TERRITORIES } from '../../engine/index.js';
 import { store } from '../state/appState.js';
+import {
+  TERRITORY_LABELS,
+  RHYTHM_LABELS,
+  CONDUCTION_LABELS,
+  SHAPE_LABELS,
+  PLACEMENT_LABELS,
+  enumLabel,
+} from '../labels.js';
 
 const SHAPES = ['concave', 'straight', 'convex', 'tombstone', 'depression-upsloping'] as const;
 const CONDUCTIONS: ConductionSpec[] = [
@@ -81,12 +89,18 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
   ctxCard.className = 'card';
   ctxCard.innerHTML = '<h3>Contexto</h3>';
   ctxCard.appendChild(
-    selectRow('Ritmo', RHYTHMS as unknown as string[], s.rhythm.type, (v) => {
-      mutateScenario((sc) => {
-        sc.rhythm = { ...sc.rhythm, type: v } as RhythmSpec;
-      });
-      onChange();
-    }),
+    selectRow(
+      'Ritmo',
+      RHYTHMS as unknown as string[],
+      s.rhythm.type,
+      (v) => {
+        mutateScenario((sc) => {
+          sc.rhythm = { ...sc.rhythm, type: v } as RhythmSpec;
+        });
+        onChange();
+      },
+      RHYTHM_LABELS,
+    ),
   );
   const hr = 'hrBpm' in s.rhythm ? s.rhythm.hrBpm : 70;
   ctxCard.appendChild(
@@ -98,12 +112,18 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
     }),
   );
   ctxCard.appendChild(
-    selectRow('Conducción', CONDUCTIONS as unknown as string[], s.conduction, (v) => {
-      mutateScenario((sc) => {
-        sc.conduction = v as ConductionSpec;
-      });
-      onChange();
-    }),
+    selectRow(
+      'Conducción',
+      CONDUCTIONS as unknown as string[],
+      s.conduction,
+      (v) => {
+        mutateScenario((sc) => {
+          sc.conduction = v as ConductionSpec;
+        });
+        onChange();
+      },
+      CONDUCTION_LABELS,
+    ),
   );
   const st = store.get();
   ctxCard.appendChild(
@@ -141,7 +161,7 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
     }),
   );
   acqCard.appendChild(
-    sliderRow('Red (mV)', acq.powerline?.amplitudeMv ?? 0, 0, 0.2, 0.01, (v) => {
+    sliderRow('Red eléctrica (mV)', acq.powerline?.amplitudeMv ?? 0, 0, 0.2, 0.01, (v) => {
       mutateAcq((a) => {
         a.powerline = { hz: a.powerline?.hz ?? 50, amplitudeMv: v };
       });
@@ -149,7 +169,7 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
     }),
   );
   acqCard.appendChild(
-    selectRow('Red (Hz)', ['50', '60'], String(acq.powerline?.hz ?? 50), (v) => {
+    selectRow('Red eléctrica (Hz)', ['50', '60'], String(acq.powerline?.hz ?? 50), (v) => {
       mutateAcq((a) => {
         a.powerline = { hz: Number(v) as 50 | 60, amplitudeMv: a.powerline?.amplitudeMv ?? 0.05 };
       });
@@ -182,12 +202,18 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
     }),
   );
   acqCard.appendChild(
-    selectRow('Colocación', PLACEMENTS as unknown as string[], acq.placement ?? 'standard', (v) => {
-      mutateAcq((a) => {
-        a.placement = v as Placement;
-      });
-      onChange();
-    }),
+    selectRow(
+      'Colocación',
+      PLACEMENTS as unknown as string[],
+      acq.placement ?? 'standard',
+      (v) => {
+        mutateAcq((a) => {
+          a.placement = v as Placement;
+        });
+        onChange();
+      },
+      PLACEMENT_LABELS,
+    ),
   );
   el.appendChild(acqCard);
 
@@ -237,12 +263,18 @@ function sourceEditor(src: InjurySource, i: number, onChange: () => void): HTMLE
     'border:1px solid var(--border);border-radius:6px;padding:8px;margin-bottom:8px';
   const terrOpts = TERRITORIES.map((t) => t.id);
   div.appendChild(
-    selectRow(`Fuente ${i + 1} territorio`, terrOpts, src.territory ?? 'anterior', (v) => {
-      mutateSource(i, (s) => {
-        s.territory = v;
-      });
-      onChange();
-    }),
+    selectRow(
+      `Fuente ${i + 1} territorio`,
+      terrOpts,
+      src.territory ?? 'anterior',
+      (v) => {
+        mutateSource(i, (s) => {
+          s.territory = v;
+        });
+        onChange();
+      },
+      TERRITORY_LABELS,
+    ),
   );
   div.appendChild(
     sliderRow('ST (mm)', src.st * 10, -30, 60, 1, (v) => {
@@ -261,12 +293,18 @@ function sourceEditor(src: InjurySource, i: number, onChange: () => void): HTMLE
     }),
   );
   div.appendChild(
-    selectRow('Forma', SHAPES as unknown as string[], src.shape ?? 'straight', (v) => {
-      mutateSource(i, (s) => {
-        s.shape = v as InjurySource['shape'];
-      });
-      onChange();
-    }),
+    selectRow(
+      'Forma',
+      SHAPES as unknown as string[],
+      src.shape ?? 'straight',
+      (v) => {
+        mutateSource(i, (s) => {
+          s.shape = v as InjurySource['shape'];
+        });
+        onChange();
+      },
+      SHAPE_LABELS,
+    ),
   );
   div.appendChild(
     sliderRow('T hiperaguda', src.hyperacuteT ?? 0, 0, 2.5, 0.1, (v) =>
@@ -355,12 +393,16 @@ function selectRow(
   opts: string[],
   value: string,
   onChange: (v: string) => void,
+  labelMap?: Record<string, string>,
 ): HTMLElement {
   const row = document.createElement('div');
   row.className = 'field-row';
   row.innerHTML = `<label>${label}</label>
     <select aria-label="${label}">${opts
-      .map((o) => `<option value="${o}" ${o === value ? 'selected' : ''}>${o}</option>`)
+      .map(
+        (o) =>
+          `<option value="${o}" ${o === value ? 'selected' : ''}>${enumLabel(labelMap ?? {}, o)}</option>`,
+      )
       .join('')}</select>`;
   row
     .querySelector('select')!

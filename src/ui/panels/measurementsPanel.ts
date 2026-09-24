@@ -42,7 +42,7 @@ export function measurementsPanel(el: HTMLElement, m: Measurements | null): void
   el.innerHTML = `
     <div class="card">
       <h3>Mediciones (mm)</h3>
-      <p class="mono">FC ${m.hrBpm.toFixed(0)} · PR ${m.prMs.toFixed(0)} ms · QRS ${m.qrsWide ? '≥120' : '<120'} ms ·
+      <p class="mono">FC ${m.hrBpm.toFixed(0)} · PR ${m.prMs.toFixed(0)} ms · QRS ${Math.max(...LEAD_IDS.map((l) => m.perLead[l].qrsDurMs)).toFixed(0)} ms${m.qrsWide ? ' · <span class="badge warn">QRS ancho</span>' : ''} ·
       QT ${m.qt.toFixed(0)} / QTc ${m.qtcBazett.toFixed(0)} · eje QRS ${m.qrsAxisDeg.toFixed(0)}° · eje T ${m.tAxisDeg.toFixed(0)}°</p>
       <table class="meas">
         <thead><tr><th></th>${COLS.map((c) => `<th>${c.label}</th>`).join('')}</tr></thead>

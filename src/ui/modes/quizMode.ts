@@ -31,6 +31,13 @@ export function quizMetrics(results: readonly QuizResult[]): {
   };
 }
 
+/** Trailing consecutive correct answers (for the score line). */
+export function currentStreak(results: readonly QuizResult[]): number {
+  let n = 0;
+  for (let i = results.length - 1; i >= 0 && results[i]!.correct; i--) n++;
+  return n;
+}
+
 /** Shuffle (seeded) the case ids and start a quiz session. */
 export function startQuiz(seed = Math.floor(Math.random() * 1e6)): void {
   const order = CASES.map((c) => c.id);
@@ -89,6 +96,9 @@ export function renderQuizPanel(
   card.className = 'card';
   card.innerHTML = `<h3>Decisión</h3>
     <p class="mono" style="color:var(--muted)">Caso ${q.idx + 1} / ${q.order.length} · ${c.vignette.age} años · ${c.vignette.sex}</p>
+    <p class="mono" style="font-size:12px">Puntuación ${quizMetrics(q.results).correct}/${q.results.length}
+      · racha ${currentStreak(q.results)}
+      · sens ${(quizMetrics(q.results).sensitivity * 100).toFixed(0)} % / esp ${(quizMetrics(q.results).specificity * 100).toFixed(0)} %</p>
     <p>${escapeHtml(c.vignette.history)}</p>`;
   for (const d of DECISIONS) {
     const b = document.createElement('button');
@@ -176,10 +186,10 @@ function renderVerdict(el: HTMLElement, c: CaseDefinition): void {
     <h3>Resultado</h3>
     <p><span class="badge ${last?.correct ? 'ok' : 'danger'}">${last?.correct ? 'Correcto' : 'Incorrecto'}</span>
     <span class="badge ${c.expected.omi ? 'danger' : 'ok'}">${c.expected.omi ? 'OMI' : 'No OMI'}</span></p>
-    <p class="mono">Culprit: ${escapeHtml(c.expected.culprit ?? c.angiography)}</p>
+    <p class="mono">Arteria culpable: ${escapeHtml(c.expected.culprit ?? c.angiography)}</p>
     <p class="mono">Hallazgos esperados: ${c.expected.positiveFindings.join(', ') || '—'}</p>
     <p class="mono">Tus hallazgos: ${[...q.picked].join(', ') || '—'}</p>
-    <p style="margin-top:8px">🫀 ${escapeHtml(c.angiography)}</p>
+    <p style="margin-top:8px">Angiografía: ${escapeHtml(c.angiography)}</p>
     <ul style="font-size:12px;color:var(--muted)">${c.teachingPoints.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`;
   el.appendChild(card);
 }
