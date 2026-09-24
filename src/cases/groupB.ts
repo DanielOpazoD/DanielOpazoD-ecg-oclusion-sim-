@@ -41,9 +41,14 @@ export const GROUP_B: CaseDefinition[] = [
       'La T hiperaguda precede al STE: área T/QRS aumentada y T simétrica.',
       'Un ECG «normal» a los 25 min de dolor no descarta OMI.',
       'Repetir el ECG en 10–15 min y comparar.',
+      'La relación T/QRS importa más que la amplitud absoluta de la T.',
     ],
-    pitfalls: ['Las T hiperagudas se confunden con repolarización precoz o hiperpotasemia.'],
-    refs: [26, 27],
+    pitfalls: [
+      'Las T hiperagudas se confunden con repolarización precoz o hiperpotasemia.',
+      'Las T hiperagudas se confunden con repolarización precoz o hiperpotasemia.',
+      'Leer el ECG aislado sin seriado en un paciente sintomático.',
+    ],
+    refs: [22, 23, 26, 27],
   },
   {
     id: 'B02',
@@ -86,8 +91,13 @@ export const GROUP_B: CaseDefinition[] = [
       'STD ascendente en J con T alta simétrica en V2–V6 equivale a oclusión de DA.',
       'El STE en aVR (0.5–1 mm) apoya el diagnóstico.',
       'No esperar troponina ni «STEMI»: es una emergencia de reperfusión.',
+      'La variante de Winter no cumple criterios STEMI: es una de las principales causas de OMI no reconocida.',
     ],
-    refs: [36, 37],
+    pitfalls: [
+      'Esperar a que aparezca STE para activar el código.',
+      'Registrar solo un ECG en un paciente con dolor activo.',
+    ],
+    refs: [47, 41],
   },
   {
     id: 'B03',
@@ -97,7 +107,7 @@ export const GROUP_B: CaseDefinition[] = [
     vignette: {
       age: 39,
       sex: 'M',
-      history: 'Varón de 39 años con dolor torácico de 1 hora. STE sutil en V2–V3.',
+      history: 'Varón de 39 años con dolor torácico de 1 hora, sin factores de riesgo conocidos.',
       vitals: 'PA 125/80, FC 76',
       troponin: 'hs-cTnT 55 ng/L',
       symptomsOnsetMin: 60,
@@ -126,6 +136,11 @@ export const GROUP_B: CaseDefinition[] = [
       'Las fórmulas de Smith separan OMI anterior sutil de repolarización precoz.',
       'STE a J+60, QTc y amplitud R en V4 son las variables clave.',
       'Un QTc prolongado favorece OMI frente a RP.',
+      'En varones jóvenes el umbral de 2 mm favorece falsos positivos; la fórmula mejora la especificidad.',
+    ],
+    pitfalls: [
+      'Fiarse del umbral de edad sin valorar la proporción T/QRS.',
+      'Descartar isquemia por la edad del paciente.',
     ],
     refs: [66, 67],
   },
@@ -138,7 +153,7 @@ export const GROUP_B: CaseDefinition[] = [
       age: 72,
       sex: 'F',
       history:
-        'Mujer de 72 años con dolor torácico de 2 horas. Solo se registraron 12 derivaciones estándar.',
+        'Mujer de 72 años con dolor torácico de 2 horas. El registro disponible es el convencional de 12 canales.',
       vitals: 'PA 145/90, FC 82',
       troponin: 'hs-cTnT 85 ng/L',
       symptomsOnsetMin: 120,
@@ -166,8 +181,13 @@ export const GROUP_B: CaseDefinition[] = [
       'STD horizontal V1–V4 con T positiva = infarto posterior hasta demostración contraria.',
       'La regla posterior-std no exige V7–V9: el espejo en V1–V3 basta.',
       'Registrar V7–V9 ante cualquier STD V1–V3.',
+      'La T terminal positiva en V1–V3 orienta el STD precordial hacia posterior, no hacia isquemia anterior.',
     ],
-    refs: [46, 47],
+    pitfalls: [
+      'Interpretar el STD V1–V3 como isquemia subendocárdica anterior.',
+      'No registrar derivaciones adicionales pese a la sospecha.',
+    ],
+    refs: [46, 5],
   },
   {
     id: 'B05',
@@ -206,8 +226,13 @@ export const GROUP_B: CaseDefinition[] = [
       'Aslanger: STE aislado en III, STD lateral V4–V6, ST V1 > V2.',
       'Indica OMI con enfermedad multivaso: prioriza la angiografía.',
       'La STD difusa subendocárdica se superpone a la lesión inferior.',
+      'El patrón de Aslanger es predictor de lesión grave con isquemia multivaso.',
     ],
-    refs: [45],
+    pitfalls: [
+      'Requerir el patrón completo en las 12 derivaciones; basta el núcleo inferior + STD lateral.',
+      'Confundirlo con un NSTEMI sin oclusión.',
+    ],
+    refs: [51, 45],
   },
   {
     id: 'B06',
@@ -217,7 +242,7 @@ export const GROUP_B: CaseDefinition[] = [
     vignette: {
       age: 58,
       sex: 'F',
-      history: 'Mujer de 58 años con dolor torácico de 40 minutos. STE inferior < 1 mm.',
+      history: 'Mujer de 58 años con dolor torácico de 40 minutos, hipertensa y fumadora.',
       vitals: 'PA 130/80, FC 74',
       troponin: 'hs-cTnT 35 ng/L',
       symptomsOnsetMin: 40,
@@ -247,8 +272,13 @@ export const GROUP_B: CaseDefinition[] = [
       'La STD en aVL es la recíproca más sensible del IAM inferior.',
       'STE < 1 mm inferior + STD aVL = oclusión hasta demostración contraria.',
       'La T hiperaguda inferior acompaña la fase precoz.',
+      'En el IAM inferior la derivación aVL recíproca suele preceder al STE franco.',
     ],
-    refs: [70],
+    pitfalls: [
+      'Esperar un STE ≥1 mm para sospechar la oclusión.',
+      'No valorar la onda T inferior en relación con el complejo QRS.',
+    ],
+    refs: [70, 5],
   },
   {
     id: 'B07',
@@ -259,7 +289,7 @@ export const GROUP_B: CaseDefinition[] = [
       age: 61,
       sex: 'M',
       history:
-        'Varón de 61 años con dolor torácico intermitente de 3 horas. STE sutil en I/aVL/V6.',
+        'Varón de 61 años con dolor torácico intermitente de 3 horas, episodios autolimitados.',
       vitals: 'PA 140/85, FC 80',
       troponin: 'hs-cTnT 210 ng/L',
       symptomsOnsetMin: 180,
@@ -289,8 +319,13 @@ export const GROUP_B: CaseDefinition[] = [
       'Las arterias marginales producen STE sutil o ausente.',
       'La troponina elevada y el dolor persistente mandan a angiografía.',
       'El componente posterior da la pista (STD V1–V3).',
+      'Las oclusiones de ramas marginales tienen una expresión eléctrica pobre.',
     ],
-    refs: [57],
+    pitfalls: [
+      'Descartar isquemia por la intermitencia del dolor.',
+      'No repetir el ECG durante un nuevo episodio.',
+    ],
+    refs: [5, 57],
   },
   {
     id: 'B08',
@@ -326,8 +361,13 @@ export const GROUP_B: CaseDefinition[] = [
       'En LBBB el STE concordante ≥1 mm o discordante excesivo indica OMI.',
       'BARCELONA mejora la sensibilidad del Sgarbossa modificado.',
       'El LBBB conocido no retrasa la reperfusión si hay criterios.',
+      'La concordancia del ST en una sola derivación ya puntúa en los sistemas modernos.',
     ],
-    refs: [62, 63],
+    pitfalls: [
+      'Asumir que el LBBB impide interpretar el segmento ST.',
+      'No comparar con un ECG previo conocido.',
+    ],
+    refs: [61, 62, 63],
   },
   {
     id: 'B09',
@@ -363,6 +403,11 @@ export const GROUP_B: CaseDefinition[] = [
       'En ritmo estimulado se aplican los criterios de Sgarbossa.',
       'Buscar concordancia o discordancia excesiva del ST.',
       'La espiga de marcapasos no invalida el análisis del ST.',
+      'Los criterios de Sgarbossa son aplicables en ritmo estimulado ventricular.',
+    ],
+    pitfalls: [
+      'Descartar OMI porque el ritmo sea de marcapasos.',
+      'No valorar la proporción discordante ST/S.',
     ],
     refs: [62, 64],
   },
@@ -374,7 +419,8 @@ export const GROUP_B: CaseDefinition[] = [
     vignette: {
       age: 66,
       sex: 'M',
-      history: 'Varón de 66 años con dolor torácico de 1 hora e hipotensión. BRD en el ECG.',
+      history:
+        'Varón de 66 años con dolor torácico de 1 hora e hipotensión. Ritmo lento con QRS ancho de patrón derecho.',
       vitals: 'PA 90/55, FC 105',
       troponin: 'hs-cTnT 180 ng/L',
       symptomsOnsetMin: 60,
@@ -400,8 +446,13 @@ export const GROUP_B: CaseDefinition[] = [
       'El BRD no oculta el STE: la discordancia solo afecta a V1–V2 terminales.',
       'BRD + IAM anterior = DA proximal pre-S1: máximo riesgo.',
       'No esperar a «estabilizar»: activar código infarto.',
+      'El BRD nuevo con dolor torácico implica lesión proximal de la DA hasta demostración contraria.',
     ],
-    refs: [65],
+    pitfalls: [
+      'Atribuir el bloqueo a una causa degenerativa estable.',
+      'Demorar la angiografía por la estabilidad aparente.',
+    ],
+    refs: [65, 5],
   },
   {
     id: 'B11',
@@ -411,7 +462,8 @@ export const GROUP_B: CaseDefinition[] = [
     vignette: {
       age: 50,
       sex: 'M',
-      history: 'Varón de 50 años con dolor torácico de 35 minutos. STE < 1 mm con J alto.',
+      history:
+        'Varón de 50 años con dolor torácico de 35 minutos; el registro inicial se leyó como no concluyente.',
       vitals: 'PA 130/85, FC 84',
       troponin: 'hs-cTnT 30 ng/L',
       symptomsOnsetMin: 35,
@@ -439,8 +491,13 @@ export const GROUP_B: CaseDefinition[] = [
       'La pérdida de la S o J/R ≥ 0.5 en V2–V3 indica oclusión sin STE formal.',
       'La distorsión terminal se asocia a peor pronóstico.',
       'Mirar el J en relación con la R, no solo el STE absoluto.',
+      'La distorsión terminal del QRS es un equivalente de oclusión con STE escaso.',
     ],
-    refs: [68],
+    pitfalls: [
+      'Medir solo el STE sin valorar la morfología terminal del QRS.',
+      'Clasificar el ECG como normal por ausencia de elevación franca.',
+    ],
+    refs: [25, 68],
   },
   {
     id: 'B12',
@@ -479,8 +536,13 @@ export const GROUP_B: CaseDefinition[] = [
       'Wellens = T de reperfusión: el paciente está «bien» pero la lesión persiste.',
       'Patrón A: T bifásica terminal negativa en V2–V4.',
       'Contraindicada la prueba de esfuerzo; angiografía urgente.',
+      'El paciente con Wellens está libre de dolor: el peligro está en la lesión, no en el síntoma.',
     ],
-    refs: [38, 39],
+    pitfalls: [
+      'Dar de alta con prueba de esfuerzo tras un ECG «tranquilizador».',
+      'No relacionar la historia de dolor reciente con el patrón T.',
+    ],
+    refs: [55, 72],
   },
   {
     id: 'B13',
@@ -518,8 +580,13 @@ export const GROUP_B: CaseDefinition[] = [
       'Wellens B: T profundas simétricas en V2–V4 — lesión crítica reperfundida.',
       'La troponina positiva + Wellens = angiografía en 24 h máximo.',
       'Sin STE los criterios STEMI no se cumplen: reconocer el patrón.',
+      'La troponina elevada con patrón Wellens obliga a angiografía sin prueba funcional.',
     ],
-    refs: [38, 39],
+    pitfalls: [
+      'Esperar a que el STE aparezca antes de actuar.',
+      'Interpretar las T negativas profundas como cambios crónicos.',
+    ],
+    refs: [55, 72],
   },
   {
     id: 'B14',
@@ -530,7 +597,7 @@ export const GROUP_B: CaseDefinition[] = [
       age: 57,
       sex: 'M',
       history:
-        'Varón de 57 años con Wellens previo; el dolor torácico recurre. El ECG muestra T «normalizadas».',
+        'Varón de 57 años con dolor recurrente tras un episodio previo autolimitado días atrás.',
       vitals: 'PA 135/85, FC 92',
       troponin: 'hs-cTnT 85 ng/L',
       symptomsOnsetMin: 8,
@@ -562,6 +629,11 @@ export const GROUP_B: CaseDefinition[] = [
       'La pseudonormalización: T invertidas que se vuelven positivas = reoclusión.',
       'Comparar con el ECG previo es diagnóstico.',
       'El dolor recurrente tras Wellens es una urgencia.',
+      'La comparación con ECGs previos es la clave de la pseudonormalización.',
+    ],
+    pitfalls: [
+      'Tomar la T «normalizada» como mejoría.',
+      'No disponer del ECG previo en la historia.',
     ],
     refs: [71, 72],
   },

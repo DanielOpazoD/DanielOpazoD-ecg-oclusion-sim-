@@ -10,7 +10,8 @@ export const GROUP_E: CaseDefinition[] = [
     vignette: {
       age: 60,
       sex: 'M',
-      history: 'Serie temporal de oclusión de DA: T hiperaguda precede al STEMI franco.',
+      history:
+        'Seguimiento de un paciente con dolor torácico de inicio reciente mientras se registran ECGs seriados.',
       vitals: 'PA 135/85, FC 90',
       troponin: 'hs-cTnT en ascenso',
     },
@@ -39,6 +40,11 @@ export const GROUP_E: CaseDefinition[] = [
       'La evolución natural: T hiperaguda → STE → Q → inversión de T.',
       'A 10 min hyperacute-t ya es positivo; stemi-udmi4 tarda.',
       'La serie temporal enseña el valor del ECG seriado.',
+      'La fase hiperaguda es fugaz: el seriado capta la transformación en STE.',
+    ],
+    pitfalls: [
+      'Basar la decisión en un único ECG precoz.',
+      'No registrar el tiempo desde el inicio del dolor.',
     ],
     refs: [22, 23],
   },
@@ -50,7 +56,8 @@ export const GROUP_E: CaseDefinition[] = [
     vignette: {
       age: 64,
       sex: 'F',
-      history: 'IAM inferior reperfundido a los 50 min; ECG a 140 min con AIVR previa.',
+      history:
+        'Paciente con IAM inferior tratado con reperfusión exitosa; control en la ventana post-procedimiento.',
       vitals: 'PA 120/75, FC 85',
       troponin: 'hs-cTnT 900 ng/L',
     },
@@ -80,8 +87,13 @@ export const GROUP_E: CaseDefinition[] = [
       'Resolución ≥50 % del STE a 60–90 min = criterio de reperfusión.',
       'La AIVR en la ventana post-reperfusión es marcador benigno.',
       'La T de reperfusión (inversión) aparece después.',
+      'La reperfusión se acompaña de arritmias benignas como la AIVR.',
     ],
-    refs: [71, 74],
+    pitfalls: [
+      'Interpretar la AIVR como taquicardia ventricular maligna.',
+      'No evaluar la resolución del STE tras el procedimiento.',
+    ],
+    refs: [28, 71],
   },
   {
     id: 'E03',
@@ -91,7 +103,8 @@ export const GROUP_E: CaseDefinition[] = [
     vignette: {
       age: 58,
       sex: 'M',
-      history: 'IAM anterior reperfundido a los 60 min que se reocluye a las 4 h.',
+      history:
+        'Paciente con IAM anterior reperfundido que refiere reaparición del dolor horas después del procedimiento.',
       vitals: 'PA 125/80, FC 95',
       troponin: 'hs-cTnT 500 ng/L',
     },
@@ -122,6 +135,11 @@ export const GROUP_E: CaseDefinition[] = [
       'La reoclusión borra la inversión de T (pseudonormalización) y vuelve el STE.',
       'Dolor recurrente post-PCI obliga a ECG seriado.',
       'La trombosis de stent es la causa clásica de reoclusión.',
+      'La reoclusión produce pseudonormalización de las T invertidas y reaparición del STE.',
+    ],
+    pitfalls: [
+      'Interpretar la normalización de la T como mejoría.',
+      'No repetir el ECG ante la recurrencia del dolor.',
     ],
     refs: [71, 72],
   },
@@ -133,7 +151,8 @@ export const GROUP_E: CaseDefinition[] = [
     vignette: {
       age: 70,
       sex: 'M',
-      history: 'Paciente diabético: STD difusa a la que se superpone STE en III.',
+      history:
+        'Paciente diabético con enfermedad coronaria multivaso conocida y dolor torácico fluctuante.',
       vitals: 'PA 105/60, FC 100',
       troponin: 'hs-cTnT 180 ng/L',
     },
@@ -163,7 +182,12 @@ export const GROUP_E: CaseDefinition[] = [
       'Enfermedad multivaso: la lesión focal se superpone a isquemia subendocárdica.',
       'STE aislado en III sobre STD difusa = patrón Aslanger.',
       'Prioriza angiografía aunque no haya STEMI clásico.',
+      'En la enfermedad multivaso la lesión focal se suma a un fondo de isquemia subendocárdica.',
     ],
-    refs: [45],
+    pitfalls: [
+      'Atribuir todos los cambios a la enfermedad crónica conocida.',
+      'No reconocer el patrón Aslanger como signo de oclusión.',
+    ],
+    refs: [51, 45],
   },
 ];

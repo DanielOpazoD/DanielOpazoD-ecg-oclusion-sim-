@@ -21,10 +21,17 @@ describe('case library metadata', () => {
     expect(CASES.length).toBe(50);
     expect(new Set(CASES.map((c) => c.id)).size).toBe(50);
   });
-  it('every case has ≥3 teachingPoints and non-empty refs', () => {
+  it('every case has ≥4 teachingPoints, ≥2 pitfalls and non-empty refs', () => {
     for (const c of CASES) {
-      expect(c.teachingPoints.length, c.id).toBeGreaterThanOrEqual(3);
+      expect(c.teachingPoints.length, c.id).toBeGreaterThanOrEqual(4);
+      expect(c.pitfalls?.length ?? 0, c.id).toBeGreaterThanOrEqual(2);
       expect(c.refs.length, c.id).toBeGreaterThanOrEqual(1);
+    }
+  });
+  it('vignette histories do not describe the ECG (quiz/blind leak guard)', () => {
+    const ecgLeak = /\b(STE|STD|ST\b|onda[s]? T|T hiperagud|Q patol|V[1-9]|aVL|aVR|aVF|derivaci)/i;
+    for (const c of CASES) {
+      expect(ecgLeak.test(c.vignette.history), c.id).toBe(false);
     }
   });
 });

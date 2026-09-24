@@ -39,9 +39,15 @@ export const GROUP_A: CaseDefinition[] = [
       'El STE convexo en V1–V4 con STD inferior recíproca orienta a DA proximal.',
       'La reciprocidad inferior aumenta la especificidad del STE anterior.',
       'La activación precoz del código infarto reduce el tiempo de reperfusión.',
+      'En varón <50–60 años el umbral UDMI4 de 2 mm en V2–V3 ya es muy específico cuando la morfología es convexa.',
     ],
-    pitfalls: ['Confundir con repolarización precoz si el STE es sutil.'],
-    refs: [1, 56],
+    pitfalls: [
+      'Confundir con repolarización precoz si el STE es sutil.',
+      'Confundir con repolarización precoz si el STE es sutil.',
+      'Descartar el infarto por troponina inicial negativa.',
+      'No registrar la evolución en los primeros minutos.',
+    ],
+    refs: [1, 5, 7],
   },
   {
     id: 'A02',
@@ -78,8 +84,13 @@ export const GROUP_A: CaseDefinition[] = [
       'A las 2 h el STE es franco y puede empezar a desarrollarse onda Q.',
       'El STE en V2–V5 localiza la lesión en la DA media.',
       'La troponina elevada no retrasa la reperfusión.',
+      'La disnea progresiva con dolor de larga evolución orienta a territorio anterior extenso.',
     ],
-    refs: [1],
+    pitfalls: [
+      'Atribuir la disnea a otra causa y demorar la angiografía.',
+      'No repetir el ECG ante síntomas persistentes.',
+    ],
+    refs: [1, 5],
   },
   {
     id: 'A03',
@@ -90,7 +101,7 @@ export const GROUP_A: CaseDefinition[] = [
       age: 71,
       sex: 'M',
       history:
-        'Varón de 71 años con síncope súbito e hipotensión. El ECG muestra disociación auriculoventricular completa con escape ventricular de 38 lpm.',
+        'Varón de 71 años con síncope súbito e hipotensión. FC muy baja al ingreso, con respuesta pobre a atropina.',
       vitals: 'PA 80/50, FC 38, SatO2 94 %',
       troponin: 'hs-cTnT 180 ng/L',
     },
@@ -118,8 +129,13 @@ export const GROUP_A: CaseDefinition[] = [
       'El BAV completo en IAM inferior indica CD proximal (nodo AV irrigado por CD).',
       'La afectación del VD se confirma con V4R y explica la hipotensión.',
       'Evitar nitratos en el infarto de VD.',
+      'La hipotensión con ingurgitación sin edema pulmonar sugiere afectación del ventrículo derecho.',
     ],
-    refs: [48, 73],
+    pitfalls: [
+      'Administrar nitratos o diuréticos ante la hipotensión del VD.',
+      'Interpretar la bradicardia como efecto vagal benigno.',
+    ],
+    refs: [48, 54],
   },
   {
     id: 'A04',
@@ -158,8 +174,13 @@ export const GROUP_A: CaseDefinition[] = [
       'ST III > ST II y ST V1 ≥ 0 sugieren CD sobre CX.',
       'La bradicardia vagal es típica del IAM inferior.',
       'Pedir derivaciones derechas ante todo IAM inferior.',
+      'Las náuseas y los vómitos son equivalentes anginosos frecuentes en el IAM inferior.',
     ],
-    refs: [48, 49],
+    pitfalls: [
+      'Atribuir los síntomas a un proceso gastrointestinal.',
+      'Olvidar las derivaciones derechas en todo IAM inferior.',
+    ],
+    refs: [48, 54],
   },
   {
     id: 'A05',
@@ -199,8 +220,13 @@ export const GROUP_A: CaseDefinition[] = [
       'ST II ≥ III y aVL isoeléctrica orientan a CX frente a CD.',
       'El STE en V5–V6 con STD V1–V3 indica extensión posterolateral.',
       'Las derivaciones posteriores V7–V9 confirman la extensión.',
+      'El infarto por CX puede ser electrocardiográficamente discreto frente al de CD.',
     ],
-    refs: [57, 58],
+    pitfalls: [
+      'Asumir que todo IAM inferior es de CD sin analizar los vectores.',
+      'No registrar derivaciones posteriores ante STD precordial.',
+    ],
+    refs: [48, 49],
   },
   {
     id: 'A06',
@@ -211,7 +237,7 @@ export const GROUP_A: CaseDefinition[] = [
       age: 49,
       sex: 'M',
       history:
-        'Varón de 49 años con dolor torácico intenso de 30 minutos y shock. El ECG muestra fusión ST-T con pérdida de la S en V2–V3.',
+        'Varón de 49 años con dolor torácico intenso de 30 minutos y shock. Sudoración profusa y palpitaciones.',
       vitals: 'PA 75/45, FC 120, SatO2 92 %',
       troponin: 'hs-cTnT pendiente',
       symptomsOnsetMin: 30,
@@ -246,8 +272,13 @@ export const GROUP_A: CaseDefinition[] = [
       'La distorsión terminal del QRS (J/R ≥ 0.5, pérdida de S) es marcador de oclusión proximal y alto riesgo.',
       'El tombstoning indica isquemia transmural grave.',
       'No confundir la amplitud del STE con benignidad: es un patrón de máximo riesgo.',
+      'El tombstoning corresponde a lesiones proximales con gran masa de miocardio en riesgo.',
     ],
-    refs: [68, 69],
+    pitfalls: [
+      'Confundir el patrón con una taquicardia ventricular o un artefacto.',
+      'Esperar al resultado de troponina para activar.',
+    ],
+    refs: [68, 25],
   },
   {
     id: 'A07',
@@ -257,7 +288,8 @@ export const GROUP_A: CaseDefinition[] = [
     vignette: {
       age: 60,
       sex: 'F',
-      history: 'Mujer de 60 años con dolor torácico de 50 minutos. STE sutil en I, aVL y V2.',
+      history:
+        'Mujer de 60 años con dolor torácico de 50 minutos sin factores de riesgo destacables.',
       vitals: 'PA 150/90, FC 85',
       troponin: 'hs-cTnT 60 ng/L',
       symptomsOnsetMin: 50,
@@ -283,8 +315,13 @@ export const GROUP_A: CaseDefinition[] = [
       'El patrón I + aVL + V2 con STD III recuerda la bandera sudafricana.',
       'La oclusión de D1 puede cumplir criterios STEMI solo en I/aVL.',
       'Buscar siempre la recíproca inferior.',
+      'La bandera sudafricana combina la derivación axial del primer diagonal con reciprocidad inferior.',
     ],
-    refs: [55],
+    pitfalls: [
+      'Descartar la oclusión porque el STE parece escaso en las precordiales.',
+      'No fijarse en la STD inferior como pista recíproca.',
+    ],
+    refs: [58, 5],
   },
   {
     id: 'A08',
@@ -295,7 +332,7 @@ export const GROUP_A: CaseDefinition[] = [
       age: 62,
       sex: 'M',
       history:
-        'Varón de 62 años con dolor torácico de 1 hora. STE anterior e inferior sin STD recíproca.',
+        'Varón de 62 años con dolor torácico de 1 hora irradiado a mandíbula. Ansiedad marcada.',
       vitals: 'PA 125/75, FC 90',
       troponin: 'hs-cTnT 210 ng/L',
       symptomsOnsetMin: 60,
@@ -324,8 +361,13 @@ export const GROUP_A: CaseDefinition[] = [
       'STE anterior + inferior sin recíproca inferior sugiere DA envolvente (wraparound).',
       'La ausencia de STD inferior distingue la DA distal de la proximal.',
       'El vértice compartido explica el doble territorio.',
+      'La DA envolvente (wraparound) produce lesión en los dos territorios compartidos del ápex.',
     ],
-    refs: [56],
+    pitfalls: [
+      'Interpretar la suma de territorios como pericarditis difusa.',
+      'No considerar la anatomía wraparound de la DA.',
+    ],
+    refs: [48, 5],
   },
   {
     id: 'A09',
@@ -335,7 +377,8 @@ export const GROUP_A: CaseDefinition[] = [
     vignette: {
       age: 68,
       sex: 'F',
-      history: 'Mujer de 68 años con dolor epigástrico de 3 horas. STD en V1–V3; V7–V9 confirman.',
+      history:
+        'Mujer de 68 años con dolor epigástrico de 3 horas y náuseas. ECG inicial sin signos franco diagnosticables.',
       vitals: 'PA 140/85, FC 78',
       troponin: 'hs-cTnT 400 ng/L',
       symptomsOnsetMin: 180,
@@ -361,8 +404,13 @@ export const GROUP_A: CaseDefinition[] = [
       'El infarto posterior se manifiesta como STD V1–V3 con T alta (espejo).',
       'V7–V9 con STE ≥ 0.5 mm confirman la oclusión.',
       'Sin derivaciones posteriores este caso sería STEMI− en el 12 derivaciones.',
+      'El dolor epigástrico es una presentación frecuente del infarto posterior/inferior.',
     ],
-    refs: [46, 47],
+    pitfalls: [
+      'No registrar las derivaciones posteriores ante la sospecha.',
+      'Concluir normalidad tras un ECG de 12 derivaciones sin lesión evidente.',
+    ],
+    refs: [46, 5],
   },
   {
     id: 'A10',
@@ -373,7 +421,7 @@ export const GROUP_A: CaseDefinition[] = [
       age: 52,
       sex: 'M',
       history:
-        'Varón de 52 años con FV al ingreso, RCP de 4 minutos. ECG post-ROSC con PVCs frecuentes.',
+        'Varón de 52 años con fibrilación ventricular al ingreso y RCP de 4 minutos con recuperación de circulación espontánea.',
       vitals: 'PA 100/60, FC 110',
       troponin: 'hs-cTnT pendiente',
     },
@@ -399,7 +447,12 @@ export const GROUP_A: CaseDefinition[] = [
       'La FV como primera manifestación de IAM inferior obliga a coronariografía urgente.',
       'Los PVCs frecuentes tras ROSC no invalidan la lectura del latido sinusal.',
       'El promediado del latido dominante limpia la interpretación.',
+      'Tras ROSC con sospecha de causa coronaria la coronariografía urgente está indicada aunque el paciente esté estable.',
     ],
-    refs: [73],
+    pitfalls: [
+      'Descartar isquemia por la frecuencia de ectopía post-ROSC.',
+      'Demorar la angiografía esperando estabilización completa.',
+    ],
+    refs: [2, 12],
   },
 ];

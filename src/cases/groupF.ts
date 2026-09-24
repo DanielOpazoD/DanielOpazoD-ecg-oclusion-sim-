@@ -10,7 +10,8 @@ export const GROUP_F: CaseDefinition[] = [
     vignette: {
       age: 66,
       sex: 'F',
-      history: 'IAM de DA media registrado con filtro de monitor (0.5 Hz causal).',
+      history:
+        'Paciente con dolor torácico monitorizado en una unidad con filtrado de línea base activado.',
       vitals: 'PA 130/80, FC 96',
       troponin: 'hs-cTnT 320 ng/L',
     },
@@ -36,6 +37,11 @@ export const GROUP_F: CaseDefinition[] = [
       'El filtro HP 0.5 Hz unidireccional distorsiona el segmento ST.',
       'Para diagnóstico usar 0.05 Hz (o fase cero).',
       'Comparar lado a lado revela el artefacto.',
+      'El filtro de 0.5 Hz distorsiona el segmento ST y puede crear pseudo-depresión.',
+    ],
+    pitfalls: [
+      'Diagnosticar STD causada por el filtro como isquemia.',
+      'No cambiar a filtro diagnóstico (0.05 Hz) para el registro.',
     ],
     refs: [33, 99],
   },
@@ -47,7 +53,8 @@ export const GROUP_F: CaseDefinition[] = [
     vignette: {
       age: 47,
       sex: 'M',
-      history: 'Paciente agitado: EMG y deriva de línea base dificultan leer las T hiperagudas.',
+      history:
+        'Paciente agitado y diaforético durante el registro; el trazado resulta difícil de interpretar.',
       vitals: 'PA 135/85, FC 88',
       troponin: 'hs-cTnT 18 ng/L',
     },
@@ -77,8 +84,13 @@ export const GROUP_F: CaseDefinition[] = [
       'El ruido muscular y la respiración pueden ocultar T hiperagudas.',
       'El promediado del latido y «quitar ruido» recuperan la morfología.',
       'Ante la duda, repetir el ECG con el paciente tranquilo.',
+      'El ruido muscular y la respiración pueden ocultar morfologías sutiles del ST-T.',
     ],
-    refs: [99],
+    pitfalls: [
+      'Leer el trazado ruidoso sin repetir con el paciente en reposo.',
+      'Ignorar el canal limpio cuando está disponible.',
+    ],
+    refs: [99, 106],
   },
   {
     id: 'F03',
@@ -88,7 +100,8 @@ export const GROUP_F: CaseDefinition[] = [
     vignette: {
       age: 34,
       sex: 'M',
-      history: 'ECG normal registrado con V1–V2 un espacio intercostal alto: rSr′ y T negativa.',
+      history:
+        'Registro de un paciente sano realizado con los electrodos precordiales anteriores un espacio intercostal por encima de lo habitual.',
       vitals: 'PA 120/75, FC 68',
       troponin: 'hs-cTnT < 14 ng/L',
     },
@@ -111,8 +124,13 @@ export const GROUP_F: CaseDefinition[] = [
       'V1–V2 altos producen rSr′ y T negativa: mimic de Brugada o IAM septal.',
       'Verificar la posición de los electrodos ante V1–V2 anómalos.',
       'Repetir con colocación estándar resuelve la duda.',
+      'La colocación alta de electrodos precordiales produce patrones que imitan patología septal.',
     ],
-    refs: [99],
+    pitfalls: [
+      'Diagnosticar patología sin verificar la posición de electrodos.',
+      'No repetir el registro con la colocación correcta.',
+    ],
+    refs: [99, 106],
   },
   {
     id: 'F04',
@@ -123,7 +141,7 @@ export const GROUP_F: CaseDefinition[] = [
       age: 71,
       sex: 'M',
       history:
-        'IAM inferior con interferencia de red de 60 Hz; el filtro LP 40 Hz suaviza la señal.',
+        'Paciente con dolor torácico; el registro muestra una interferencia rítmica uniforme durante toda la adquisición.',
       vitals: 'PA 90/55, FC 40',
       troponin: 'hs-cTnT 180 ng/L',
     },
@@ -152,7 +170,12 @@ export const GROUP_F: CaseDefinition[] = [
       'La interferencia de red añade un zumbido uniforme de 50/60 Hz.',
       'El LP 40 Hz limpia el ruido pero suaviza las espigas del QRS.',
       'Comparar clean vs filtrada enseña el efecto de cada filtro.',
+      'La interferencia de red de 50/60 Hz es un artefacto reconocible y evitable.',
     ],
-    refs: [33],
+    pitfalls: [
+      'Confundir la interferencia con arritmia o morfología anómala.',
+      'No valorar el efecto del filtro LP sobre la amplitud real del QRS.',
+    ],
+    refs: [33, 99],
   },
 ];

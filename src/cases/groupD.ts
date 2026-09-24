@@ -11,7 +11,8 @@ export const GROUP_D: CaseDefinition[] = [
     vignette: {
       age: 24,
       sex: 'M',
-      history: 'Varón de 24 años con dolor pleurítico. ECG con STE cóncavo y muesca en J.',
+      history:
+        'Varón de 24 años con dolor pleurítico que aumenta con la inspiración. Sin antecedentes.',
       vitals: 'PA 120/75, FC 62',
       troponin: 'hs-cTnT < 14 ng/L',
     },
@@ -38,8 +39,13 @@ export const GROUP_D: CaseDefinition[] = [
       'La RP tiene STE cóncavo, muesca en J y R altas en V4.',
       'Smith 4v suele ser negativo en RP por la R alta y el QTc corto.',
       'Puede cumplir criterios STEMI técnicos: el contexto decide.',
+      'El contexto de edad, sexo y ausencia de recíproca orienta a repolarización precoz.',
     ],
-    pitfalls: ['STE técnico en V2–V3 no es oclusión si hay J-notch y concavidad.'],
+    pitfalls: [
+      'STE técnico en V2–V3 no es oclusión si hay J-notch y concavidad.',
+      'STE técnico en V2–V3 no es oclusión si hay J-notch y concavidad.',
+      'Activar el código en un joven sano por un umbral aislado.',
+    ],
     refs: [66, 67, 75],
   },
   {
@@ -78,8 +84,13 @@ export const GROUP_D: CaseDefinition[] = [
       'STE difuso cóncavo + depresión del PR + ausencia de recíproca = pericarditis.',
       'El STE de pericarditis no respeta un territorio vascular.',
       'aVR sin STE ayuda frente a isquemia subendocárdica.',
+      'El dolor postural y la depresión del PR orientan a pericarditis.',
     ],
-    refs: [75],
+    pitfalls: [
+      'Confundir el STE difuso con una OMI extenso.',
+      'Omitir la auscultación del roce pericárdico.',
+    ],
+    refs: [75, 17],
   },
   {
     id: 'D03',
@@ -89,7 +100,8 @@ export const GROUP_D: CaseDefinition[] = [
     vignette: {
       age: 70,
       sex: 'F',
-      history: 'Mujer de 70 años, hipertensa, con disnea. Voltajes altos y T discordante lateral.',
+      history:
+        'Mujer de 70 años, hipertensa de larga evolución, con disnea de esfuerzo progresiva.',
       vitals: 'PA 165/95, FC 84',
       troponin: 'hs-cTnT 18 ng/L',
     },
@@ -114,8 +126,13 @@ export const GROUP_D: CaseDefinition[] = [
       'El strain de HVI produce STE discordante proporcional en V1–V3.',
       'La desproporción ST/QRS distingue strain de oclusión.',
       'La historia (HTA, voltajes) orienta el diagnóstico.',
+      'La discordancia ST/T del strain es proporcional al voltaje del QRS.',
     ],
-    refs: [16, 76],
+    pitfalls: [
+      'Interpretar la discordancia del strain como isquemia.',
+      'No ponderar el tamaño del QRS al valorar el ST.',
+    ],
+    refs: [76, 16],
   },
   {
     id: 'D04',
@@ -147,6 +164,11 @@ export const GROUP_D: CaseDefinition[] = [
       'El LBBB tiene discordancia fisiológica proporcional al QRS.',
       'Sgarbossa y BARCELONA son negativos sin isquemia.',
       'El exceso de discordancia (ST/S) es lo que delata la OMI.',
+      'En el LBBB sin isquemia la discordancia respeta la proporción fisiológica.',
+    ],
+    pitfalls: [
+      'Diagnosticar isquemia por la discordancia fisiológica del LBBB.',
+      'No aplicar los criterios específicos en pacientes sintomáticos.',
     ],
     refs: [61, 62],
   },
@@ -158,7 +180,8 @@ export const GROUP_D: CaseDefinition[] = [
     vignette: {
       age: 60,
       sex: 'M',
-      history: 'Varón de 60 años con ERC; K+ 7.2. T picudas estrechas y QRS ensanchado.',
+      history:
+        'Varón de 60 años con enfermedad renal crónica; potasio sérico de 7.2 en la analítica urgente.',
       vitals: 'PA 140/85, FC 70',
       troponin: 'hs-cTnT < 14 ng/L',
     },
@@ -181,8 +204,13 @@ export const GROUP_D: CaseDefinition[] = [
       'La T hiperkalemia es estrecha y simétrica; la hiperaguda de OMI es ancha.',
       'El score hyperacute-t pondera el área T/QRS: la T estrecha puntúa bajo.',
       'Correlacionar con K+ sérico y ancho de QRS.',
+      'La hiperpotasemia puede simular T hiperagudas, pero la T del potasio es estrecha y simétrica con QRS ensanchado.',
     ],
-    refs: [77],
+    pitfalls: [
+      'Confundir la T hiperkalémica con la hiperaguda isquémica.',
+      'No pedir ionograma ante un ECG con T picudas.',
+    ],
+    refs: [77, 27],
   },
   {
     id: 'D06',
@@ -192,7 +220,8 @@ export const GROUP_D: CaseDefinition[] = [
     vignette: {
       age: 42,
       sex: 'M',
-      history: 'Varón de 42 años con síncope. STE en coved V1–V2 con T negativa.',
+      history:
+        'Varón de 42 años con síncope sin prodromo mientras veía la televisión. Sin cardiopatía conocida.',
       vitals: 'PA 125/80, FC 75',
       troponin: 'hs-cTnT < 14 ng/L',
     },
@@ -217,8 +246,13 @@ export const GROUP_D: CaseDefinition[] = [
       'El coved de Brugada desciende a T negativa sin recíproca inferior.',
       'La colocación alta de V1–V2 desenmascara el patrón.',
       'El síncope + Brugada tipo 1 tiene implicaciones de riesgo propias.',
+      'El patrón coved de Brugada tipo 1 es diagnóstico por morfología, no por criterios de lesión.',
     ],
-    refs: [78],
+    pitfalls: [
+      'Confundir el patrón Brugada con un STE anteroseptal.',
+      'No retirar la colocación alta de electrodos antes de descartar artefacto.',
+    ],
+    refs: [78, 80],
   },
   {
     id: 'D07',
@@ -228,7 +262,7 @@ export const GROUP_D: CaseDefinition[] = [
     vignette: {
       age: 67,
       sex: 'F',
-      history: 'Mujer de 67 años tras estrés emocional intenso. STE anteroapical e inferior leve.',
+      history: 'Mujer de 67 años tras estrés emocional intenso (fallecimiento de un familiar).',
       vitals: 'PA 110/70, FC 96',
       troponin: 'hs-cTnT 140 ng/L',
     },
@@ -255,8 +289,13 @@ export const GROUP_D: CaseDefinition[] = [
       'Takotsubo puede cumplir criterios STEMI: angiografía inmediata.',
       'El QTc prolongado y la discordancia edad/severidad son pistas.',
       'Diagnóstico de exclusión tras coronariografía.',
+      'El takotsubo es un diagnóstico de exclusión tras coronariografía normal.',
     ],
-    refs: [79],
+    pitfalls: [
+      'Asumir oclusión solo por el contexto emocional sin descartarla.',
+      'Olvidar el seguimiento del QTc en takotsubo.',
+    ],
+    refs: [74, 5],
   },
   {
     id: 'D08',
@@ -266,7 +305,8 @@ export const GROUP_D: CaseDefinition[] = [
     vignette: {
       age: 28,
       sex: 'M',
-      history: 'Varón de 28 años tras cuadro viral. STE concavo difuso con PVCs ocasionales.',
+      history:
+        'Varón de 28 años tras un cuadro viral febril hace 5 días; dolor torácico leve persistente.',
       vitals: 'PA 125/80, FC 88',
       troponin: 'hs-cTnT 350 ng/L',
     },
@@ -291,8 +331,13 @@ export const GROUP_D: CaseDefinition[] = [
       'La miocarditis difusa produce STE concavo multiterritorial.',
       'La troponina alta con ECG difuso no es oclusión focal.',
       'La RM cardiaca confirma el diagnóstico.',
+      'La miocarditis muestra lesión difusa sin territorio vascular definido.',
     ],
-    refs: [75],
+    pitfalls: [
+      'Interpretar el STE difuso como oclusión multivaso.',
+      'No pedir RM cardiaca en la sospecha de miocarditis.',
+    ],
+    refs: [75, 17],
   },
   {
     id: 'D09',
@@ -302,7 +347,8 @@ export const GROUP_D: CaseDefinition[] = [
     vignette: {
       age: 50,
       sex: 'F',
-      history: 'Mujer de 50 años con disnea súbita. Taquicardia, T negativas V1–V3 (S1Q3T3).',
+      history:
+        'Mujer de 50 años con disnea súbita, taquicardia y antecedente de inmovilización reciente.',
       vitals: 'PA 100/65, FC 115, SatO2 90 %',
       troponin: 'hs-cTnT 60 ng/L',
     },
@@ -326,8 +372,13 @@ export const GROUP_D: CaseDefinition[] = [
       'La sobrecarga aguda del VD da T negativas en V1–V3 y BRD incompleto.',
       'Disnea + taquicardia + S1Q3T3 orientan a TEP, no a OMI.',
       'La angio-TC confirma; el ECG solo sugiere.',
+      'La sobrecarga aguda del VD por TEP produce signos precordiales derechos sin oclusión coronaria.',
     ],
-    refs: [80],
+    pitfalls: [
+      'Interpretar el patrón VD como infarto septal.',
+      'No pedir angio-TC ante la sospecha de TEP.',
+    ],
+    refs: [80, 5],
   },
   {
     id: 'D10',
@@ -337,7 +388,8 @@ export const GROUP_D: CaseDefinition[] = [
     vignette: {
       age: 66,
       sex: 'M',
-      history: 'Varón de 66 años con IAM anterior hace 2 años. STE persistente con Q patológicas.',
+      history:
+        'Varón de 66 años con IAM anterior tratado hace 2 años; se revisa por control, sin dolor agudo.',
       vitals: 'PA 130/80, FC 76',
       troponin: 'hs-cTnT 16 ng/L',
     },
@@ -368,8 +420,13 @@ export const GROUP_D: CaseDefinition[] = [
       'El STE persistente con Q patológicas y baja relación T/QRS sugiere aneurisma.',
       'La amplitud T baja respecto al STE distingue aneurisma de OMI aguda.',
       'Comparar con ECGs antiguos es esencial.',
+      'El aneurisma ventricular deja STE persistente con Q patológicas de larga evolución.',
     ],
-    refs: [81],
+    pitfalls: [
+      'Confundir el STE persistente con una reoclusión aguda.',
+      'No comparar con ECGs anteriores del paciente.',
+    ],
+    refs: [104, 5],
   },
   {
     id: 'D11',
@@ -379,7 +436,8 @@ export const GROUP_D: CaseDefinition[] = [
     vignette: {
       age: 55,
       sex: 'M',
-      history: 'Varón de 55 años con hipotermia (T 29 °C). Ondas J en V3–V6 y temblor.',
+      history:
+        'Varón de 55 años encontrado tras exposición prolongada al frío; temperatura central de 29 °C.',
       vitals: 'PA 110/70, FC 45, T 29 °C',
       troponin: 'hs-cTnT 30 ng/L',
     },
@@ -403,8 +461,13 @@ export const GROUP_D: CaseDefinition[] = [
       'La onda J de Osborn es una deflexión positiva justo tras el QRS.',
       'Bradicardia + temblor (artefacto EMG) completan el cuadro.',
       'El recalentamiento resuelve el ECG; no hay oclusión.',
+      'La hipotermia produce ondas J de Osborn que se resuelven con el recalentamiento.',
     ],
-    refs: [82],
+    pitfalls: [
+      'Interpretar la onda J como lesión isquémica.',
+      'No medir la temperatura central en el paciente encontrado.',
+    ],
+    refs: [82, 5],
   },
   {
     id: 'D12',
@@ -414,7 +477,7 @@ export const GROUP_D: CaseDefinition[] = [
     vignette: {
       age: 33,
       sex: 'F',
-      history: 'Mujer de 33 años con palpitaciones. PR corto y onda delta.',
+      history: 'Mujer de 33 años con palpitaciones recurrentes paroxísticas desde la adolescencia.',
       vitals: 'PA 115/75, FC 78',
       troponin: 'hs-cTnT < 14 ng/L',
     },
@@ -436,8 +499,13 @@ export const GROUP_D: CaseDefinition[] = [
       'WPW: PR corto + onda delta + T discordante secundaria.',
       'La discordancia por preexcitación no es isquemia.',
       'La historia de palpitaciones orienta el diagnóstico.',
+      'La preexcitación WPW produce discordancia secundaria del ST/T que no es isquemia.',
     ],
-    refs: [82],
+    pitfalls: [
+      'Confundir la onda delta con una onda Q patológica.',
+      'Interpretar la discordancia de WPW como OMI.',
+    ],
+    refs: [80, 19],
   },
   {
     id: 'D13',
@@ -447,7 +515,7 @@ export const GROUP_D: CaseDefinition[] = [
     vignette: {
       age: 22,
       sex: 'M',
-      history: 'Varón de 22 años, atleta, en chequeo. Bradicardia con STE cóncava V2–V4.',
+      history: 'Varón de 22 años, atleta de resistencia, en chequeo deportivo sin síntomas.',
       vitals: 'PA 110/70, FC 46',
       troponin: 'hs-cTnT < 14 ng/L',
     },
@@ -470,8 +538,13 @@ export const GROUP_D: CaseDefinition[] = [
       'El atleta joven muestra RP con bradicardia y T amplias.',
       'La T grande del atleta es ancha pero no hiperaguda (área/QRS normal).',
       'El contexto de chequeo sin síntomas descarta OMI.',
+      'El corazón de atleta muestra bradicardia fisiológica y repolarización precoz.',
     ],
-    refs: [75],
+    pitfalls: [
+      'Activar el código por un umbral de STE aislado en un asintomático.',
+      'No contextualizar la FC baja con el perfil deportivo.',
+    ],
+    refs: [81, 75],
   },
   {
     id: 'D14',
@@ -482,7 +555,7 @@ export const GROUP_D: CaseDefinition[] = [
       age: 60,
       sex: 'M',
       history:
-        'Varón de 60 años derivado por «IAM lateral» en triage. ECG con I invertida y aVR positiva.',
+        'Varón de 60 años derivado de triage con un primer ECG etiquetado como «alteraciones laterales».',
       vitals: 'PA 130/80, FC 72',
       troponin: 'hs-cTnT < 14 ng/L',
     },
@@ -505,7 +578,12 @@ export const GROUP_D: CaseDefinition[] = [
       'LA-RA invertidos: I negativa, aVR positiva, precordiales normales.',
       'El artefacto de electrodos es el mimics más barato de corregir.',
       'Repetir el ECG con colocación correcta antes de decidir.',
+      'La inversión de electrodos de miembros es el mimic más frecuente y más barato de corregir.',
     ],
-    refs: [99],
+    pitfalls: [
+      'Diagnosticar IAM lateral sin verificar la colocación.',
+      'No repetir el ECG tras corregir los electrodos.',
+    ],
+    refs: [99, 106],
   },
 ];

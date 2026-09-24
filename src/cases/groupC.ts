@@ -32,8 +32,13 @@ export const GROUP_C: CaseDefinition[] = [
       'STD difusa + STE aVR = isquemia subendocárdica, no necesariamente oclusión.',
       'Corregir la causa de la demanda (anemia, taquicardia) es el tratamiento.',
       'La angiografía urgente solo si hay sospecha de TCI/3 vasos agudo.',
+      'La isquemia por demanda no requiere oclusión: es un desequilibrio oferta/demanda.',
     ],
-    refs: [51, 52],
+    pitfalls: [
+      'Activar el código infarto en toda STD difusa sin valorar el contexto.',
+      'No corregir la causa desencadenante (anemia, taquicardia).',
+    ],
+    refs: [52, 53],
   },
   {
     id: 'C02',
@@ -43,7 +48,7 @@ export const GROUP_C: CaseDefinition[] = [
     vignette: {
       age: 70,
       sex: 'M',
-      history: 'Varón de 70 años con dolor torácico y shock. STD difusa intensa con STE en aVR.',
+      history: 'Varón de 70 años con dolor torácico, shock y sudoración profusa.',
       vitals: 'PA 80/50, FC 110, SatO2 91 %',
       troponin: 'hs-cTnT 450 ng/L',
     },
@@ -69,8 +74,13 @@ export const GROUP_C: CaseDefinition[] = [
       'STD difusa + STE aVR + shock = sospechar tronco común.',
       'La regla avr-diffuse-std no distingue demanda de TCI: el shock lo define.',
       'Emergencia: angiografía inmediata y soporte hemodinámico.',
+      'El tronco común subtotal es una emergencia quirúrgica/angiográfica inmediata.',
     ],
-    refs: [51, 53],
+    pitfalls: [
+      'Asumir que la STD difusa es solo demanda ante un paciente inestable.',
+      'Administrar betabloqueo o vasodilatadores en shock.',
+    ],
+    refs: [53, 5],
   },
   {
     id: 'C03',
@@ -80,7 +90,7 @@ export const GROUP_C: CaseDefinition[] = [
     vignette: {
       age: 64,
       sex: 'M',
-      history: 'Varón de 64 años con dolor de 4 horas y STD lateral subendocárdica.',
+      history: 'Varón de 64 años con dolor de 4 horas, ahora en descenso espontáneo.',
       vitals: 'PA 135/85, FC 82',
       troponin: 'hs-cTnT 300 ng/L',
       symptomsOnsetMin: 240,
@@ -104,8 +114,13 @@ export const GROUP_C: CaseDefinition[] = [
       'La STD lateral con troponina alta es NSTEMI: angiografía en 24–72 h según GRACE.',
       'Sin signos de oclusión el manejo inicial es médico.',
       'Vigilar evolución: la STD puede transformarse en OMI.',
+      'El NSTEMI con STD persistente puede evolucionar a oclusión: vigilancia estrecha.',
     ],
-    refs: [9],
+    pitfalls: [
+      'Relajar la vigilancia cuando el dolor remite.',
+      'No seriar ECG y troponina en NSTEMI de alto riesgo.',
+    ],
+    refs: [53, 9],
   },
   {
     id: 'C04',
@@ -115,7 +130,8 @@ export const GROUP_C: CaseDefinition[] = [
     vignette: {
       age: 45,
       sex: 'F',
-      history: 'Mujer de 45 años con palpitaciones; STD difusa durante la TSV a 180 lpm.',
+      history:
+        'Mujer de 45 años con palpitaciones; taquicardia regular rápida que cede con maniobras vagales.',
       vitals: 'PA 100/65, FC 180',
       troponin: 'hs-cTnT 22 ng/L',
     },
@@ -137,7 +153,12 @@ export const GROUP_C: CaseDefinition[] = [
       'La STD por taquicardia suele revertir al frenar la frecuencia.',
       'Repetir ECG tras cardioversión antes de atribuir isquemia.',
       'La demanda aumentada produce el patrón subendocárdico.',
+      'La STD durante TSV puede ser funcional: repetir el ECG tras la reversión.',
     ],
-    refs: [52],
+    pitfalls: [
+      'Diagnosticar isquemia coronaria sin valorar el ritmo.',
+      'No reevaluar el segmento ST una vez controlada la frecuencia.',
+    ],
+    refs: [52, 5],
   },
 ];
