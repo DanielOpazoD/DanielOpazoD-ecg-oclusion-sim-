@@ -3,7 +3,7 @@ import { effectiveSource, aivrWindow, type TimelineEvent } from './timeline.js';
 import { generateBeatSchedule, type RhythmSpec } from './rhythm.js';
 import { createRng } from './math/random.js';
 import { generateEcg, defaultScenario } from './scenario.js';
-import { measureBeat, mm } from '../../test/helpers/measure.js';
+import { measureBeat } from '../../test/helpers/measure.js';
 
 const M = { st: 2, hyperacuteT: 1.5, tInversion: 0 };
 const occ: TimelineEvent[] = [{ atMin: 0, kind: 'occlusion' }];

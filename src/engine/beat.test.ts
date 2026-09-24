@@ -47,7 +47,7 @@ describe('beat — §9.2 normal beat ranges (§2.2–§2.3)', () => {
   });
   it('P in II within 0.10–0.15 mV', () => {
     // Measure P peak over the PR segment before the QRS.
-    const beat = ecg.beats.find((b) => b.type === 'sinus')!;
+    const beat = ecg.beats.find((b) => b.type === 'sinus' && b.pOnset > 20)!;
     const s = ecg.clean.II;
     let pMax = -Infinity;
     for (let i = beat.pOnset; i < beat.qrsOnset - 10; i++) {
@@ -60,8 +60,12 @@ describe('beat — §9.2 normal beat ranges (§2.2–§2.3)', () => {
 
 describe('determinism — §9.11', () => {
   it('same seed ⇒ identical signals', () => {
-    const a = ecgOf({ sources: [{ territory: 'anterior', st: 1.5, refLead: 'V3', shape: 'straight' }] });
-    const b = ecgOf({ sources: [{ territory: 'anterior', st: 1.5, refLead: 'V3', shape: 'straight' }] });
+    const a = ecgOf({
+      sources: [{ territory: 'anterior', st: 1.5, refLead: 'V3', shape: 'straight' }],
+    });
+    const b = ecgOf({
+      sources: [{ territory: 'anterior', st: 1.5, refLead: 'V3', shape: 'straight' }],
+    });
     for (const l of ['I', 'V3', 'aVF'] as const) {
       expect(Array.from(a.leads[l])).toEqual(Array.from(b.leads[l]));
     }

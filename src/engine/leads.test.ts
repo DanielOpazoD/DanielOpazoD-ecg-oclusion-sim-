@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
-import { createLeadSystem, projectDipole, LEAD_IDS, type LeadId } from './leads.js';
+import { createLeadSystem, projectDipole, LEAD_IDS } from './leads.js';
 import type { Vec3 } from './math/vec3.js';
 
-const vec3Arb = fc.tuple(fc.double({ min: -5, max: 5, noNaN: true }), fc.double({ min: -5, max: 5, noNaN: true }), fc.double({ min: -5, max: 5, noNaN: true })) as fc.Arbitrary<Vec3>;
+const vec3Arb = fc.tuple(
+  fc.double({ min: -5, max: 5, noNaN: true }),
+  fc.double({ min: -5, max: 5, noNaN: true }),
+  fc.double({ min: -5, max: 5, noNaN: true }),
+) as fc.Arbitrary<Vec3>;
 
 describe('leads — §9.1 Einthoven/Goldberger', () => {
   it('I + III = II and aVR + aVL + aVF = 0 for random dipoles (< 1e-9)', () => {
@@ -24,10 +28,7 @@ describe('leads — §9.1 Einthoven/Goldberger', () => {
       fc.property(vec3Arb, vec3Arb, fc.double({ min: -3, max: 3, noNaN: true }), (a, b, k) => {
         const pa = projectDipole(a, sys);
         const pb = projectDipole(b, sys);
-        const sum = projectDipole(
-          [a[0] + k * b[0], a[1] + k * b[1], a[2] + k * b[2]],
-          sys,
-        );
+        const sum = projectDipole([a[0] + k * b[0], a[1] + k * b[1], a[2] + k * b[2]], sys);
         for (const id of LEAD_IDS) {
           expect(Math.abs(sum[id] - (pa[id] + k * pb[id]))).toBeLessThan(1e-9);
         }
