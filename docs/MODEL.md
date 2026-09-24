@@ -273,17 +273,17 @@ Reglas (`rules/*.ts`), cada una devuelve `Finding { id, label, positive, score?,
 | `posterior-std` | STD máxima en V1–V4 (≥ 0.5 mm) con T terminal positiva, sin STE anterior; excluida si ≥ 2 derivaciones fuera del espejo (II/III/aVF/V5–V6/I/aVL) tienen STD ≥ 0.5 mm (STD subendocárdica difusa) | [46,47] |
 | `de-winter` | STD ≥ 0.4 mm en J en ≥ 2 de V2–V5 + T ≥ 8 mm (la T hiperaguda opera como discriminador de la pendiente ascendente); STE aVR ≥ 0.2 mm | [36,37] |
 | `hyperacute-t` | por derivación `s = 0.75·min(tQrsAreaRatio/1.5, 1) + 0.25·tSym`, puertas: T ≥ 5 mm, `tWidth50` ≥ 90 ms (T estrecha de hiperpotasemia excluida), ratio ≥ 4.0 (≈2× basal); positiva si la media del mejor par contiguo ≥ 0.7 | [27] |
-| `aslanger` | STE III ≥ 0.3 mm y III > II y III > aVF, STD en ≥ 1 de V4–V6 con T terminal positiva, ST V1 > ST V2 | [45] |
-| `rv-involvement` | STE V4R ≥ 1 mm (o V1 con STE III > II) en IAM inferior | [48,49] |
+| `aslanger` | STE III ≥ 0.3 mm con STE II < 0.5 mm y STE aVF < STE III − 0.5 mm (III elevada, II isométrica), STD en ≥ 1 de V4–V6 con T terminal positiva, ST V1 > ST V2 | [45] |
+| `rv-involvement` | STE V4R ≥ 1 mm o STE V1 ≥ 1 mm, solo con contexto inferior RCA (STE III ≥ 0.5 mm y III > II); no evaluado en LBBB/marcapasos | [48,49] |
 | `avr-diffuse-std` | STD ≥ 1 mm en ≥ 5 derivaciones + STE aVR ≥ 0.5 mm (umbrales relajados vs el libro ≥ 6 / ≥ 1) | [51,52] |
 | `south-african-flag` | STE I ≥ 0.5, aVL ≥ 0.5, V2 ≥ 0.3 + STD III ≤ −0.5 mm | [55] |
 | `reciprocal-avl` | STE inferior ≥ 0.3 mm + STD aVL ≤ −0.3 mm | [70] |
 | `sgarbossa` / `sgarbossa-modified` / `barcelona` | en LBBB/paced: concordante ≥ 1, STD V1–V3 ≥ 1, discordante ≥ 5; modificado: discordante ≥ 25 % de la S (ST/S ≥ 0.25); BARCELONA: concordante ≥ 1 o discordante ≥ 1 con |QRS| ≤ 6 mm | [61,62,63] |
-| `smith-3v` / `smith-4v` | fórmulas con umbrales 23.4 / 18.2; aplicables solo con QRS estrecho, conducción normal, sin STD inferior y R(V3) ≥ 0.15 mV (sin QS) | [66,67] |
+| `smith-3v` / `smith-4v` | fórmulas con umbrales 23.4 / 18.2; `applicable = 0` si ya se cumplen criterios UDMI4 (el score se expone igualmente por docencia), con QRS estrecho, conducción normal, sin STD inferior y R(V3) ≥ 0.15 mV (sin QS) | [66,67] |
 | `terminal-qrs-distortion` | J/R ≥ 0.5 en V2–V3 con ST(J) ≥ 0.3 mm y R ≥ 0.2 mV (QS excluido); no aplicable en LBBB/marcapasos | [68] |
 | `wellens` | T bifásica (A) o profunda simétrica (B) en V2–V4 sin STE, con QRS estrecho | [38,39] |
 | `pathological-q` | Q ≥ 40 ms o ≥ 25 % R en 2 contiguas, con R ≥ 3 mm y q ≥ 0.8 mm (descarta dips septales fisiológicos); o complejo QS (R < 1.5 mm, profundidad ≥ 1.5 mm durante ≥ 40 ms). No evaluado en LBBB/marcapasos | [1] |
-| `omi-composite` | positivo si `stemi-udmi4` o cualquiera de: de‑winter, hyperacute‑t, posterior‑std, aslanger, sgarbossa‑modified, barcelona, smith‑4v ≥ 18.2, south‑african‑flag, terminal‑qrs‑distortion, wellens (lesión crítica reperfundida = equivalente OMI). Un STEMI técnico solo‑anterior con smith‑4v aplicable y < 18.2 se reprime (RP, no OMI) | [5,6,9,66,67] |
+| `omi-composite` | positivo si `stemi-udmi4` o cualquiera de: de‑winter, hyperacute‑t, posterior‑std, aslanger, sgarbossa‑modified, barcelona, smith‑4v ≥ 18.2, south‑african‑flag, terminal‑qrs‑distortion, wellens (lesión crítica reperfundida = equivalente OMI). | [5,6,9,66,67] |
 
 Todas las reglas tienen tests con casos positivos y negativos construidos con el propio motor.
 
