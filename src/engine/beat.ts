@@ -37,6 +37,10 @@ export interface EffectiveInjury {
   stVector: Vec3;
   /** ST morphology coefficients (§3.2). */
   shape: ShapeCoeffs;
+  /** T-peak gain of the ST vector; defaults to `shape.sT` (§3.2).
+   * Territories like posterior use a low `tGain` so the injury lifts ST
+   * without dragging the anterior T below the baseline. */
+  tGain: number;
   /** Hyperacute T multiplier 0–2.5 (§3.3). */
   hyperacuteT: number;
   /** T-wave inversion 0–1 (§3.5). */
@@ -61,10 +65,12 @@ export interface BeatOverrides {
   tSigmaScale?: number;
   /** QTc target in ms (default 400, §2.3). */
   qtc?: number;
-  /** PR-segment depression amplitude in mV (pericarditis), applied along −û_P. */
-  prDepression?: number;
+  /** PR-segment depression in mV (pericarditis), applied along −û_P. */
+  prDepressionMv?: number;
   /** J-notch (early repolarization) amplitude in mV along +û_T. */
-  jNotch?: number;
+  jNotchMv?: number;
+  /** Osborn J-wave amplitude in mV along +û_T at J (hypothermia). */
+  osbornMv?: number;
   /** Multiplier on the free-wall QRS amplitude (e.g. low voltage). */
   rScale?: number;
 }
@@ -284,7 +290,11 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
     vJFull = add(vJFull, scale(stVector, s.sJ));
     v40Full = add(v40Full, scale(stVector, s.s40));
     vJnFull = add(vJnFull, scale(stVector, s.sJn));
-    vPeakFull = add(vPeakFull, add(scale(stVector, s.sT), scale(d, inj.hyperacuteT * aT)));
+    // Hyperacute T contribution scaled ×0.5 vs §3.3 (clinical T sizes).
+    vPeakFull = add(
+      vPeakFull,
+      add(scale(stVector, inj.tGain), scale(d, 0.5 * inj.hyperacuteT * aT)),
+    );
     // T inversion displaces the T-peak vector (§3.5).
     if (inj.tInversion > 0) {
       const ti = Math.min(1, inj.tInversion);
@@ -300,8 +310,8 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
 
   // PR-segment depression (overrides; pericarditis) — small negative bump
   // along −û_P just before QRS.
-  if (params.overrides?.prDepression) {
-    h = add(h, scale(U_P, -params.overrides.prDepression * gaussian(tauMs, -15, 25)));
+  if (params.overrides?.prDepressionMv) {
+    h = add(h, scale(U_P, -params.overrides.prDepressionMv * gaussian(tauMs, -15, 25)));
   }
 
   // ST-T contribution via Hermite spline (§2.3).
@@ -317,8 +327,13 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
   }
 
   // J notch (early repolarization override).
-  if (params.overrides?.jNotch) {
-    h = add(h, scale(uT, params.overrides.jNotch * gaussian(tauMs, jAtMs + 15, 12)));
+  if (params.overrides?.jNotchMv) {
+    h = add(h, scale(uT, params.overrides.jNotchMv * gaussian(tauMs, jAtMs + 15, 12)));
+  }
+
+  // Osborn wave: dome right at J (hypothermia).
+  if (params.overrides?.osbornMv) {
+    h = add(h, scale(uT, params.overrides.osbornMv * gaussian(tauMs, jAtMs + 25, 18)));
   }
 
   return h;

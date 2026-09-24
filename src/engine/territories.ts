@@ -18,6 +18,9 @@ export interface Territory {
   artery: string;
   /** Injury profile (§3.1). */
   profile: 'transmural' | 'subendocardial';
+  /** Default T-peak gain override (§3.2 `tGain`); e.g. posterior keeps the
+   * anterior T upright while depressing ST in V1–V3. */
+  tGain?: number;
 }
 
 /** Territory table (§4). */
@@ -81,6 +84,9 @@ export const TERRITORIES: readonly Territory[] = [
     looksAt: ['V7', 'V8', 'V9'],
     artery: 'CX / CD-DP',
     profile: 'transmural',
+    // Very low T contribution: posterior OMI shows STD V1–V3 with upright T
+    // (0.15 still inverted the anterior T; calibrated to 0.05).
+    tGain: 0.05,
   },
   {
     id: 'rv',

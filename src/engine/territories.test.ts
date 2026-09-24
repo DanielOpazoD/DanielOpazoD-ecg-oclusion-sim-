@@ -76,8 +76,36 @@ describe('territories — §9.3–9.4 reciprocal & discriminating patterns', () 
       expect(mm(measureBeat(ecg, l).stJ), l).toBeLessThan(-0.5);
     }
     for (const l of ['V7', 'V8', 'V9'] as const) {
-      expect(mm(measureBeat(ecg, l).stJ), l).toBeGreaterThan(1);
+      // Posterior leads scaled ×0.6: UDMI4 criterion is ≥ 0.5 mm.
+      expect(mm(measureBeat(ecg, l).stJ), l).toBeGreaterThan(0.5);
     }
+  });
+
+  it('posterior: T stays upright in V1–V3 (tGain = 0.15)', () => {
+    const ecg = ecgFor('posterior', 'V8');
+    expect(measureBeat(ecg, 'V2').tTerminal).toBeGreaterThan(0);
+  });
+});
+
+describe('fidelity — hyperacute T and de-winter sizes', () => {
+  it('de-winter config: T(V3) between 6 and 15 mm', () => {
+    const ecg = generateEcg({
+      ...defaultScenario(),
+      seed: 21,
+      durationS: 4,
+      sources: [
+        {
+          territory: 'anterior',
+          st: -0.15,
+          refLead: 'V3',
+          shape: 'depression-upsloping',
+          hyperacuteT: 1.6,
+        },
+      ],
+    });
+    const t3 = mm(measureBeat(ecg, 'V3').tAmp);
+    expect(t3).toBeGreaterThanOrEqual(6);
+    expect(t3).toBeLessThanOrEqual(15);
   });
 });
 

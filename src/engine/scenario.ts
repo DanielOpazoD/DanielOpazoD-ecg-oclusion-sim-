@@ -43,6 +43,8 @@ export interface InjurySource {
   qLoss?: number;
   /** Terminal QRS distortion 0–1 (§3.4). */
   terminalDistortion?: number;
+  /** T-peak gain override (§3.2 `tGain`); defaults to territory or shape. */
+  tGain?: number;
   /** Injury profile (§3.1; default from territory or 'transmural'). */
   profile?: 'transmural' | 'subendocardial';
 }
@@ -141,6 +143,7 @@ export function generateEcg(scenario: Scenario, tMin?: number): Ecg12 {
       direction,
       stVector: scale(direction, k),
       shape: SHAPES[src.shape],
+      tGain: src.tGain ?? terr?.tGain ?? SHAPES[src.shape].sT,
       hyperacuteT: eff.hyperacuteT,
       tInversion: eff.tInversion,
       qLoss: eff.qLoss,

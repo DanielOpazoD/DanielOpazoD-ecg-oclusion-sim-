@@ -40,13 +40,14 @@ Matriz de Dower (Dower 1980 [83], coeficientes X, Y, Z):
 
 Derivadas: `III = II − I`, `aVR = −(I + II)/2`, `aVL = I − II/2`, `aVF = II − I/2`.
 
-Derivaciones adicionales (vectores aproximados, normalizados a módulo similar a V6):
+Derivaciones adicionales (vectores aproximados; V7–V9 escalados ×0.6 respecto al
+módulo de V6 porque las R posteriores reales son pequeñas):
 
 | Derivación | X | Y | Z | Uso |
 |---|---|---|---|---|
-| V7 | 0.45 | 0.10 | 0.75 | posterior |
-| V8 | 0.10 | 0.10 | 0.90 | posterior |
-| V9 | −0.25 | 0.10 | 0.85 | posterior |
+| V7 | 0.27 | 0.06 | 0.45 | posterior |
+| V8 | 0.06 | 0.06 | 0.54 | posterior |
+| V9 | −0.15 | 0.06 | 0.51 | posterior |
 | V3R | −0.75 | 0.10 | −0.60 | VD |
 | V4R | −0.95 | 0.15 | −0.35 | VD |
 
@@ -68,7 +69,10 @@ Tres gaussianas 3D (septal, pared libre, basal) — modelo McSharry extendido a 
 |---|---|---|---|---|
 | septal | 12 | 7 | norm(−0.55, 0.15, −0.60) | 0.22 |
 | pared libre | 40 | 12 | norm(0.72, 0.62, 0.30) | 1.00 |
-| basal | 70 | 8 | norm(−0.30, −0.45, 0.65) | 0.28 |
+| basal | 70 | 6 | norm(−0.30, −0.45, 0.65) | 0.28 |
+
+(σ basal 6 ms, no 8: con σ 8 la cola basal supera el punto J ~0.03 mV y rompe la
+isoeléctrica del ST.)
 
 La ganancia global `a_QRS` se **calibra por test** para cumplir en el latido normal:
 `R(V5) ∈ [1.0, 2.2] mV`, `r(V1) < 0.5 mV`, `S(V1) ∈ [0.5, 1.6] mV`, `R(II) ∈ [0.6, 1.5] mV`,
@@ -87,14 +91,15 @@ en el tiempo; cada punto es un vector 3D. Puntos base (latido normal), relativos
 | T pico | 220 | a_T·û_T |
 | T fin | 340 | 0 |
 
-`û_T ≈ norm(0.70, 0.45, −0.25)` (concordante con QRS, anterior), `a_T` calibrado para
+`û_T = norm(0.65, 0.45, −0.40)` (concordante con QRS, anterior; con (0.70,0.45,−0.25)
+no se cumplen a la vez `T(V5) ≤ 0.6` y `T(V2) ≥ 0.3`). `a_T = 0.50` calibrado para
 `T(V5) ∈ [0.25, 0.6] mV`, `T(V2) ∈ [0.3, 0.9]`, T negativa en aVR, T(V1) ∈ [−0.2, 0.2].
 Los tiempos se escalan con la **QT** deseada: `QT = k·√RR` (Bazett inverso), QTc objetivo 400 ms.
 
 ## 3. Lesión (isquemia transmural / subendocárdica)
 
 ### 3.1 Vector de lesión
-Un `InjurySource` es `{ direction: Vec3 (unitario), st: number (mV), profile: 'transmural' | 'subendocardial', shape, hyperacuteT, tInversion, qLoss, terminalDistortion }`.
+Un `InjurySource` es `{ direction: Vec3 (unitario), st: number (mV), profile: 'transmural' | 'subendocardial', shape, hyperacuteT, tInversion, qLoss, terminalDistortion, tGain? }`.
 
 - **Transmural**: `d_ST` apunta desde el centro ventricular hacia el **epicardio de la pared**
   afectada. Se suma a los puntos de control ST‑T: `J += st·s_J·d`, `J+40 += st·s_40·d`,
@@ -116,13 +121,17 @@ Coeficientes (`s_J, s_40, s_jn, s_T`) por forma:
 | `tombstone` | 1.3 | 1.25 | 1.0 | 0.0 | fusión ST‑T, J/R ≥ 0.5 |
 | `depression-upsloping` | 0.6 | 1.0 | 0.9 | −1.6 | De Winter (con `st < 0` y T alta) |
 
-`st` se expresa **en la derivación de referencia** de la fuente (`refLead`): el motor escala la
-magnitud del vector para que `ℓ_refLead · (st·d)` = `st` mV. Así un caso dice "STE 2.5 mm en V3"
-y el resto de derivaciones sale de la física.
+`st` es la **magnitud pre‑shape del vector de lesión** expresada en la derivación de
+referencia (`refLead`): el motor escala `d` para que `ℓ_refLead · stVector = st` mV.
+La elevación resultante en J en `refLead` es `ST_J = st·s_J` (p. ej. `straight` ⇒ 0.9·st).
+`tGain` (opcional, por defecto `shape.s_T`; el territorio `posterior` usa 0.05) es la
+ganancia del vector de lesión en el punto T‑pico, desacoplada de la morfología del ST.
 
 ### 3.3 T hiperaguda
-`hyperacuteT ∈ [0, 2.5]` multiplica la amplitud de T en dirección `d` y **ensancha** la T
-(σ efectivo ×(1 + 0.25·hyperacuteT)) y la hace **simétrica** (Tpico se centra). Objetivo:
+`hyperacuteT ∈ [0, 2.5]` añade `0.5·hyperacuteT·a_T·d` al punto T pico (coeficiente
+0.5 calibrado para tamaños de T clínicos) y **ensancha** la T estirando el eje temporal
+tras el junction ×(1 + 0.25·hyperacuteT) — implementación equivalente a σ efectivo mayor,
+que además recentra el pico y la hace **simétrica**. Objetivo:
 área T/QRS ↑ ≥ 2× respecto al basal en derivaciones que miran la lesión [26,27].
 
 ### 3.4 Necrosis (onda Q) y distorsión terminal
@@ -143,18 +152,21 @@ positivo en `junction` y negativo en `Tpico`); con `tInversion → 1` Wellens B 
 
 | id | direction (X,Y,Z) | miran | arteria |
 |---|---|---|---|
-| `anteroseptal` | norm(−0.10, −0.15, −0.95) | V1–V4, aVR | DA proximal (pre‑S1) |
+| `anteroseptal` | norm(−0.10, −0.30, −0.93) | V1–V4, aVR | DA proximal (pre‑S1) |
 | `anterior` | norm(0.30, 0.20, −0.90) | V2–V5 | DA media |
 | `anteroapical` | norm(0.55, 0.45, −0.65) | V3–V6, II | DA distal |
 | `high-lateral` | norm(0.80, −0.50, −0.25) | I, aVL, V2 | D1 / OM alta (South African flag) |
 | `lateral` | norm(0.90, 0.20, 0.30) | I, aVL, V5–V6 | CX / OM |
-| `inferior-rca` | norm(−0.15, 0.92, 0.35) | II, III (>II), aVF | CD |
-| `inferior-lcx` | norm(0.45, 0.80, 0.40) | II (≥III), aVF, V5–V6 | CX |
+| `inferior-rca` | norm(−0.15, 0.95, 0.10) | II, III (>II), aVF | CD |
+| `inferior-lcx` | norm(0.75, 0.55, 0.35) | II (≥III), aVF, V5–V6 | CX |
 | `posterior` | norm(0.30, 0.20, 0.93) | V7–V9; STD V1–V3 | CX / CD‑DP |
 | `rv` | norm(−0.70, 0.40, −0.55) | V1, V3R–V4R, III | CD proximal |
 | `subendocardial` | norm(−0.60, −0.55, 0.45) (profile subendocardial) | STD difusa, STE aVR | demanda / TCI / 3 vasos |
 
 Los vectores se **ajustan por test** hasta que cada territorio cumple su patrón esperado (ver §9).
+Ajustes ya calibrados: `anteroseptal` con Y −0.30 (genera STD inferior recíproca),
+`inferior-rca` con Z 0.10 (ST V1 ≥ 0), `inferior-lcx` rotada a +X (aVL ≈ isoeléctrica).
+`posterior` lleva `tGain = 0.05` (STD V1–V3 con T terminal positiva, no invertida).
 
 ## 5. Ritmo y conducción
 
@@ -177,7 +189,15 @@ Los vectores se **ajustan por test** hasta que cada territorio cumple su patrón
 - `rbbb`: componente terminal lenta hacia derecha‑anterior (μ 85, σ 18, dir norm(−0.8, 0.1, −0.55)),
   QRS 120–140 ms, T discordante solo en V1–V2.
 - `paced`: espiga (2 ms, 0.5–2 mV, dir arbitraria) + morfología tipo LBBB con eje superior.
-- `lvh`: pared libre ×1.8, `strain`: T discordante asimétrica lateral (ST‑T "strain") [16].
+- `lvh`: pared libre ×1.8; `lvh-strain`: además T discordante asimétrica lateral [16].
+- `wpw`: componente inicial lenta (onda delta, μ 8, σ 18) + PR corto (~90 ms) [82].
+- Hiperpotasemia: no es un `ConductionSpec`; se modela con `BeatOverrides`
+  (`aTScale`, `tSigmaScale`, helper `hyperkalemiaOverrides()`) [77].
+
+Extrasístoles/AIVR (`pvc`, `aivr`, `escape` ancho): un único componente ventricular
+ancho (μ 55, σ 25) en la dirección de origen `ventricularOrigin`. Marcapasos incluye
+espiga de 2 ms (~1.2 mV) antes del QRS. En `av-block-3` los eventos llevan
+`prMs = −1` (P disociada), en `svt`/`aivr`/`pvc`/`afib` no hay P precedente.
 
 ## 6. Evolución temporal (`Timeline`)
 
@@ -216,12 +236,19 @@ luego `hyperacuteT` y `st` suben con las rampas de oclusión desplazadas a t_O.
   Intercambios de miembros se implementan **recombinando** las derivaciones (I → −I, II↔III,
   aVR↔aVL para LA‑RA). `v1v2-high`: los vectores de V1/V2 rotan hacia superior‑posterior
   (Y −0.35, Z +0.25) ⇒ rSr′ y T negativa V1–V2 (mimic de Brugada/IAM anteroseptal).
+  `precordial-lateral-shift`: V1–V5 se interpolan 50 % hacia la derivación siguiente
+  (desplazamiento de una posición hacia lateral; la clínica no cuantifica el vector).
+  `placement` vive dentro de `acquisition` en `Scenario`.
 
 Orden de operaciones: dipolo → proyección con `LeadSystem` (colocación) → suma de ruido →
 filtros. La señal "verdad" (sin ruido ni filtros) queda disponible para el análisis y para el modo
 docente "quitar ruido".
 
 ## 8. Análisis (`src/analysis`)
+
+Nota de implementación: `Scenario.timeline` eventos llevan `sourceId` (id o índice de
+fuente; `undefined` = todas). `Scenario` incluye `beatOverrides` (`aTScale`, `tSigmaScale`,
+`qtc`, `prDepressionMv`, `jNotchMv`, `osbornMv`, `rScale`).
 
 Entrada: `Ecg12` (matriz `leads × samples`, `fs`, fiduciales por latido: onset P, onset QRS, J,
 fin T — **generados por el motor**, no detectados). Se promedia el latido sinusal dominante por
@@ -261,8 +288,10 @@ Todas las reglas tienen tests con casos positivos y negativos construidos con el
 1. **Einthoven/Goldberger**: `I + III = II`, `aVR + aVL + aVF = 0` con error < 1e‑9 mV.
 2. **Latido normal** cumple los rangos de §2.2–§2.3.
 3. Cada `Territory` con `st = 2 mV en refLead`, `shape = straight` produce: STE > 1 mm en sus
-   derivaciones "que miran", STD recíproca en las opuestas (inferior‑CD ⇒ aVL < −0.5 mm;
-   anteroseptal ⇒ STD en II/III/aVF; posterior ⇒ STD V1–V3 con STE V7–V9).
+   derivaciones "que miran" (≥ 0.5 mm en V7–V9, que llevan ganancia reducida), STD recíproca
+   en las opuestas (inferior‑CD ⇒ aVL < −0.5 mm;
+   anteroseptal ⇒ STD en II/III/aVF; posterior ⇒ STD V1–V3 con STE V7–V9 y T terminal
+   positiva en V2).
 4. `inferior-rca`: `ST(III) > ST(II)`, `ST(V1) ≥ 0`. `inferior-lcx`: `ST(II) ≥ ST(III)`, `ST(aVL) ≥ −0.5 mm`.
 5. `subendocardial` con `st = 1.5`: STD ≥ 1 mm en ≥ 6 derivaciones y STE aVR ≥ 1 mm ⇒ `avr-diffuse-std` positivo; `stemi-udmi4` negativo.
 6. Timeline: a t = 5 min `hyperacute-t` positivo y `stemi-udmi4` negativo; a t = 45 min `stemi-udmi4` positivo; tras reperfusión a t_R + 90 min STE < 50 % del máximo; a t_R + 24 h `wellens` o inversión de T presente; reoclusión ⇒ T positiva de nuevo (pseudonormalización) en ≤ 10 min.

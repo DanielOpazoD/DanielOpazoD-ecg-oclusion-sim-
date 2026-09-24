@@ -46,9 +46,10 @@ const DOWER: Record<'I' | 'II' | 'V1' | 'V2' | 'V3' | 'V4' | 'V5' | 'V6', Vec3> 
 
 /** Extra posterior / right-sided lead vectors (§1). */
 const EXTRA: Record<'V7' | 'V8' | 'V9' | 'V3R' | 'V4R', Vec3> = {
-  V7: [0.45, 0.1, 0.75],
-  V8: [0.1, 0.1, 0.9],
-  V9: [-0.25, 0.1, 0.85],
+  // Posterior leads scaled ×0.6 vs §1: real posterior R waves are small.
+  V7: [0.27, 0.06, 0.45],
+  V8: [0.06, 0.06, 0.54],
+  V9: [-0.15, 0.06, 0.51],
   V3R: [-0.75, 0.1, -0.6],
   V4R: [-0.95, 0.15, -0.35],
 };
