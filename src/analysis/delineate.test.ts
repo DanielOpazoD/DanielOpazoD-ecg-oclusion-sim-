@@ -73,6 +73,48 @@ describe('delineate', () => {
     expect(r?.positive).toBe(true);
   });
 
+  it('delineates wide QRS durations within tolerance per morphology', () => {
+    const specs: [string, Partial<Scenario>, number][] = [
+      ['sinus', { rhythm: { type: 'sinus', hrBpm: 72 }, conduction: 'normal' }, 90],
+      ['rbbb', { rhythm: { type: 'sinus', hrBpm: 72 }, conduction: 'rbbb' }, 125],
+      ['lbbb', { rhythm: { type: 'sinus', hrBpm: 72 }, conduction: 'lbbb' }, 150],
+      ['vvi', { rhythm: { type: 'paced', mode: 'VVI', rateBpm: 60 } }, 150],
+      ['vt', { rhythm: { type: 'vt', hrBpm: 170 } }, 140],
+      [
+        'avb3-ventricular',
+        {
+          rhythm: { type: 'av-block-3', atrialBpm: 80, escapeBpm: 35, escapeOrigin: 'ventricular' },
+        },
+        140,
+      ],
+      ['rbbb-lafb', { rhythm: { type: 'sinus', hrBpm: 72 }, conduction: 'rbbb-lafb' }, 130],
+    ];
+    for (const [name, sc, truth] of specs) {
+      const e = generateEcg({ ...sinus, seed: 42, ...sc });
+      const d = delineate({ fs: e.fs, leads: e.clean });
+      expect(Math.abs(d.qrsMs! - truth), `${name}: qrs ${d.qrsMs} vs truth ${truth}`).toBeLessThan(
+        25,
+      );
+    }
+  });
+
+  it('dextrocardia: P still delineates and no false AV dissociation', () => {
+    const e = generateEcg({
+      ...sinus,
+      rhythm: { type: 'sinus', hrBpm: 70 },
+      acquisition: { placement: 'dextrocardia' },
+    });
+    const d = delineate({ fs: e.fs, leads: e.clean });
+    const pr = median(
+      e.beats.filter((b) => b.pOnset >= 0).map((b) => ((b.qrsOnset - b.pOnset) / e.fs) * 1000),
+    );
+    expect(Math.abs(d.prMs! - pr)).toBeLessThan(25);
+    const r = analyzeEcg(e, { conduction: 'normal' }).findings.find(
+      (f) => f.id === 'av-dissociation',
+    );
+    expect(r?.positive).toBe(false);
+  });
+
   it('VVI 60 leaves ~10 pacing spikes in 10 s', () => {
     const e = generateEcg({ ...sinus, rhythm: { type: 'paced', mode: 'VVI', rateBpm: 60 } });
     const d = delineate({ fs: e.fs, leads: e.clean });

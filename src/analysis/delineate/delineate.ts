@@ -119,22 +119,107 @@ export function delineate(input: DelineationInput, opts: { windowS?: number } = 
     const b = baseline(p);
     const onsetLo = Math.max(prev + Math.round(0.1 * fs), p - Math.round(0.2 * fs));
     const endHi = Math.min(next - Math.round(0.12 * fs), p + Math.round(0.25 * fs));
+    // QRS edges: forward/backward from the dominant peak, the first sample
+    // where the multi-lead slope energy stays below 8% of the beat's peak
+    // energy for ≥12 ms (robust on wide ventricular complexes).
+    const quietN = Math.max(2, Math.ceil(0.012 * fs));
+    // Smoothed slope energy (~6 ms box) so a single fast sample cannot
+    // break the ≥12 ms quiet run.
+    const eSmooth = (i: number) => {
+      let s = 0;
+      let c = 0;
+      for (let j = i - Math.round(0.003 * fs); j <= i + Math.round(0.003 * fs); j++) {
+        if (j >= 0 && j < n) {
+          s += slope(j);
+          c++;
+        }
+      }
+      return s / Math.max(1, c);
+    };
+    const energies: number[] = [];
+    for (let i = onsetLo; i < endHi; i++) energies.push(eSmooth(i));
+    const ePeak = Math.max(...energies);
+    const eFloor = [...energies].sort((a, b) => a - b)[Math.floor(energies.length * 0.1)] ?? 0;
+    const quiet = eFloor + 0.08 * (ePeak - eFloor);
     let on = p;
     let off = p;
-    const amp = Math.max(
-      ...Array.from({ length: Math.max(1, endHi - onsetLo) }, (_, j) => magnitude(onsetLo + j)),
-    );
-    const threshold = Math.max(0.015, amp * 0.06);
-    for (let i = p; i > onsetLo; i--)
-      if (magnitude(i) < threshold * 1.7 && slope(i) < 0.12 * fs) {
+    for (let i = p; i > onsetLo; i--) {
+      let ok = true;
+      for (let j = i; j < Math.min(i + quietN, n); j++)
+        if (eSmooth(j) >= quiet) {
+          ok = false;
+          break;
+        }
+      if (ok) {
         on = i;
         break;
       }
-    for (let i = p; i < endHi; i++)
-      if (magnitude(i) < threshold && slope(i) < 0.12 * fs) {
+    }
+    for (let i = p; i < endHi; i++) {
+      let ok = true;
+      for (let j = i; j < Math.min(i + quietN, n); j++)
+        if (eSmooth(j) >= quiet) {
+          ok = false;
+          break;
+        }
+      if (ok) {
         off = i;
         break;
       }
+    }
+    // Refine each edge to the 12%-of-peak energy crossing — the quiet-run
+    // boundary overshoots the true edge while the ST-T slope tail decays.
+    const hiOn = eFloor + 0.12 * (ePeak - eFloor);
+    let onRef = on + quietN;
+    for (let i = on; i < Math.min(on + quietN + Math.round(0.04 * fs), n); i++)
+      if (eSmooth(i) >= hiOn) {
+        onRef = i;
+        break;
+      }
+    on = onRef;
+    // A sustained discordant ST-T tail (LBBB/paced morphologies) keeps the
+    // post-crossing energy elevated: use a higher fraction there, and a
+    // lower one where the energy decays cleanly after the J point.
+    let sustained = 0;
+    let tailN = 0;
+    for (let i = Math.max(p, off - Math.round(0.06 * fs)); i < off; i++) {
+      tailN++;
+      if (eSmooth(i) > 0.1 * ePeak) sustained++;
+    }
+    const offFrac = tailN > 0 && sustained / tailN > 0.7 ? 0.18 : null;
+    if (offFrac !== null) {
+      const hiOff = eFloor + offFrac * (ePeak - eFloor);
+      for (let i = off; i > p; i--)
+        if (eSmooth(i) >= hiOff) {
+          off = i + 1;
+          break;
+        }
+      // Deep-dip-then-rebound: a ventricular tail that truly goes quiet
+      // (<5% peak) then rises again (>12%) belongs to the complex — the
+      // true J sits at the end of the tail, cross at 10% instead.
+      let dipped = false;
+      let rebounded = false;
+      for (let i = off; i < Math.min(off + Math.round(0.09 * fs), endHi); i++) {
+        if (eSmooth(i) < 0.05 * ePeak) dipped = true;
+        if (dipped && eSmooth(i) > 0.12 * ePeak) rebounded = true;
+      }
+      if (rebounded) {
+        const hiOff2 = eFloor + 0.1 * (ePeak - eFloor);
+        for (let i = Math.min(off + Math.round(0.09 * fs), endHi); i > p; i--)
+          if (eSmooth(i) >= hiOff2) {
+            off = i + 1;
+            break;
+          }
+      }
+    } else {
+      // Clean decay: the quiet run starts ~12 ms before the isoelectric J.
+      off += quietN;
+    }
+    off = Math.min(off, on + Math.round(0.2 * fs));
+    on = Math.max(on, off - Math.round(0.2 * fs));
+    const amp = Math.max(
+      ...Array.from({ length: Math.max(1, endHi - onsetLo) }, (_, j) => magnitude(onsetLo + j)),
+    );
     if (off <= on || (off - on) / fs < 0.035 || (off - on) / fs > 0.3) {
       on = Math.max(onsetLo, p - Math.round(0.04 * fs));
       off = Math.min(endHi, p + Math.round(0.1 * fs));
@@ -202,18 +287,39 @@ export function delineate(input: DelineationInput, opts: { windowS?: number } = 
   // outside ventricular/T-wave windows. This is deliberately separate from
   // the P-to-QRS association above, so complete AV block can expose its P
   // rate while AF remains irregular/unavailable.
-  const atrialLead = signal.II;
-  const initialAtrial = Array.from(atrialLead!.slice(0, Math.min(n, Math.round(0.8 * fs)))).sort(
-    (a, b) => a - b,
-  );
-  const atrialBaseline = initialAtrial[Math.floor(initialAtrial.length * 0.2)] ?? 0;
+  // Independent atrial scan (polarity-agnostic): score |signal| normalised by
+  // a typical P amplitude per lead so inverted P (dextrocardia, ectopic
+  // atria) still counts, while T waves (~2× P in every lead) fall above the
+  // upper bound.
+  const ATRIAL_LEADS = ['II', 'aVR', 'V1', 'I'] as const;
+  const P_TYP: Record<string, number> = { I: 0.08, II: 0.12, aVR: 0.1, V1: 0.09 };
+  const atrialLeads = ATRIAL_LEADS.filter((l) => signal[l] !== undefined);
+  const atrialBase = atrialLeads.map((l) => {
+    const w = Array.from(signal[l]!.slice(0, Math.min(n, Math.round(0.8 * fs)))).sort(
+      (a, b) => a - b,
+    );
+    return w[Math.floor(w.length * 0.2)] ?? 0;
+  });
+  const aScore = (i: number) =>
+    Math.hypot(
+      ...atrialLeads.map((l, k) => Math.abs(signal[l]![i]! - atrialBase[k]!) / (P_TYP[l] ?? 0.1)),
+    );
   const atrialPeaks: number[] = [];
   for (let i = Math.round(0.06 * fs); i < n - Math.round(0.06 * fs); i++) {
     if (peaks.some((q) => Math.abs(i - q) < Math.round(0.12 * fs))) continue;
-    const av = Math.abs(atrialLead![i]! - atrialBaseline);
-    const avPrev = Math.abs(atrialLead![i - 1]! - atrialBaseline);
-    const avNext = Math.abs(atrialLead![i + 1]! - atrialBaseline);
-    if (av <= 0.025 || av > 0.22 || av < avPrev || av <= avNext) continue;
+    const av = aScore(i);
+    // Mask the QRS–T window for large deflections only: a discordant T
+    // (LBBB/ventricular morphologies) outscores the P otherwise and halves
+    // the detected atrial interval; a real P landing inside the T window is
+    // still small enough to pass.
+    if (
+      av > 2.2 &&
+      beats.some(
+        (b) => i >= b.qrsOnsetS * fs - Math.round(0.02 * fs) && i <= (b.tEndS ?? b.qrsEndS) * fs,
+      )
+    )
+      continue;
+    if (av <= 0.8 || av > 2.9 || av < aScore(i - 1) || av <= aScore(i + 1)) continue;
     const last = atrialPeaks.at(-1);
     if (last === undefined || i - last > Math.round(0.18 * fs)) atrialPeaks.push(i);
   }
