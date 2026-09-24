@@ -108,7 +108,7 @@ export const GROUP_A: CaseDefinition[] = [
     scenario: {
       seed: 103,
       durationS: 5,
-      rhythm: { type: 'av-block-3', atrialBpm: 80, escapeBpm: 38, escapeWide: true },
+      rhythm: { type: 'av-block-3', atrialBpm: 80, escapeBpm: 38, escapeOrigin: 'ventricular' },
       conduction: 'normal',
       sources: [
         { territory: 'inferior-rca', st: 0.3, refLead: 'III', shape: 'straight' },
@@ -153,7 +153,7 @@ export const GROUP_A: CaseDefinition[] = [
     scenario: {
       seed: 104,
       durationS: 5,
-      rhythm: { type: 'sinus-bradycardia', hrBpm: 48 },
+      rhythm: { type: 'sinus', hrBpm: 48 },
       conduction: 'normal',
       sources: [
         { territory: 'inferior-rca', st: 0.2, refLead: 'III', shape: 'straight' },
@@ -428,7 +428,8 @@ export const GROUP_A: CaseDefinition[] = [
     scenario: {
       seed: 110,
       durationS: 5,
-      rhythm: { type: 'pvc', hrBpm: 100, pvcPerMin: 6 },
+      rhythm: { type: 'sinus', hrBpm: 100 },
+      ectopy: { kind: 'pvc', pattern: 'isolated', perMin: 6 },
       conduction: 'normal',
       sources: [{ territory: 'inferior-rca', st: 0.3, refLead: 'III', shape: 'straight' }],
       acquisition: { emg: { sigmaMv: 0.03 } },

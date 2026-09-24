@@ -15,6 +15,12 @@ const CONDUCTIONS: ConductionSpec[] = [
   'normal',
   'lbbb',
   'rbbb',
+  'irbbb',
+  'lafb',
+  'lpfb',
+  'rbbb-lafb',
+  'rbbb-lpfb',
+  'rvh',
   'paced',
   'lvh',
   'lvh-strain',
@@ -22,22 +28,61 @@ const CONDUCTIONS: ConductionSpec[] = [
 ];
 const RHYTHMS: RhythmSpec['type'][] = [
   'sinus',
-  'sinus-bradycardia',
+  'sinus-arrhythmia',
+  'afib',
+  'flutter',
+  'svt',
+  'junctional',
   'av-block-1',
   'av-block-2-mobitz1',
+  'av-block-2-mobitz2',
   'av-block-3',
+  'idioventricular',
   'aivr',
-  'pvc',
-  'afib',
-  'svt',
-  'paced-rhythm',
+  'vt',
+  'torsades',
+  'vf',
+  'asystole',
+  'paced',
 ];
+
+/** Defaults for each rhythm type when switching in the lab. */
+function rhythmDefault(type: RhythmSpec['type'], hr: number): RhythmSpec {
+  switch (type) {
+    case 'flutter':
+      return { type, atrialBpm: 300, ratio: 2 };
+    case 'av-block-1':
+      return { type, hrBpm: hr, prMs: 260 };
+    case 'av-block-2-mobitz1':
+      return { type, hrBpm: hr, ratio: '4:3' };
+    case 'av-block-2-mobitz2':
+      return { type, hrBpm: hr, ratio: '3:2' };
+    case 'av-block-3':
+      return { type, atrialBpm: 80, escapeBpm: Math.min(hr, 45), escapeOrigin: 'junctional' };
+    case 'paced':
+      return { type, mode: 'VVI', rateBpm: hr };
+    case 'vf':
+    case 'asystole':
+      return { type };
+    default:
+      return { type, hrBpm: hr };
+  }
+}
+
+/** Readable HR field differs across rhythm variants. */
+function rhythmHr(r: RhythmSpec): number {
+  if ('hrBpm' in r) return r.hrBpm;
+  if ('rateBpm' in r) return r.rateBpm;
+  if ('escapeBpm' in r) return r.escapeBpm;
+  return 70;
+}
 const PLACEMENTS: Placement[] = [
   'standard',
   'la-ra-swap',
   'la-ll-swap',
   'v1v2-high',
   'precordial-lateral-shift',
+  'dextrocardia',
 ];
 
 const REFLEADS = [
@@ -95,14 +140,14 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
       s.rhythm.type,
       (v) => {
         mutateScenario((sc) => {
-          sc.rhythm = { ...sc.rhythm, type: v } as RhythmSpec;
+          sc.rhythm = rhythmDefault(v as RhythmSpec['type'], rhythmHr(sc.rhythm));
         });
         onChange();
       },
       RHYTHM_LABELS,
     ),
   );
-  const hr = 'hrBpm' in s.rhythm ? s.rhythm.hrBpm : 70;
+  const hr = rhythmHr(s.rhythm);
   ctxCard.appendChild(
     sliderRow('FC (lpm)', hr, 30, 200, 1, (v) => {
       mutateScenario((sc) => {

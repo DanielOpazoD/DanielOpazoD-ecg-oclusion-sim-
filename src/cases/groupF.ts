@@ -148,7 +148,7 @@ export const GROUP_F: CaseDefinition[] = [
     scenario: {
       seed: 604,
       durationS: 5,
-      rhythm: { type: 'av-block-3', atrialBpm: 80, escapeBpm: 40 },
+      rhythm: { type: 'av-block-3', atrialBpm: 80, escapeBpm: 40, escapeOrigin: 'junctional' },
       conduction: 'normal',
       sources: [
         { territory: 'inferior-rca', st: 0.3, refLead: 'III', shape: 'straight' },

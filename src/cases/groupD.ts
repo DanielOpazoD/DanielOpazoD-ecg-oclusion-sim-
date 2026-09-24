@@ -67,11 +67,11 @@ export const GROUP_D: CaseDefinition[] = [
       variability: false,
       conduction: 'normal',
       sources: [
-        { territory: 'anterior', st: 0.05, refLead: 'V3', shape: 'concave' },
-        { territory: 'inferior-lcx', st: 0.05, refLead: 'II', shape: 'concave' },
-        { territory: 'lateral', st: 0.03, refLead: 'V6', shape: 'concave' },
+        { territory: 'anterior', st: 0.03, refLead: 'V3', shape: 'concave' },
+        { territory: 'inferior-lcx', st: 0.04, refLead: 'II', shape: 'concave' },
+        { territory: 'lateral', st: 0.02, refLead: 'V6', shape: 'concave' },
       ],
-      beatOverrides: { prDepressionMv: 0.08 },
+      beatOverrides: { prDepressionMv: 0.08, qtc: 380 },
     },
     expected: {
       omi: false,
@@ -313,12 +313,14 @@ export const GROUP_D: CaseDefinition[] = [
     scenario: {
       seed: 408,
       durationS: 5,
-      rhythm: { type: 'pvc', hrBpm: 85, pvcPerMin: 4 },
+      rhythm: { type: 'sinus', hrBpm: 85 },
+      ectopy: { kind: 'pvc', pattern: 'isolated', perMin: 4 },
       conduction: 'normal',
       sources: [
-        { territory: 'anterior', st: 0.06, refLead: 'V3', shape: 'concave' },
-        { territory: 'lateral', st: 0.05, refLead: 'V6', shape: 'concave' },
+        { territory: 'anterior', st: 0.03, refLead: 'V3', shape: 'concave' },
+        { territory: 'lateral', st: 0.03, refLead: 'V6', shape: 'concave' },
       ],
+      beatOverrides: { qtc: 380 },
     },
     expected: {
       omi: false,
@@ -444,10 +446,10 @@ export const GROUP_D: CaseDefinition[] = [
     scenario: {
       seed: 411,
       durationS: 5,
-      rhythm: { type: 'sinus-bradycardia', hrBpm: 45 },
+      rhythm: { type: 'sinus', hrBpm: 45 },
       conduction: 'normal',
-      sources: [{ territory: 'lateral', st: 0.06, refLead: 'V4', shape: 'concave' }],
-      beatOverrides: { osbornMv: 0.25 },
+      sources: [{ territory: 'lateral', st: 0.04, refLead: 'V4', shape: 'concave' }],
+      beatOverrides: { osbornMv: 0.18 },
       acquisition: { emg: { sigmaMv: 0.08 }, baselineWander: { amplitudeMv: 0.2, hz: 0.3 } },
     },
     expected: {
@@ -522,7 +524,7 @@ export const GROUP_D: CaseDefinition[] = [
     scenario: {
       seed: 413,
       durationS: 5,
-      rhythm: { type: 'sinus-bradycardia', hrBpm: 46 },
+      rhythm: { type: 'sinus', hrBpm: 46 },
       conduction: 'normal',
       sources: [{ territory: 'anterior', st: 0.1, refLead: 'V3', shape: 'concave' }],
       beatOverrides: { aTScale: 1.2, qtc: 380 },

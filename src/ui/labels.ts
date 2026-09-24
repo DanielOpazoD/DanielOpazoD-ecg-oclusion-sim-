@@ -19,21 +19,34 @@ export const TERRITORY_LABELS: Record<string, string> = {
 
 export const RHYTHM_LABELS: Record<string, string> = {
   sinus: 'Sinusal',
-  'sinus-bradycardia': 'Bradicardia sinusal',
+  'sinus-arrhythmia': 'Arritmia sinusal respiratoria',
+  afib: 'Fibrilación auricular',
+  flutter: 'Flutter auricular',
+  svt: 'TSV',
+  junctional: 'Ritmo de la unión',
   'av-block-1': 'BAV 1º',
   'av-block-2-mobitz1': 'BAV 2º Mobitz I',
+  'av-block-2-mobitz2': 'BAV 2º Mobitz II / alto grado',
   'av-block-3': 'BAV completo',
+  idioventricular: 'Idioventricular',
   aivr: 'RIVA',
-  pvc: 'Extrasístoles ventriculares',
-  afib: 'Fibrilación auricular',
-  svt: 'TSV',
-  'paced-rhythm': 'Ritmo de marcapasos',
+  vt: 'TV monomórfica',
+  torsades: 'Torsades de pointes',
+  vf: 'Fibrilación ventricular',
+  asystole: 'Asistolia',
+  paced: 'Marcapasos',
 };
 
 export const CONDUCTION_LABELS: Record<string, string> = {
   normal: 'Normal',
   lbbb: 'BRI',
   rbbb: 'BRD',
+  irbbb: 'BRD incompleto',
+  lafb: 'Hemibloqueo anterior',
+  lpfb: 'Hemibloqueo posterior',
+  'rbbb-lafb': 'BRD + hemibloqueo anterior',
+  'rbbb-lpfb': 'BRD + hemibloqueo posterior',
+  rvh: 'HVD',
   paced: 'Marcapasos',
   lvh: 'HVI',
   'lvh-strain': 'HVI con strain',
@@ -54,6 +67,7 @@ export const PLACEMENT_LABELS: Record<string, string> = {
   'la-ll-swap': 'Inversión BI–PI',
   'v1v2-high': 'V1–V2 altos',
   'precordial-lateral-shift': 'Precordiales desplazadas lateralmente',
+  dextrocardia: 'Dextrocardia',
 };
 
 /** Fallback label map covering every enum used in selectRows. */

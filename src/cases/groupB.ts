@@ -300,7 +300,7 @@ export const GROUP_B: CaseDefinition[] = [
       rhythm: { type: 'sinus', hrBpm: 80 },
       conduction: 'normal',
       sources: [
-        { territory: 'lateral', st: 0.07, refLead: 'V6', shape: 'straight' },
+        { territory: 'lateral', st: 0.06, refLead: 'V6', shape: 'straight' },
         { territory: 'posterior', st: 0.06, refLead: 'V8', shape: 'straight' },
       ],
       timeline: [{ atMin: 0, kind: 'occlusion' }],
@@ -385,7 +385,7 @@ export const GROUP_B: CaseDefinition[] = [
     scenario: {
       seed: 209,
       durationS: 5,
-      rhythm: { type: 'paced-rhythm', hrBpm: 70 },
+      rhythm: { type: 'paced', mode: 'VVI', rateBpm: 70 },
       conduction: 'paced',
       sources: [{ territory: 'inferior-rca', st: 0.15, refLead: 'III', shape: 'straight' }],
       timeline: [{ atMin: 0, kind: 'occlusion' }],

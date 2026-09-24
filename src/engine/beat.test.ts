@@ -49,7 +49,7 @@ describe('beat — §9.2 normal beat ranges (§2.2–§2.3)', () => {
   });
   it('P in II within 0.10–0.15 mV', () => {
     // Measure P peak over the PR segment before the QRS.
-    const beat = ecg.beats.find((b) => b.type === 'sinus' && b.pOnset > 20)!;
+    const beat = ecg.beats.find((b) => b.kind === 'sinus' && b.pOnset > 20)!;
     const s = ecg.clean.II;
     let pMax = -Infinity;
     for (let i = beat.pOnset; i < beat.qrsOnset - 10; i++) {
@@ -83,7 +83,7 @@ describe('filters — §9.9', () => {
       acquisition: { highPassHz: 0.05, highPassMode: 'causal' },
     });
     // Measure ST J on the dirty signals with fiducials.
-    const b = hp05.beats.find((x) => x.type === 'sinus')!;
+    const b = hp05.beats.find((x) => x.kind === 'sinus')!;
     const d = Math.abs(hp05.leads.V5[b.j]! - hp005.leads.V5[b.j]!);
     expect(d).toBeGreaterThan(0.05);
   });
