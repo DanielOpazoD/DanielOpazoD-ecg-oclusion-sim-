@@ -5,7 +5,8 @@
  *          lbbb | de-winter | all (default)
  */
 import { generateEcg, defaultScenario, LEAD_IDS, type Scenario } from '../src/engine/index.js';
-import { measureBeat, mm } from '../test/helpers/measure.js';
+import { measureEcg, mm, analyzeEcg } from '../src/analysis/index.js';
+import { getCase } from '../src/cases/index.js';
 
 const PRESETS: Record<string, Partial<Scenario>> = {
   normal: {},
@@ -47,20 +48,41 @@ function fmt(x: number): string {
   return (x >= 0 ? ' ' : '') + x.toFixed(2);
 }
 
-function dump(name: string, patch: Partial<Scenario>): void {
-  const ecg = generateEcg({ ...defaultScenario(), seed: 7, durationS: 4, ...patch });
+function dump(
+  name: string,
+  patch: Partial<Scenario>,
+  opts?: { sex?: 'M' | 'F'; age?: number; conduction?: string },
+): void {
+  const sc: Scenario = { ...defaultScenario(), seed: 7, durationS: 4, ...patch };
+  const ecg = generateEcg(sc);
   console.log(`\n=== ${name} ===`);
   console.log('lead |  ST_J  | ST60  |   R   |   S   |   T   (mm)');
+  const meas = measureEcg(ecg);
   for (const id of LEAD_IDS) {
-    const m = measureBeat(ecg, id);
+    const m = meas.perLead[id];
     console.log(
       `${id.padEnd(4)} | ${fmt(mm(m.stJ))} | ${fmt(mm(m.st60))} | ${fmt(mm(m.rAmp))} | ${fmt(mm(m.sAmp))} | ${fmt(mm(m.tAmp))}`,
     );
   }
+  const rep = analyzeEcg(ecg, {
+    sex: opts?.sex ?? 'M',
+    age: opts?.age ?? 60,
+    conduction: (sc.conduction ?? 'normal') as 'normal',
+  });
+  console.log(`OMI: ${rep.omi.positive ? '✔' : '✘'}`);
+  for (const f of rep.findings.filter((x) => x.positive)) {
+    console.log(`  + ${f.id}: ${f.rationale}`);
+  }
 }
 
 const arg = process.argv[2];
-if (arg && arg !== 'all') {
+const kase = arg ? getCase(arg) : undefined;
+if (kase) {
+  dump(`${kase.id} ${kase.title}`, kase.scenario, {
+    sex: kase.vignette.sex,
+    age: kase.vignette.age,
+  });
+} else if (arg && arg !== 'all') {
   dump(arg, PRESETS[arg] ?? {});
 } else {
   for (const [name, patch] of Object.entries(PRESETS)) dump(name, patch);

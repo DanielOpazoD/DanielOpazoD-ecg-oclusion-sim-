@@ -1,0 +1,162 @@
+import type { CaseDefinition } from './types.js';
+
+/** Group F — adquisición y artefactos. docs/CASES.md §F. */
+export const GROUP_F: CaseDefinition[] = [
+  {
+    id: 'F01',
+    group: 'F',
+    title: 'Filtro monitor 0.5 Hz',
+    difficulty: 1,
+    vignette: {
+      age: 66,
+      sex: 'F',
+      history: 'IAM de DA media registrado con filtro de monitor (0.5 Hz causal).',
+      vitals: 'PA 130/80, FC 96',
+      troponin: 'hs-cTnT 320 ng/L',
+    },
+    scenario: {
+      seed: 601,
+      durationS: 5,
+      rhythm: { type: 'sinus', hrBpm: 96 },
+      conduction: 'normal',
+      sources: [{ territory: 'anterior', st: 0.25, refLead: 'V3', shape: 'straight' }],
+      acquisition: { highPassHz: 0.5, highPassMode: 'causal' },
+      timeline: [{ atMin: 0, kind: 'occlusion' }],
+    },
+    ecgAtMin: 120,
+    expected: {
+      omi: true,
+      activateCathLab: true,
+      culprit: 'DA media',
+      positiveFindings: [],
+      negativeFindings: [],
+      rulesMiss:
+        'Caso docente de artefacto: el filtro 0.5 Hz causal distorsiona el ST (pseudo-depresión tras R alta); comparar con 0.05 Hz.',
+    },
+    angiography: 'DA media TIMI 0',
+    teachingPoints: [
+      'El filtro HP 0.5 Hz unidireccional distorsiona el segmento ST.',
+      'Para diagnóstico usar 0.05 Hz (o fase cero).',
+      'Comparar lado a lado revela el artefacto.',
+    ],
+    refs: [33, 99],
+  },
+  {
+    id: 'F02',
+    group: 'F',
+    title: 'Ruido EMG y wander',
+    difficulty: 1,
+    vignette: {
+      age: 47,
+      sex: 'M',
+      history: 'Paciente agitado: EMG y deriva de línea base dificultan leer las T hiperagudas.',
+      vitals: 'PA 135/85, FC 88',
+      troponin: 'hs-cTnT 18 ng/L',
+    },
+    scenario: {
+      seed: 602,
+      durationS: 5,
+      rhythm: { type: 'sinus', hrBpm: 85 },
+      conduction: 'normal',
+      sources: [
+        { territory: 'anterior', st: 0.06, refLead: 'V3', shape: 'concave', hyperacuteT: 2.0 },
+      ],
+      acquisition: { emg: { sigmaMv: 0.06 }, baselineWander: { amplitudeMv: 0.3, hz: 0.3 } },
+      timeline: [{ atMin: 0, kind: 'occlusion' }],
+    },
+    ecgAtMin: 12,
+    expected: {
+      omi: true,
+      activateCathLab: true,
+      culprit: 'DA media',
+      positiveFindings: [],
+      negativeFindings: [],
+      rulesMiss:
+        'Con EMG 0.06 mV y wander 0.3 mV la medición sobre la señal ruidosa es poco fiable; la señal limpia (clean) muestra la T hiperaguda.',
+    },
+    angiography: 'DA media TIMI 1',
+    teachingPoints: [
+      'El ruido muscular y la respiración pueden ocultar T hiperagudas.',
+      'El promediado del latido y «quitar ruido» recuperan la morfología.',
+      'Ante la duda, repetir el ECG con el paciente tranquilo.',
+    ],
+    refs: [99],
+  },
+  {
+    id: 'F03',
+    group: 'F',
+    title: 'V1–V2 altos',
+    difficulty: 1,
+    vignette: {
+      age: 34,
+      sex: 'M',
+      history: 'ECG normal registrado con V1–V2 un espacio intercostal alto: rSr′ y T negativa.',
+      vitals: 'PA 120/75, FC 68',
+      troponin: 'hs-cTnT < 14 ng/L',
+    },
+    scenario: {
+      seed: 603,
+      durationS: 5,
+      rhythm: { type: 'sinus', hrBpm: 68 },
+      conduction: 'normal',
+      sources: [],
+      acquisition: { placement: 'v1v2-high' },
+    },
+    expected: {
+      omi: false,
+      activateCathLab: false,
+      positiveFindings: [],
+      negativeFindings: ['omi-composite', 'wellens'],
+    },
+    angiography: 'no indicada',
+    teachingPoints: [
+      'V1–V2 altos producen rSr′ y T negativa: mimic de Brugada o IAM septal.',
+      'Verificar la posición de los electrodos ante V1–V2 anómalos.',
+      'Repetir con colocación estándar resuelve la duda.',
+    ],
+    refs: [99],
+  },
+  {
+    id: 'F04',
+    group: 'F',
+    title: 'Powerline 60 Hz + LP 40 Hz',
+    difficulty: 1,
+    vignette: {
+      age: 71,
+      sex: 'M',
+      history:
+        'IAM inferior con interferencia de red de 60 Hz; el filtro LP 40 Hz suaviza la señal.',
+      vitals: 'PA 90/55, FC 40',
+      troponin: 'hs-cTnT 180 ng/L',
+    },
+    scenario: {
+      seed: 604,
+      durationS: 5,
+      rhythm: { type: 'av-block-3', atrialBpm: 80, escapeBpm: 40 },
+      conduction: 'normal',
+      sources: [
+        { territory: 'inferior-rca', st: 0.3, refLead: 'III', shape: 'straight' },
+        { territory: 'rv', st: 0.15, refLead: 'V4R', shape: 'straight' },
+      ],
+      acquisition: { powerline: { hz: 60, amplitudeMv: 0.08 }, lowPassHz: 40 },
+      timeline: [{ atMin: 0, kind: 'occlusion' }],
+    },
+    ecgAtMin: 90,
+    expected: {
+      omi: true,
+      activateCathLab: true,
+      culprit: 'CD proximal',
+      positiveFindings: [],
+      negativeFindings: [],
+      rulesMiss:
+        'Caso de adquisición: el LP 40 Hz reduce espigas y amplitud R; la señal limpia mantiene los hallazgos.',
+    },
+    angiography: 'CD proximal TIMI 0',
+    teachingPoints: [
+      'La interferencia de red añade un zumbido uniforme de 50/60 Hz.',
+      'El LP 40 Hz limpia el ruido pero suaviza las espigas del QRS.',
+      'Comparar clean vs filtrada enseña el efecto de cada filtro.',
+    ],
+    refs: [33],
+  },
+];
