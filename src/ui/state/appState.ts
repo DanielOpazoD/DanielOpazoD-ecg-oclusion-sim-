@@ -1,0 +1,95 @@
+import type { Scenario } from '../../engine/index.js';
+import { defaultScenario } from '../../engine/index.js';
+import { createStore } from './store.js';
+
+/** View and display options. */
+export interface ViewState {
+  speedMmS: 25 | 50;
+  gainMmMv: 5 | 10 | 20;
+  layout: '3x4' | '3x4+II' | '6x2' | '12x1';
+  /** Show clean (ground-truth) trace overlay. */
+  showClean: boolean;
+  /** Show V7–V9 / V3R–V4R extra row. */
+  extraLeads: boolean;
+  theme: 'dark' | 'light';
+  /** Tiny J-point ticks. */
+  markers: boolean;
+}
+
+export type Mode = 'cases' | 'lab' | 'quiz';
+export type PanelTab = 'clinical' | 'findings' | 'measurements' | 'teaching' | 'lab';
+
+export interface QuizState {
+  order: string[];
+  idx: number;
+  /** Selected findings for current case. */
+  picked: Set<string>;
+  decision?: 'activate' | 'serial' | 'not-ischemic';
+  submitted: boolean;
+  results: QuizResult[];
+  done: boolean;
+}
+
+export interface QuizResult {
+  caseId: string;
+  correct: boolean;
+  expectedOmi: boolean;
+  decidedActivate: boolean;
+}
+
+export interface AppState {
+  mode: Mode;
+  /** 'blind' hides group/title in the case browser. */
+  blind: boolean;
+  caseId: string | null;
+  /** Editable working copy of the scenario (lab mode). */
+  scenario: Scenario;
+  /** Evaluation point in minutes. */
+  tMin: number;
+  patient: { sex: 'M' | 'F'; age: number };
+  view: ViewState;
+  playing: boolean;
+  /** Playback speed: sim minutes per real second. */
+  playSpeedMinPerS: number;
+  quiz: QuizState;
+  panelTab: PanelTab;
+  /** Analysis signal source. */
+  analysisSource: 'clean' | 'acquired';
+}
+
+const savedTheme = (globalThis.localStorage?.getItem('omilab.theme') ?? 'dark') as 'dark' | 'light';
+
+export const store = createStore<AppState>({
+  mode: 'cases',
+  blind: false,
+  caseId: null,
+  scenario: defaultScenario(),
+  tMin: 0,
+  patient: { sex: 'M', age: 60 },
+  view: {
+    speedMmS: 25,
+    gainMmMv: 10,
+    layout: '3x4+II',
+    showClean: false,
+    extraLeads: false,
+    theme: savedTheme,
+    markers: false,
+  },
+  playing: false,
+  playSpeedMinPerS: 1,
+  quiz: {
+    order: [],
+    idx: 0,
+    picked: new Set(),
+    submitted: false,
+    results: [],
+    done: false,
+  },
+  panelTab: 'findings',
+  analysisSource: 'clean',
+});
+
+export function setTheme(theme: 'dark' | 'light'): void {
+  store.update({ view: { ...store.get().view, theme } });
+  globalThis.localStorage?.setItem('omilab.theme', theme);
+}
