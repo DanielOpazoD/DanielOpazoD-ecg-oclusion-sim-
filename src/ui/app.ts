@@ -1,7 +1,7 @@
 import { generateEcg, type Ecg12 } from '../engine/index.js';
 import { analyzeEcg, type AnalysisReport } from '../analysis/index.js';
 import { getCase, CASES } from '../cases/index.js';
-import { store, setTheme } from './state/appState.js';
+import { store, setTheme, type AppState } from './state/appState.js';
 import { renderEcg } from './ecg/renderer.js';
 import { Monitor } from './ecg/monitor.js';
 import { renderVectorView } from './ecg/vectorView.js';
@@ -70,7 +70,7 @@ export function mount(root: HTMLElement): void {
   const regenerate = () => {
     const s = store.get();
     try {
-      ecg = generateEcg(s.scenario, s.tMin);
+      ecg = generateEcg({ ...s.scenario, durationS: Math.max(10, s.scenario.durationS) }, s.tMin);
     } catch (e) {
       console.error('generateEcg failed', e);
       ecg = null;
@@ -227,6 +227,12 @@ export function mount(root: HTMLElement): void {
   };
 
   // --- Header buttons ------------------------------------------------------
+  for (const b of root.querySelectorAll<HTMLButtonElement>('.mode-tabs button')) {
+    b.addEventListener('click', () => {
+      const mode = b.dataset.mode as AppState['mode'];
+      store.update({ mode, playing: false });
+    });
+  }
   root.querySelector('#btn-theme')!.addEventListener('click', () => {
     setTheme(store.get().view.theme === 'dark' ? 'light' : 'dark');
   });

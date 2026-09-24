@@ -32,7 +32,7 @@ export function phaseLabel(
   if (q > 0.5) return 'Onda Q';
   if (st > 0.3) return 'STE';
   if (hyper > 0.3) return 'T hiperaguda';
-  return 'Pre-occlusión';
+  return 'Preoclusión';
 }
 
 const KIND_LABEL: Record<TimelineEvent['kind'], string> = {
