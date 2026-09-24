@@ -40,7 +40,11 @@ describe('delineate', () => {
   it('recovers the same metrics on the acquired (noisy) signal', () => {
     const dirty = generateEcg({
       ...sinus,
-      acquisition: { baselineWander: { amplitudeMv: 0.1, hz: 0.3 }, emg: { sigmaMv: 0.03 }, powerline: { hz: 50, amplitudeMv: 0.02 } },
+      acquisition: {
+        baselineWander: { amplitudeMv: 0.1, hz: 0.3 },
+        emg: { sigmaMv: 0.03 },
+        powerline: { hz: 50, amplitudeMv: 0.02 },
+      },
     });
     const d = delineate({ fs: dirty.fs, leads: dirty.leads });
     expect(Math.abs(d.hrBpm! - 72)).toBeLessThan(3);
