@@ -21,15 +21,17 @@ export const GROUP_D: CaseDefinition[] = [
       rhythm: { type: 'sinus', hrBpm: 62 },
       conduction: 'normal',
       sources: [
-        { territory: 'anterior', st: 0.12, refLead: 'V3', shape: 'concave', hyperacuteT: 0 },
+        { territory: 'anterior', st: 0.4, refLead: 'V3', shape: 'concave', hyperacuteT: 0 },
       ],
       beatOverrides: { jNotchMv: 0.06, aTScale: 1.3, qtc: 380, rScale: 1.4 },
     },
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: [],
-      negativeFindings: ['omi-composite', 'smith-4v', 'hyperacute-t'],
+      positiveFindings: ['stemi-udmi4', 'terminal-qrs-distortion'],
+      negativeFindings: ['smith-4v', 'hyperacute-t'],
+      rulesMiss:
+        'Falso STEMI+: los criterios UDMI4 se cumplen técnicamente; el diagnóstico de repolarización precoz es morfológico (concavidad, muesca J, R alta, QTc corto, ausencia de recíprocos).',
     },
     angiography: 'no indicada',
     teachingPoints: [

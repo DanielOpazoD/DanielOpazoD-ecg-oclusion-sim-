@@ -62,7 +62,7 @@ export const GROUP_C: CaseDefinition[] = [
       activateCathLab: true,
       culprit: 'TCI 95 %',
       positiveFindings: ['avr-diffuse-std'],
-      negativeFindings: [],
+      negativeFindings: ['rv-involvement'],
     },
     angiography: 'TCI 95 %',
     teachingPoints: [

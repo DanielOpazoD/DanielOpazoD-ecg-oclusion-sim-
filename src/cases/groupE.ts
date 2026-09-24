@@ -31,7 +31,6 @@ export const GROUP_E: CaseDefinition[] = [
       culprit: 'DA',
       positiveFindings: ['hyperacute-t'],
       negativeFindings: ['stemi-udmi4'],
-      rulesMiss: 'A 10 min la T hiperaguda ya es marcador OMI; STEMI llega ~40 min.',
     },
     angiography: 'DA TIMI 0',
     teachingPoints: [
@@ -142,17 +141,19 @@ export const GROUP_E: CaseDefinition[] = [
       rhythm: { type: 'sinus', hrBpm: 100 },
       conduction: 'normal',
       sources: [
-        { territory: 'inferior-rca', st: 0.12, refLead: 'III', shape: 'straight' },
-        { territory: 'subendocardial', st: -0.1, refLead: 'V5', shape: 'straight' },
+        { territory: 'inferior-rca', st: 0.2, refLead: 'III', shape: 'straight' },
+        { territory: 'subendocardial', st: -0.22, refLead: 'V5', shape: 'straight' },
       ],
       timeline: [{ atMin: 0, kind: 'occlusion' }],
     },
     ecgAtMin: 60,
+    // ECG estándar de 12 derivaciones: el patrón de Aslanger se define sobre el 12.
+    leadsAvailable: ['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'],
     expected: {
       omi: true,
       activateCathLab: true,
       culprit: 'CD + multivaso',
-      positiveFindings: ['aslanger'],
+      positiveFindings: ['aslanger', 'avr-diffuse-std', 'reciprocal-avl'],
       negativeFindings: ['stemi-udmi4'],
     },
     angiography: 'CD aguda + enfermedad 3 vasos',

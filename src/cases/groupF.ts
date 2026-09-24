@@ -30,8 +30,6 @@ export const GROUP_F: CaseDefinition[] = [
       culprit: 'DA media',
       positiveFindings: [],
       negativeFindings: [],
-      rulesMiss:
-        'Caso docente de artefacto: el filtro 0.5 Hz causal distorsiona el ST (pseudo-depresión tras R alta); comparar con 0.05 Hz.',
     },
     angiography: 'DA media TIMI 0',
     teachingPoints: [
@@ -71,8 +69,6 @@ export const GROUP_F: CaseDefinition[] = [
       culprit: 'DA media',
       positiveFindings: [],
       negativeFindings: [],
-      rulesMiss:
-        'Con EMG 0.06 mV y wander 0.3 mV la medición sobre la señal ruidosa es poco fiable; la señal limpia (clean) muestra la T hiperaguda.',
     },
     angiography: 'DA media TIMI 1',
     teachingPoints: [
@@ -148,8 +144,6 @@ export const GROUP_F: CaseDefinition[] = [
       culprit: 'CD proximal',
       positiveFindings: [],
       negativeFindings: [],
-      rulesMiss:
-        'Caso de adquisición: el LP 40 Hz reduce espigas y amplitud R; la señal limpia mantiene los hallazgos.',
     },
     angiography: 'CD proximal TIMI 0',
     teachingPoints: [

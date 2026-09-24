@@ -32,7 +32,7 @@ export const GROUP_A: CaseDefinition[] = [
       activateCathLab: true,
       culprit: 'DA proximal',
       positiveFindings: ['stemi-udmi4'],
-      negativeFindings: ['wellens', 'avr-diffuse-std', 'reciprocal-avl'],
+      negativeFindings: ['wellens', 'avr-diffuse-std', 'reciprocal-avl', 'rv-involvement'],
     },
     angiography: 'DA proximal TIMI 0',
     teachingPoints: [
@@ -111,7 +111,7 @@ export const GROUP_A: CaseDefinition[] = [
       activateCathLab: true,
       culprit: 'CD proximal',
       positiveFindings: ['stemi-udmi4', 'rv-involvement', 'reciprocal-avl'],
-      negativeFindings: ['de-winter'],
+      negativeFindings: ['de-winter', 'aslanger'],
     },
     angiography: 'CD proximal TIMI 0',
     teachingPoints: [
@@ -151,7 +151,7 @@ export const GROUP_A: CaseDefinition[] = [
       activateCathLab: true,
       culprit: 'CD proximal',
       positiveFindings: ['stemi-udmi4', 'rv-involvement'],
-      negativeFindings: [],
+      negativeFindings: ['aslanger'],
     },
     angiography: 'CD proximal',
     teachingPoints: [
@@ -239,7 +239,7 @@ export const GROUP_A: CaseDefinition[] = [
       activateCathLab: true,
       culprit: 'DA proximal',
       positiveFindings: ['stemi-udmi4', 'terminal-qrs-distortion'],
-      negativeFindings: [],
+      negativeFindings: ['rv-involvement'],
     },
     angiography: 'DA proximal TIMI 0',
     teachingPoints: [

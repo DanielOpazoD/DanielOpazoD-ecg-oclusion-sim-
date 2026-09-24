@@ -186,15 +186,17 @@ export const GROUP_B: CaseDefinition[] = [
       rhythm: { type: 'sinus', hrBpm: 98 },
       conduction: 'normal',
       sources: [
-        { territory: 'inferior-rca', st: 0.12, refLead: 'III', shape: 'straight' },
-        { territory: 'subendocardial', st: -0.1, refLead: 'V5', shape: 'straight' },
+        { territory: 'inferior-rca', st: 0.2, refLead: 'III', shape: 'straight' },
+        { territory: 'subendocardial', st: -0.22, refLead: 'V5', shape: 'straight' },
       ],
     },
+    // ECG estándar de 12 derivaciones: el patrón de Aslanger se define sobre el 12.
+    leadsAvailable: ['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'],
     expected: {
       omi: true,
       activateCathLab: true,
       culprit: 'CD aguda + enfermedad 3 vasos',
-      positiveFindings: ['aslanger'],
+      positiveFindings: ['aslanger', 'avr-diffuse-std', 'reciprocal-avl'],
       negativeFindings: ['stemi-udmi4'],
     },
     angiography: 'CD aguda + enfermedad 3 vasos',
@@ -313,7 +315,7 @@ export const GROUP_B: CaseDefinition[] = [
       activateCathLab: true,
       culprit: 'DA proximal',
       positiveFindings: ['sgarbossa-modified', 'barcelona'],
-      negativeFindings: [],
+      negativeFindings: ['rv-involvement'],
     },
     angiography: 'DA proximal',
     teachingPoints: [
@@ -350,7 +352,7 @@ export const GROUP_B: CaseDefinition[] = [
       activateCathLab: true,
       culprit: 'CD',
       positiveFindings: ['sgarbossa-modified'],
-      negativeFindings: ['stemi-udmi4'],
+      negativeFindings: ['stemi-udmi4', 'rv-involvement'],
     },
     angiography: 'CD',
     teachingPoints: [
@@ -387,7 +389,7 @@ export const GROUP_B: CaseDefinition[] = [
       activateCathLab: true,
       culprit: 'DA proximal pre-S1',
       positiveFindings: ['stemi-udmi4'],
-      negativeFindings: [],
+      negativeFindings: ['rv-involvement'],
     },
     angiography: 'DA proximal pre-S1',
     teachingPoints: [
