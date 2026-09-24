@@ -28,16 +28,8 @@ export const GROUP_K: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: [
-        'stemi-udmi4',
-        'rv-involvement',
-        'reciprocal-avl',
-        'terminal-qrs-distortion',
-        'lvh-voltage',
-      ],
-      negativeFindings: ['pacing'],
-      rulesMiss:
-        'El QRS ancho ventricular con discordancia ST/T satisface las reglas de oclusión; el origen es un ritmo de escape acelerado.',
+      positiveFindings: ['wide-qrs'],
+      negativeFindings: ['stemi-udmi4', 'omi-composite', 'pacing'],
       diagnosis: 'Ritmo idioventricular acelerado',
       distractors: ['Ritmo de la unión', 'Bloqueo AV completo', 'TV lenta'],
     },
@@ -80,7 +72,7 @@ export const GROUP_K: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['heart-rate'],
+      positiveFindings: ['heart-rate', 'wide-qrs'],
       negativeFindings: ['omi-composite'],
       diagnosis: 'Taquicardia ventricular monomórfica',
       distractors: ['TSV con aberrancia', 'Flutter 2:1', 'Taquicardia sinusal'],

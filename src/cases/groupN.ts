@@ -115,18 +115,8 @@ export const GROUP_N: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: [
-        'low-voltage',
-        'heart-rate',
-        'smith-3v',
-        'smith-4v',
-        'pathological-q',
-        'av-dissociation',
-        'u-wave',
-      ],
+      positiveFindings: ['low-voltage', 'heart-rate', 'pathological-q', 'u-wave'],
       negativeFindings: [],
-      rulesMiss:
-        'El bajo voltaje con alternancia confunde las métricas de amplitud y de ritmo; el derrame es la lesión real.',
       diagnosis: 'Derrame pericárdico con bajo voltaje',
       distractors: ['Hipotensión por sepsis', 'Infarto anterior', 'Neumotórax a tensión'],
     },
@@ -169,10 +159,8 @@ export const GROUP_N: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['axis-deviation', 'smith-3v', 'smith-4v', 'av-dissociation'],
-      negativeFindings: [],
-      rulesMiss:
-        'El espejo sagital de la dextrocardia invierte amplitudes y ejes y confunde los scores de oclusión.',
+      positiveFindings: ['axis-deviation'],
+      negativeFindings: ['av-dissociation', 'omi-composite'],
       diagnosis: 'Dextrocardia',
       distractors: ['Intercambio de electrodos de brazos', 'Hemibloqueo posterior', 'Normalidad'],
     },
@@ -215,10 +203,8 @@ export const GROUP_N: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['heart-rate', 'smith-3v', 'smith-4v'],
+      positiveFindings: ['heart-rate'],
       negativeFindings: [],
-      rulesMiss:
-        'La onda de Osborn y la bradicardia alteran las relaciones del score de Smith; la causa es la hipotermia.',
       diagnosis: 'Hipotermia con onda de Osborn',
       distractors: ['Isquemia por infarto', 'Bradicardia sinusal', 'Bloqueo AV completo'],
     },

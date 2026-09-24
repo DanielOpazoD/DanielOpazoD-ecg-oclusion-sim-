@@ -70,18 +70,10 @@ export const GROUP_L: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: [
-        'pacing',
-        'stemi-udmi4',
-        'rv-involvement',
-        'reciprocal-avl',
-        'wide-qrs',
-        'bundle-branch-morphology',
-        'axis-deviation',
-      ],
-      negativeFindings: [],
+      positiveFindings: ['pacing', 'wide-qrs', 'sgarbossa', 'sgarbossa-modified', 'barcelona'],
+      negativeFindings: ['stemi-udmi4'],
       rulesMiss:
-        'El QRS marcapaseado produce discordancia ST/T que las reglas de oclusión leen como lesión; la espiga delata el origen.',
+        'El QRS marcapaseado produce discordancia ST/T que los criterios de Sgarbossa/Barcelona leen como lesión; no hay isquemia real.',
       diagnosis: 'Marcapasos ventricular VVI',
       distractors: ['Marcapasos auricular AAI', 'Marcapasos dual DDD', 'Ritmo idioventricular'],
     },
@@ -123,19 +115,10 @@ export const GROUP_L: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: [
-        'pacing',
-        'stemi-udmi4',
-        'rv-involvement',
-        'reciprocal-avl',
-        'wide-qrs',
-        'bundle-branch-morphology',
-        'axis-deviation',
-        'lvh-voltage',
-      ],
-      negativeFindings: [],
+      positiveFindings: ['pacing', 'wide-qrs', 'sgarbossa', 'sgarbossa-modified', 'barcelona'],
+      negativeFindings: ['stemi-udmi4'],
       rulesMiss:
-        'El QRS marcapaseado produce discordancia ST/T que las reglas de oclusión leen como lesión; la espiga delata el origen.',
+        'El QRS marcapaseado produce discordancia ST/T que los criterios de Sgarbossa/Barcelona leen como lesión; no hay isquemia real.',
       diagnosis: 'Marcapasos dual DDD',
       distractors: [
         'Marcapasos ventricular VVI',

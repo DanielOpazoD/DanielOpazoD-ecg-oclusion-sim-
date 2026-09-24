@@ -171,10 +171,8 @@ export const GROUP_M: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['qtc-prolonged', 'smith-3v', 'smith-4v'],
+      positiveFindings: ['qtc-prolonged'],
       negativeFindings: [],
-      rulesMiss:
-        'El ST largo por hipocalcemia altera las relaciones que usan los scores de Smith; la causa es metabólica.',
       diagnosis: 'Hipocalcemia',
       distractors: ['QT largo congénito', 'Hiperpotasemia', 'Isquemia subendocárdica'],
     },
@@ -306,10 +304,8 @@ export const GROUP_M: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['qtc-prolonged', 'smith-3v', 'smith-4v'],
+      positiveFindings: ['qtc-prolonged'],
       negativeFindings: [],
-      rulesMiss:
-        'El QT muy largo distorsiona las métricas de repolarización que pondera el score de Smith; no hay oclusión.',
       diagnosis: 'Síndrome de QT largo',
       distractors: ['Hipocalcemia', 'Hiperpotasemia', 'Isquemia'],
     },

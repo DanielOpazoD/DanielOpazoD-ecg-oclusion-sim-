@@ -120,10 +120,8 @@ export const GROUP_G: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['heart-rate', 'smith-4v', 'u-wave'],
-      negativeFindings: ['rr-irregular', 'wide-qrs'],
-      rulesMiss:
-        'La taquicardia sinusal cambia amplitudes y relaciones ST/T que el score de Smith interpreta como lesión; no hay oclusión.',
+      positiveFindings: ['heart-rate', 'u-wave'],
+      negativeFindings: ['rr-irregular', 'wide-qrs', 'omi-composite'],
       diagnosis: 'Taquicardia sinusal',
       distractors: [
         'Flutter auricular 2:1',
@@ -213,10 +211,8 @@ export const GROUP_G: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['heart-rate', 'rr-irregular', 'smith-3v', 'smith-4v', 'axis-deviation'],
+      positiveFindings: ['heart-rate', 'rr-irregular', 'axis-deviation'],
       negativeFindings: ['pacing'],
-      rulesMiss:
-        'La respuesta ventricular rápida añade cambios de repolarización que los scores de Smith leen como lesión; no hay oclusión.',
       diagnosis: 'Fibrilación auricular con respuesta rápida',
       distractors: ['Flutter auricular variable', 'Taquicardia auricular multifocal', 'TSV'],
     },
@@ -259,8 +255,16 @@ export const GROUP_G: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['heart-rate', 'rr-irregular', 'pr-prolonged'],
-      negativeFindings: ['omi-composite', 'flutter-waves'],
+      positiveFindings: [
+        'heart-rate',
+        'rr-irregular',
+        'pr-prolonged',
+        'av-dissociation',
+        'flutter-waves',
+      ],
+      negativeFindings: ['omi-composite'],
+      rulesMiss:
+        'Las ondas f y la conducción irregular hacen que el detector lea actividad auricular organizada y un patrón tipo flutter.',
       diagnosis: 'Fibrilación auricular con respuesta lenta',
       distractors: ['Bloqueo AV completo', 'Bradicardia sinusal', 'Flutter con alto bloqueo'],
     },
@@ -302,10 +306,8 @@ export const GROUP_G: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['heart-rate', 'flutter-waves', 'smith-3v', 'smith-4v', 'axis-deviation'],
+      positiveFindings: ['heart-rate', 'flutter-waves', 'axis-deviation'],
       negativeFindings: ['rr-irregular'],
-      rulesMiss:
-        'A 150 lpm las ondas F y los cambios de repolarización activan los scores de Smith; el diagnóstico es flutter, no oclusión.',
       diagnosis: 'Flutter auricular con conducción 2:1',
       distractors: ['Taquicardia sinusal', 'TSV por reentrada nodal', 'FA con respuesta rápida'],
     },
@@ -348,10 +350,8 @@ export const GROUP_G: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['rr-irregular', 'pr-prolonged', 'smith-4v', 'axis-deviation'],
+      positiveFindings: ['rr-irregular', 'pr-prolonged', 'axis-deviation', 'flutter-waves'],
       negativeFindings: ['pacing'],
-      rulesMiss:
-        'El flutter variable desordena las medidas PR/ST y activa el score de Smith; no hay oclusión.',
       diagnosis: 'Flutter auricular con conducción variable',
       distractors: ['Fibrilación auricular', 'Taquicardia auricular multifocal', 'TSV'],
     },

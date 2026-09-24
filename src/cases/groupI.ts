@@ -243,20 +243,8 @@ export const GROUP_I: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: [
-        'av-dissociation',
-        'heart-rate',
-        'stemi-udmi4',
-        'reciprocal-avl',
-        'terminal-qrs-distortion',
-        'pathological-q',
-        'pr-prolonged',
-        'axis-deviation',
-        'lvh-voltage',
-      ],
-      negativeFindings: ['pacing', 'flutter-waves'],
-      rulesMiss:
-        'El escape ventricular ancho genera discordancia ST/T secundaria que satisface las reglas de oclusión; la lesión real es el bloqueo completo.',
+      positiveFindings: ['av-dissociation', 'heart-rate', 'pr-prolonged', 'wide-qrs'],
+      negativeFindings: ['stemi-udmi4', 'omi-composite', 'pacing', 'flutter-waves'],
       diagnosis: 'Bloqueo AV completo con escape ventricular',
       distractors: ['Bradicardia sinusal', 'Ritmo idioventricular', 'Bloqueo AV 2:1'],
     },
