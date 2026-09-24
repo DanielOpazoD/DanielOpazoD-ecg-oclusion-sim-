@@ -9,8 +9,11 @@ export const rvInvolvement: Rule = (ctx) => {
   const v1 = stJmm(ctx, 'V1');
   const stII = stJmm(ctx, 'II');
   const stIII = stJmm(ctx, 'III');
-  const inferior = stIII > 0.5 || stII > 0.5;
-  const positive = v4r >= 1 || (v1 >= 1 && inferior && stIII > stII);
+  // Requires an inferior-RCA context: STE III ≥ 0.5 mm AND III > II.
+  const inferior = stIII >= 0.5 && stIII > stII;
+  // Discordant V1/V4R elevation in LBBB/paced is not RV infarction.
+  const qrsOk = ctx.conduction !== 'lbbb' && ctx.conduction !== 'paced';
+  const positive = qrsOk && inferior && (v4r >= 1 || v1 >= 1);
   return finding(
     'rv-involvement',
     'Afectación del ventrículo derecho',

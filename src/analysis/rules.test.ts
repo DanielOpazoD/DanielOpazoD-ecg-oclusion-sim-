@@ -114,8 +114,8 @@ describe('individual rules — positive/negative', () => {
   it('aslanger: III-only STE + lateral STD + V1>V2', () => {
     const p = run({
       sources: [
-        { territory: 'inferior-rca', st: 0.12, refLead: 'III', shape: 'straight' },
-        { territory: 'subendocardial', st: -0.1, refLead: 'V5', shape: 'straight' },
+        { territory: 'inferior-rca', st: 0.24, refLead: 'III', shape: 'straight' },
+        { territory: 'subendocardial', st: -0.26, refLead: 'V5', shape: 'straight' },
       ],
     });
     expect(p.pos('aslanger')).toBe(true);

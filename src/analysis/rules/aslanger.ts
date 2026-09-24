@@ -15,7 +15,7 @@ export const aslanger: Rule = (ctx) => {
     (l) => stJmm(ctx, l) <= -0.5 && mmOf(ctx, l, 'tTerminal') > 0,
   );
   const positive =
-    stIII >= 0.3 && stIII > stII && stIII > stAVF && stdLateral.length >= 1 && stV1 > stV2;
+    stIII >= 0.3 && stII < 0.5 && stAVF < stIII - 0.5 && stdLateral.length >= 1 && stV1 > stV2;
   return finding(
     'aslanger',
     'Patrón de Aslanger',
