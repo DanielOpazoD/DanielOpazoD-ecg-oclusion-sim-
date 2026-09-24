@@ -33,13 +33,18 @@ describe('schedule — determinism and sinus', () => {
 });
 
 describe('schedule — AF / flutter / SVT / junctional', () => {
-  it('afib: RR CV > 0.15 and no RR < 250 ms', () => {
+  it('afib: RR CV > 0.15 and no RR < 260 ms (refractoriness floor)', () => {
     const { beats } = sched({ type: 'afib', hrBpm: 90 }, undefined, 60);
     const rrs = beats.slice(1).map((b, i) => b.tMs - beats[i]!.tMs);
     const mean = rrs.reduce((a, x) => a + x, 0) / rrs.length;
     const sd = Math.sqrt(rrs.reduce((a, x) => a + (x - mean) ** 2, 0) / rrs.length);
     expect(sd / mean).toBeGreaterThan(0.15);
-    expect(Math.min(...rrs)).toBeGreaterThanOrEqual(250);
+    expect(Math.min(...rrs)).toBeGreaterThanOrEqual(260);
+  });
+  it('afib 150 over 60 s: generates without throwing, min RR ≥ 260 ms', () => {
+    const { beats } = sched({ type: 'afib', hrBpm: 150 }, undefined, 60);
+    const rrs = beats.slice(1).map((b, i) => b.tMs - beats[i]!.tMs);
+    expect(Math.min(...rrs)).toBeGreaterThanOrEqual(260);
   });
   it('flutter 2:1: ventricular rate = atrial/2 ±2%', () => {
     const { beats } = sched({ type: 'flutter', atrialBpm: 300, ratio: 2 }, undefined, 20);

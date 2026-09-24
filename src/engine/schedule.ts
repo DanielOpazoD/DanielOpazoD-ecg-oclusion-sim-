@@ -210,9 +210,12 @@ export function generateSchedule(
       const base = sinusBaseRr(rhythm.hrBpm);
       let t = 350;
       while (t < endMs) {
-        const rr =
+        const rr = Math.max(
           base *
-          clamp(0.8 + Math.exp(0.42 * rng.gaussian()) * 0.2 + 0.38 * rng.gaussian(), 0.38, 2.15);
+            clamp(0.8 + Math.exp(0.42 * rng.gaussian()) * 0.2 + 0.38 * rng.gaussian(), 0.38, 2.15),
+          // AV-node refractoriness floor: conducted RR never < 260 ms.
+          Math.max(0.38 * base, 260),
+        );
         pushBeat(beats, { tMs: t, kind: 'conducted', rrMs: base, ventricular: false }, state);
         t += rr;
       }
