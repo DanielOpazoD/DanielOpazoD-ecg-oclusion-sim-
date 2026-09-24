@@ -30,11 +30,7 @@ export type LeadId = (typeof LEAD_IDS)[number];
 
 /** Electrode placement presets (§7 `placement`). */
 export type Placement =
-  | 'standard'
-  | 'la-ra-swap'
-  | 'la-ll-swap'
-  | 'v1v2-high'
-  | 'precordial-lateral-shift';
+  'standard' | 'la-ra-swap' | 'la-ll-swap' | 'v1v2-high' | 'precordial-lateral-shift';
 
 /** Dower inverse matrix coefficients (§1, Dower 1980). */
 const DOWER: Record<'I' | 'II' | 'V1' | 'V2' | 'V3' | 'V4' | 'V5' | 'V6', Vec3> = {

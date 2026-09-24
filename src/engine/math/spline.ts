@@ -27,10 +27,7 @@ export function ramp(t: number, a: number, b: number): number {
  * Monotone cubic Hermite spline (Fritsch–Carlson) through scalar control
  * points. Used per-component by `hermiteVec3` (§2.3).
  */
-export function hermiteScalar(
-  ts: readonly number[],
-  ys: readonly number[],
-): (t: number) => number {
+export function hermiteScalar(ts: readonly number[], ys: readonly number[]): (t: number) => number {
   const n = ts.length;
   if (n < 2) throw new Error('need ≥2 control points');
   const m = new Array<number>(n).fill(0);
@@ -82,9 +79,7 @@ export function hermiteScalar(
  * Monotone cubic Hermite spline through `(τ, Vec3)` control points (§2.3).
  * Returns an evaluator `f(τ) → Vec3`.
  */
-export function hermiteVec3(
-  points: readonly (readonly [number, Vec3])[],
-): (t: number) => Vec3 {
+export function hermiteVec3(points: readonly (readonly [number, Vec3])[]): (t: number) => Vec3 {
   const ts = points.map((p) => p[0]);
   const fx = hermiteScalar(
     ts,

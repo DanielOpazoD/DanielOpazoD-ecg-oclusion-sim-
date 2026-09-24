@@ -24,7 +24,8 @@ export interface Territory {
 export const TERRITORIES: readonly Territory[] = [
   {
     id: 'anteroseptal',
-    direction: normalize([-0.1, -0.15, -0.95]),
+    // Y lowered vs §4 (−0.15 → −0.30) to yield reciprocal inferior STD.
+    direction: normalize([-0.1, -0.3, -0.93]),
     looksAt: ['V1', 'V2', 'V3', 'V4', 'aVR'],
     artery: 'DA proximal (pre-S1)',
     profile: 'transmural',
@@ -59,14 +60,17 @@ export const TERRITORIES: readonly Territory[] = [
   },
   {
     id: 'inferior-rca',
-    direction: normalize([-0.15, 0.92, 0.35]),
+    // Z reduced vs §4 (0.35 → 0.10) so ST(V1) ≥ 0 (§9.4).
+    direction: normalize([-0.15, 0.95, 0.1]),
     looksAt: ['II', 'III', 'aVF'],
     artery: 'CD',
     profile: 'transmural',
   },
   {
     id: 'inferior-lcx',
-    direction: normalize([0.45, 0.8, 0.4]),
+    // Rotated toward +X vs §4 (0.45,0.80,0.40) so ST(aVL) ≥ −0.5 mm (§9.4)
+    // while ST(II) ≥ ST(III) and V5–V6 still elevate.
+    direction: normalize([0.75, 0.55, 0.35]),
     looksAt: ['II', 'aVF', 'V5', 'V6'],
     artery: 'CX',
     profile: 'transmural',
