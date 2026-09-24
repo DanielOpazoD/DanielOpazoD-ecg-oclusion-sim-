@@ -46,6 +46,8 @@ export interface LeadMeasurement {
   tWidth50Ms: number;
   /** Terminal T (max |v| in last 120 ms of T), signed mV. */
   tTerminal: number;
+  /** U-wave peak after T end, signed mV. */
+  uAmp: number;
   /** Early-T positive deflection before a negative peak (Wellens A), mV (0 if none). */
   tBiphasic: number;
   /** Minimum value in the terminal 30 ms of QRS relative to baseline, mV.
@@ -152,6 +154,7 @@ function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): Le
       tQrsAreaRatio: 0,
       tWidth50Ms: 0,
       tTerminal: 0,
+      uAmp: 0,
       tBiphasic: 0,
       terminalMin: 0,
     };
@@ -243,6 +246,13 @@ function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): Le
   while (wStart < tPeak && Math.abs(rel(wStart)) < half) wStart++;
   while (wEnd > tPeak && Math.abs(rel(wEnd)) < half) wEnd--;
   const tWidth50Ms = ((wEnd - wStart) / fs) * 1000;
+  let uAmp = 0;
+  const uLo = Math.min(wave.length - 1, tEnd + msToSamples(40, fs));
+  const uHi = Math.min(wave.length - 1, tEnd + msToSamples(220, fs));
+  for (let i = uLo; i <= uHi; i++) {
+    const x = rel(i);
+    if (Math.abs(x) > Math.abs(uAmp)) uAmp = x;
+  }
   let tTerminal = 0;
   for (let i = Math.max(junction, tEnd - msToSamples(120, fs)); i <= tEnd; i++) {
     const x = rel(i);
@@ -277,6 +287,7 @@ function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): Le
     tQrsAreaRatio: qrsArea > 1e-6 ? tArea / qrsArea : 0,
     tWidth50Ms,
     tTerminal,
+    uAmp,
     tBiphasic,
     terminalMin,
   };

@@ -1,6 +1,9 @@
 import type { Ecg12, LeadId, ConductionSpec } from '../engine/index.js';
 import { LEAD_IDS } from '../engine/index.js';
 import { measureEcg, type Measurements } from './measure.js';
+import { delineate, type Delineation } from './delineate/delineate.js';
+import { auditDelineation } from './audit.js';
+import { GENERAL_RULES } from './rules/general.js';
 import type { Finding, RuleContext } from './rules/types.js';
 import { stemiUdmi4 } from './rules/stemi-udmi4.js';
 import { posteriorStd } from './rules/posterior-std.js';
@@ -45,10 +48,14 @@ const RULES = [
   pathologicalQ,
 ];
 
+const GENERAL = GENERAL_RULES;
+
 /** Full analysis report. */
 export interface AnalysisReport {
   measurements: Measurements;
   findings: Finding[];
+  /** Independent sample delineation, optionally audited against generator truth. */
+  delineation: Delineation;
   /** Composite OMI verdict (§8 `omi-composite`). */
   omi: Finding;
 }
@@ -68,20 +75,37 @@ export interface AnalyzeOptions {
 
 /** Run the full analysis on an ECG (§8). */
 export function analyzeEcg(ecg: Ecg12, opts: AnalyzeOptions = {}): AnalysisReport {
+  const source = opts.source ?? 'clean';
+  const rawDelineation = delineate({
+    fs: ecg.fs,
+    leads: source === 'acquired' ? ecg.leads : ecg.clean,
+  });
   const ctx: RuleContext = {
-    measurements: measureEcg(ecg, opts.source ?? 'clean'),
+    measurements: measureEcg(ecg, source),
+    delineation: ecg.schedule
+      ? auditDelineation(rawDelineation, {
+          fiducials: ecg.beats,
+          schedule: ecg.schedule,
+          fs: ecg.fs,
+        })
+      : rawDelineation,
     patient: { sex: opts.sex ?? 'M', age: opts.age ?? 60 },
     leadsAvailable: opts.leadsAvailable ?? [...LEAD_IDS],
     conduction: opts.conduction ?? 'normal',
   };
-  const findings = RULES.map((r) => r(ctx));
-  const omi = omiComposite(findings);
-  return { measurements: ctx.measurements, findings, omi };
+  const omiFindings = RULES.map((r) => r(ctx));
+  const findings = [...omiFindings, ...GENERAL.map((r) => r(ctx))];
+  const omi = omiComposite(omiFindings);
+  return { measurements: ctx.measurements, delineation: ctx.delineation, findings, omi };
 }
 
 export { measureEcg, mm } from './measure.js';
 export type { Measurements, LeadMeasurement } from './measure.js';
 export type { Finding, RuleContext } from './rules/types.js';
+export { delineate } from './delineate/delineate.js';
+export type { Delineation, DelineatedBeat } from './delineate/delineate.js';
+export { auditDelineation } from './audit.js';
+export type { Evidence, EvidenceStatus } from './delineate/evidence.js';
 export * from './rules/stemi-udmi4.js';
 export * from './rules/posterior-std.js';
 export * from './rules/de-winter.js';
@@ -99,3 +123,4 @@ export * from './rules/terminal-qrs-distortion.js';
 export * from './rules/wellens.js';
 export * from './rules/pathological-q.js';
 export { omiComposite } from './rules/omi-composite.js';
+export * from './rules/general.js';
