@@ -3,7 +3,10 @@ import { effectiveSource, aivrWindow, type TimelineEvent } from './timeline.js';
 import { generateBeatSchedule, type RhythmSpec } from './rhythm.js';
 import { createRng } from './math/random.js';
 import { generateEcg, defaultScenario } from './scenario.js';
-import { measureBeat } from '../../test/helpers/measure.js';
+import { measureEcg } from '../analysis/index.js';
+import type { Ecg12, LeadId } from './index.js';
+
+const measureBeat = (ecg: Ecg12, l: LeadId) => measureEcg(ecg).perLead[l];
 
 const M = { st: 2, hyperacuteT: 1.5, tInversion: 0 };
 const occ: TimelineEvent[] = [{ atMin: 0, kind: 'occlusion' }];

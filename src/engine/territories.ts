@@ -84,9 +84,9 @@ export const TERRITORIES: readonly Territory[] = [
     looksAt: ['V7', 'V8', 'V9'],
     artery: 'CX / CD-DP',
     profile: 'transmural',
-    // Very low T contribution: posterior OMI shows STD V1–V3 with upright T
-    // (0.15 still inverted the anterior T; calibrated to 0.05).
-    tGain: 0.05,
+    // Negative T-peak gain: the ST vector points posteriorly, so a negative
+    // gain keeps the anterior T UPRIGHT in V1–V3 (posterior OMI mirror).
+    tGain: -0.15,
   },
   {
     id: 'rv',

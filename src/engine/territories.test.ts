@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { TERRITORIES } from './territories.js';
 import { defaultScenario, generateEcg, type Scenario } from './scenario.js';
-import { measureBeat, mm } from '../../test/helpers/measure.js';
-import type { LeadId } from './leads.js';
+import { measureEcg, mm } from '../analysis/index.js';
+import type { Ecg12, LeadId } from './index.js';
+
+const measureBeat = (ecg: Ecg12, l: LeadId) => measureEcg(ecg).perLead[l];
 
 /**
  * §9.3–9.4: each territory with st = 2 mV in refLead, shape straight.
@@ -81,7 +83,7 @@ describe('territories — §9.3–9.4 reciprocal & discriminating patterns', () 
     }
   });
 
-  it('posterior: T stays upright in V1–V3 (tGain = 0.15)', () => {
+  it('posterior: T stays upright in V1–V3 (negative tGain mirror)', () => {
     const ecg = ecgFor('posterior', 'V8');
     expect(measureBeat(ecg, 'V2').tTerminal).toBeGreaterThan(0);
   });

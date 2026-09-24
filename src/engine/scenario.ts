@@ -146,7 +146,8 @@ export function generateEcg(scenario: Scenario, tMin?: number): Ecg12 {
       tGain: src.tGain ?? terr?.tGain ?? SHAPES[src.shape].sT,
       hyperacuteT: eff.hyperacuteT,
       tInversion: eff.tInversion,
-      qLoss: eff.qLoss,
+      // Static `qLoss` on the source acts as a floor on top of timeline evolution.
+      qLoss: Math.max(eff.qLoss, src.qLoss ?? 0),
       terminalDistortion: src.terminalDistortion ?? 0,
       profile,
     };
@@ -195,7 +196,8 @@ export function generateEcg(scenario: Scenario, tMin?: number): Ecg12 {
       pOnset: qrsOnset - Math.round((params.prMs / 1000) * fs),
       qrsOnset,
       j: qrsOnset + Math.round((dur / 1000) * fs),
-      tEnd: qrsOnset + Math.round(((dur + qtMs) / 1000) * fs),
+      // QT is measured from Q onset to T end (includes the QRS).
+      tEnd: qrsOnset + Math.round((qtMs / 1000) * fs),
       type: beat.type,
     });
   }

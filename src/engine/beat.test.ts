@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { defaultScenario, generateEcg, type Scenario } from './scenario.js';
-import { measureBeat, mm } from '../../test/helpers/measure.js';
-import type { LeadId } from './leads.js';
+import { measureEcg, mm } from '../analysis/index.js';
+import type { Ecg12, LeadId } from './index.js';
+
+const measureBeat = (ecg: Ecg12, l: LeadId) => measureEcg(ecg).perLead[l];
 
 function ecgOf(patch: Partial<Scenario> = {}) {
   return generateEcg({ ...defaultScenario(), seed: 7, durationS: 4, ...patch });

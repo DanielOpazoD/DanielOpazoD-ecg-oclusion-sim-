@@ -124,7 +124,9 @@ interface QrsComponent {
 /** Baseline QRS components (§2.2 McSharry extended to 3D). */
 function normalQrs(): QrsComponent[] {
   return [
-    { mu: 12, sigma: 7, dir: normalize([-0.55, 0.15, -0.6]), gain: 0.22 },
+    // Septal dir/gain tuned: keeps r(V1) small without producing a
+    // pseudo-pathologic q in I (§9 pathological-q must stay negative).
+    { mu: 12, sigma: 7, dir: normalize([-0.4, 0.2, -0.55]), gain: 0.18 },
     { mu: 40, sigma: 12, dir: normalize([0.72, 0.62, 0.3]), gain: 1.0 },
     // Basal σ 8→6 so its tail does not bleed past the J point (§9 sanity).
     { mu: 70, sigma: 6, dir: normalize([-0.3, -0.45, 0.65]), gain: 0.28 },
@@ -138,10 +140,12 @@ function qrsComponents(params: BeatParams): QrsComponent[] {
     case 'normal':
       return normalQrs().map((c) => ({ ...c, gain: c.gain * rScale }));
     case 'lbbb':
+      // Terminal vector leftward-superior-posterior so V1–V3 are negative
+      // (deep S) and V5–V6 positive — matching real LBBB discordance.
       return [
         { mu: 12, sigma: 7, dir: normalize([0.55, -0.15, 0.6]), gain: 0.22 },
-        { mu: 60, sigma: 22, dir: normalize([0.72, 0.62, 0.3]), gain: 1.0 * rScale },
-        { mu: 95, sigma: 25, dir: normalize([-0.3, -0.45, 0.65]), gain: 0.35 },
+        { mu: 60, sigma: 22, dir: normalize([0.72, 0.62, 0.3]), gain: 0.8 * rScale },
+        { mu: 90, sigma: 28, dir: normalize([0.5, -0.2, 0.5]), gain: 0.7 },
       ];
     case 'rbbb':
       return [
@@ -173,7 +177,9 @@ function tDirection(params: BeatParams): Vec3 {
   switch (params.conduction) {
     case 'lbbb':
     case 'paced':
-      return normalize([-0.72, -0.62, -0.3]); // −dominant QRS (discordant)
+      // −dominant terminal QRS: discordant ST/T positive in V1–V3,
+      // negative in V5–V6.
+      return normalize([-0.68, 0.27, -0.68]);
     case 'rbbb': {
       // Discordant T only in V1–V2: blend −(right-anterior) component.
       return normalize(add(U_T, scale(normalize([-0.8, 0.1, -0.55]), -0.35)));
@@ -190,7 +196,7 @@ function discordantSt(params: BeatParams): Vec3 {
   switch (params.conduction) {
     case 'lbbb':
     case 'paced':
-      return scale(normalize([-0.72, -0.62, -0.3]), 0.15 * A_QRS);
+      return scale(normalize([-0.68, 0.27, -0.68]), 0.15 * A_QRS);
     case 'lvh-strain':
       return scale(normalize([-0.72, -0.62, -0.3]), 0.08 * A_QRS * 1.8);
     default:
@@ -256,7 +262,9 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
     // Necrosis: initial forces opposite to d (§3.4).
     if (inj.qLoss > 0) {
       h = add(h, scale(d, -inj.qLoss * 0.9 * A_QRS * gaussian(tauMs, 18, 9)));
-      h = add(h, scale(d, -inj.qLoss * 0.35 * A_QRS * gaussian(tauMs, 40, 12)));
+      // Mid component attenuated enough for QS complexes in looking leads
+      // (§3.5 pathological Q / R loss; calibrated 0.35→0.55).
+      h = add(h, scale(d, -inj.qLoss * 0.8 * A_QRS * gaussian(tauMs, 40, 12)));
     }
     // Terminal QRS distortion: injury vector ramps in from τ=60 (§3.4).
     if (inj.terminalDistortion > 0) {
