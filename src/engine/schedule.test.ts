@@ -129,21 +129,23 @@ describe('schedule — ectopy', () => {
     const post = beats[i + 1]!.tMs - beats[i]!.tMs;
     expect(Math.abs(coupling + post - 2 * base) / (2 * base)).toBeLessThan(0.05);
   });
-  it('PAC: non-compensatory (next sinus arrives on the original grid)', () => {
-    const { beats } = sched(
+  it('PAC: non-compensatory (sinus node resets to P′ + baseRr)', () => {
+    const s = sched(
       { type: 'sinus', hrBpm: 70 },
       { kind: 'pac', pattern: 'isolated', perMin: 6 },
       20,
     );
+    const beats = s.beats;
     const i = beats.findIndex((b) => b.kind === 'pac');
     expect(i).toBeGreaterThan(0);
     const base = 60000 / 70;
-    // Non-compensatory: the post-PAC interval is shorter than a full RR
-    // (the sinus grid keeps marching, unlike the PVC full pause).
-    const post = beats[i + 1]!.tMs - beats[i]!.tMs;
-    expect(post).toBeLessThan(base);
-    const coupling = beats[i]!.tMs - beats[i - 1]!.tMs;
-    expect(coupling).toBeLessThan(base);
+    // Non-compensatory: interval pre-PAC sinus → post-PAC sinus < 2×RR.
+    const interval = beats[i + 1]!.tMs - beats[i - 1]!.tMs;
+    expect(interval).toBeLessThan(2 * base * 1.08);
+    // Sinus-node reset: post-PAC sinus P onset = P' + baseRr (±8%).
+    const pPrime = s.atrial.find((a) => a.kind === 'ectopic' && a.conducted)!;
+    const nextSinus = s.atrial.find((a) => a.kind === 'sinus' && a.tMs > pPrime.tMs)!;
+    expect(Math.abs(nextSinus.tMs - pPrime.tMs - base) / base).toBeLessThan(0.08);
   });
 });
 

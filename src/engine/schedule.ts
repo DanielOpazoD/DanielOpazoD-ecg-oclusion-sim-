@@ -70,6 +70,7 @@ export interface EctopySpec {
 
 export type BeatKind =
   | 'sinus'
+  | 'conducted' // supraventricular QRS without a discrete P event (AF/flutter)
   | 'pac'
   | 'pvc'
   | 'junctional'
@@ -212,7 +213,7 @@ export function generateSchedule(
         const rr =
           base *
           clamp(0.8 + Math.exp(0.42 * rng.gaussian()) * 0.2 + 0.38 * rng.gaussian(), 0.38, 2.15);
-        pushBeat(beats, { tMs: t, kind: 'sinus', rrMs: base, ventricular: false }, state);
+        pushBeat(beats, { tMs: t, kind: 'conducted', rrMs: base, ventricular: false }, state);
         t += rr;
       }
       break;
@@ -226,7 +227,7 @@ export function generateSchedule(
         const r =
           rhythm.variableRatio && k % 4 === 3 ? Math.min(4, rhythm.ratio + 1) : rhythm.ratio;
         const rr = (60000 / atrialBpm) * r;
-        pushBeat(beats, { tMs: t, kind: 'sinus', rrMs: rr, ventricular: false }, state);
+        pushBeat(beats, { tMs: t, kind: 'conducted', rrMs: rr, ventricular: false }, state);
         t += rr;
         k++;
       }
@@ -411,10 +412,22 @@ export function generateSchedule(
     const out: BeatEvent[] = [];
     let sinusIndex = 0;
     let lastPvc = -1e18;
+    // PAC sinus-node reset: after a PAC at P' time e, the next sinus P onset
+    // is e + baseRr — the whole subsequent grid shifts (non-compensatory).
+    let pacResetAt = -1e18;
     for (const b of beats) {
       if (b.ventricular) {
         out.push(b);
         continue;
+      }
+      if (pacResetAt > -1e17) {
+        const e = pacResetAt;
+        pacResetAt = -1e18;
+        const delta = e + baseRr - (b.tMs - (b.prMs ?? patientPrMs));
+        if (delta !== 0) {
+          for (const a of atrial) if (a.tMs > e) a.tMs += delta;
+          b.tMs += delta;
+        }
       }
       // Full compensatory pause: the conducted sinus beat falling inside the
       // post-PVC window is suppressed; its P remains as a non-conducted event.
@@ -442,7 +455,7 @@ export function generateSchedule(
       const e = b.tMs + coupling;
       if (ectopy.kind === 'pac') {
         // PAC: ectopic P' conducted with a shorter PR; non-compensatory —
-        // the sinus grid is unaffected.
+        // the sinus node resets, so the next sinus P falls at e + baseRr.
         const pr = (b.prMs ?? patientPrMs) * 0.9;
         atrial.push({ tMs: e, kind: 'ectopic', conducted: true });
         out.push({
@@ -452,6 +465,7 @@ export function generateSchedule(
           prMs: pr,
           ventricular: false,
         });
+        pacResetAt = e;
       } else {
         out.push({ tMs: e, kind: 'pvc', rrMs: baseRr, ventricular: true, origin });
         lastPvc = e;
