@@ -21,11 +21,14 @@ Ecg12 { leads (adquirida), clean, beats (fiduciales), schedule, fs }
 suppressImpulses ──► delineate (muestras; picos, bordes QRS por energía de pendiente,
                      P/T multiderivación, autocorrelación auricular, evidencia por métrica)
    │
-   ▼  auditDelineation (retira métricas que se desvían de los fiduciales)
-Delineation auditada + Measurements (latido dominante, fiduciales)
+measureFromDelineation ──► Measurements (latido dominante desde la delineación)
+   │  auditDelineation (retira métricas que se desvían de los fiduciales)
+   │  auditMeasurements (informa discordancias vs la referencia fiducial)
+Delineation auditada + Measurements ciegas
    │
    ▼  RuleContext { delineation, measurements, ecg, patient, conduction, qrsContext, leadsAvailable }
 14 reglas OMI (+ notApplicable si qrsContext ancho) + 16 reglas generales ──► Finding[]
+   │  (las reglas solo ven mediciones ciegas; los fiduciales nunca alimentan la lógica)
    │
    ▼
 UI: shell (modos) · renderer (papel) · monitor · paneles · quiz · persistencia · PNG
@@ -40,8 +43,10 @@ UI: shell (modos) · renderer (papel) · monitor · paneles · quiz · persisten
   `timeline.ts`, `acquisition.ts` (ruido/filtros, 30/60 s de tira), `scenario.ts` (orquestación
   → `Ecg12`, `ModelScopeError` para combinaciones físicamente inviables).
 - `src/analysis/`: `delineate/` (supresión de spikes, estadística robusta, evidencia,
-  delineación por muestras), `audit.ts` (retirada de métricas vs fiduciales), `measure.ts`
-  (fiduciales → latido dominante), `rules/` (OMI: un fichero por regla; `general.ts`: 16
+  delineación por muestras), `blindMeasure.ts` (delineación → latido dominante →
+  medición), `measure.ts` (`measureSignal` sobre fiduciales arbitrarios; `measureEcg` =
+  referencia fiducial solo para auditoría), `audit.ts` (retirada de métricas y
+  `auditMeasurements` vs fiduciales), `rules/` (OMI: un fichero por regla; `general.ts`: 16
   reglas clínicas), `index.ts` (`analyzeEcg`: contexto, gating por `qrsContext`, compuesto).
 - `src/cases/`: `CaseDefinition` × 103, grupos `groupA.ts`…`groupN.ts`, `types.ts`
   (`category`, `diagnosis`, `distractors`), `index.ts` (`CASES`, `getCase`).

@@ -267,9 +267,14 @@ Nota de implementación: `Scenario.timeline` eventos llevan `sourceId` (id o ín
 fuente; `undefined` = todas). `Scenario` incluye `beatOverrides` (`aTScale`, `tSigmaScale`,
 `qtc`, `prDepressionMv`, `jNotchMv`, `osbornMv`, `rScale`).
 
-Entrada: `Ecg12` (matriz `leads × samples`, `fs`, fiduciales por latido: onset P, onset QRS, J,
-fin T — **generados por el motor**, no detectados). Se promedia el latido sinusal dominante por
-derivación (mediana temporal, excluyendo extrasístoles) y se mide:
+Pipeline: `samples → delineate → measureFromDelineation → rules`. Las reglas leen
+**mediciones ciegas**: fiduciales obtenidos solo de las muestras por el delineador
+independiente (`delineate`), que selecciona los latidos de morfología dominante
+(excluyendo prematuros anchos y QRS aberrantes por mediana de anchura/RR) y promedia
+su señal por derivación (mediana temporal). Los fiduciales del motor
+(`ecg.beats`: onset P, onset QRS, J, fin T — **generados**, no detectados) alimentan
+`measureEcg` como **referencia de auditoría** (`auditMeasurements`), nunca las reglas.
+Sobre el latido dominante se mide:
 
 - Línea de base: media del segmento **PR** (`onsetQRS − 60 ms … onsetQRS − 20 ms`) [1].
 - `stJ`, `st60`, `st80` (mV) respecto a la base; `stSlope` (mV/s).

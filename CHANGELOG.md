@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Análisis 100 % ciego**: las reglas OMI/ST leen `measureFromDelineation` — mediciones
+  construidas solo de las muestras y la delineación independiente. `measureSignal` acepta
+  fiduciales arbitrarios (`BeatFiducials[]`); `measureEcg` queda como referencia de
+  auditoría. `auditMeasurements` reporta leads discordantes (|ΔstJ| > 0.05 mV, |ΔtAmp| >
+  0.1 mV o cambio de signo) con estado usable/revisión/no disponible, expuesto en
+  `AnalysisReport.measurementAudit` y `reference`. Auditoría de eje QRS: se retira si
+  discrepa > 25° de la referencia. La UI muestra la insignia «Medido en señal (ciego)» y
+  la nota de auditoría cuando el estado no es usable.
+
+### Changed
+
+- **Delineador**: cruce de fin de QRS por suelo de plateau (min magnitud ×1.08), segunda
+  oportunidad de búsqueda de P hasta 30 ms antes del onset (PR cortos/WPW), realineación
+  por correlación de segmentos en el latido promedio, amplitudes R/S/T por latido sobre
+  señal cruda (robustas a jitter y alternans), refinamiento del punto J por derivación
+  con prueba de pendiente y estabilidad de nivel.
+
+### Fixed
+
+- Umbrales de J tardío/sistemáticamente temprano en la delineación que provocaban
+  falsos negativos de STE y falsos positivos de STD/Sgarbossa; extrasístoles excluidos
+  de la medición; FV excluida por decorrelación de latidos en ritmo caótico.
+
 ## [2.0.0] - 2026
 
 ### Added
