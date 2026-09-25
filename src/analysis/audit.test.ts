@@ -25,8 +25,15 @@ const base: Delineation = {
 
 const truth = (
   prMs: number,
-): { fiducials: Fiducials[]; schedule: { beats: []; atrial: [] }; fs: number } => ({
+  qrsAxisDeg: number | null = null,
+): {
+  fiducials: Fiducials[];
+  schedule: { beats: []; atrial: [] };
+  fs: number;
+  qrsAxisDeg: number | null;
+} => ({
   fs: 500,
+  qrsAxisDeg,
   fiducials: [1, 2, 3, 4].map((k) => ({
     pOnset: k * 416 - (prMs / 1000) * 500,
     qrsOnset: k * 416,
@@ -61,5 +68,17 @@ describe('auditDelineation', () => {
     expect(out.hrBpm).toBeNull();
     expect(out.qtMs).toBeNull();
     expect(out.qtc.bazett).toBeNull();
+  });
+
+  it('withdraws a QRS axis that differs from the reference by more than 25°', () => {
+    const out = auditDelineation(
+      { ...base, axisDeg: { ...base.axisDeg, qrs: 120 } },
+      truth(160, 60),
+    );
+    expect(out.axisDeg.qrs).toBeNull();
+    expect(out.evidence.axis.status).toBe('unavailable');
+    const ok = auditDelineation({ ...base, axisDeg: { ...base.axisDeg, qrs: 70 } }, truth(160, 60));
+    expect(ok.axisDeg.qrs).toBe(70);
+    expect(ok.evidence.axis.status).toBe('usable');
   });
 });
