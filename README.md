@@ -79,6 +79,20 @@ TypeScript estricto (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`), 
 Prettier, Vitest (+ fast-check en propiedades), tests de aceptación por caso y por regla,
 CI en GitHub Actions y despliegue estático en Pages.
 
+## Verificación
+
+- `npm run check` — format:check + lint + typecheck + tests + build (todo local antes de PR).
+- `npm run test` — unitarios, propiedades, aceptación por caso y **snapshots de señal y
+  análisis** (`src/cases/signature.test.ts`, `engine/signature.ts`): una firma por
+  derivación `[min, max, media, rms, v25 %, v50 %, v75 %]` y un resumen de análisis por
+  caso. Cuando el modelo cambia a propósito, regenera con `npm run test:update`
+  (`vitest run -u`) y revisa el diff del `__snapshots__` en el commit.
+- `npm run e2e` — Playwright/Chromium (smoke, casos, teclado, quiz, exportación,
+  responsive). Levanta `vite dev` en :4173 vía `webServer` (reutiliza uno existente en
+  local). `npm run e2e:ui` para el modo interactivo.
+- Hooks (husky + lint-staged): `pre-commit` formatea y linta lo staged;
+  `pre-push` corre typecheck + tests.
+
 ## Limitaciones y honestidad
 
 Herramienta **educativa**: no es un dispositivo médico. Las señales son sintéticas (dipolo
