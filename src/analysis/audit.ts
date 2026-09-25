@@ -36,10 +36,13 @@ export function auditMeasurements(blind: Measurements, ref: Measurements): Measu
     if (dSt > maxStDeltaMv) maxStDeltaMv = dSt;
     if (dSt > 0.05) stDiscordant.push(l);
     const signFlip =
-      Math.sign(b.tAmp) !== Math.sign(r.tAmp) && (Math.abs(b.tAmp) > 0.1 || Math.abs(r.tAmp) > 0.1);
+      Math.sign(b.tAmp) !== Math.sign(r.tAmp) && Math.abs(b.tAmp) > 0.1 && Math.abs(r.tAmp) > 0.1;
     if (Math.abs(b.tAmp - r.tAmp) > 0.1 || signFlip) tDiscordant.push(l);
   }
-  const discordant = new Set([...stDiscordant, ...tDiscordant]).size;
+  // Status is driven by the 12 standard leads; extra leads (V7–V9, V3R, V4R)
+  // are still listed for information.
+  const std = new Set<string>(LEAD_IDS.slice(0, 12));
+  const discordant = new Set([...stDiscordant, ...tDiscordant].filter((l) => std.has(l))).size;
   const status: EvidenceStatus =
     discordant === 0 ? 'usable' : discordant <= 2 ? 'review' : 'unavailable';
   const note =
