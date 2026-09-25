@@ -450,6 +450,7 @@ export function mount(root: HTMLElement): void {
       void copyReport(formatReport(report, { tMin: store.get().tMin, caseId: store.get().caseId }));
   });
   const openAbout = () => {
+    if (document.querySelector('.modal-backdrop')) return;
     const back = document.createElement('div');
     back.className = 'modal-backdrop';
     back.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="about-title">
