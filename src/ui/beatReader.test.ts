@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getCase, CASES } from '../cases/index.js';
+import { getCase } from '../cases/index.js';
 import { generateEcg } from '../engine/index.js';
 import { delineate } from '../analysis/delineate/delineate.js';
 import { pickBeat, beatWindow, renderBeatReaderSvg } from './ecg/beatDetail.js';
@@ -43,13 +43,11 @@ describe('renderBeatReaderSvg', () => {
     expect(svg).toContain('ms desde QRS');
   });
   it('omits PR when the beat has no P fiducial', () => {
-    // Find a case whose delineated beats lack pOnsetS (e.g. AF).
-    const noP = CASES.map((c) => ({ c, ...ecgAndDelin(c.id) })).find(({ delin }) =>
-      delin.beats.some((b) => b.pOnsetS === undefined),
-    );
-    expect(noP, 'expected a case with a P-less delineated beat').toBeTruthy();
-    const idx = noP!.delin.beats.findIndex((b) => b.pOnsetS === undefined);
-    const svg = renderBeatReaderSvg(noP!.ecg, noP!.delin, idx, 'II');
+    // G05 (AF con respuesta ventricular rápida): no P fiducials.
+    const { ecg, delin } = ecgAndDelin('G05');
+    const idx = delin.beats.findIndex((b) => b.pOnsetS === undefined);
+    expect(idx, 'G05 should delineate at least one P-less beat').toBeGreaterThanOrEqual(0);
+    const svg = renderBeatReaderSvg(ecg, delin, idx, 'II');
     expect(svg).not.toContain('PR ');
     expect(svg).not.toContain('>P<');
     expect(svg).toContain('QRS ');
