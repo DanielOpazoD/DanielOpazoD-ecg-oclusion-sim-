@@ -74,7 +74,7 @@ export function metricCards(
     },
     {
       label: 'Ejes P·QRS·T',
-      value: `${num(d?.axisDeg.p ?? null)}° / ${num(d?.axisDeg.qrs ?? null)}° / ${num(d?.axisDeg.t ?? null)}°`,
+      value: `${num(d?.axisDeg.p ?? null)}°·${num(d?.axisDeg.qrs ?? null)}°·${num(d?.axisDeg.t ?? null)}°`,
       status: ev('axis').status,
       note: ev('axis').note,
     },

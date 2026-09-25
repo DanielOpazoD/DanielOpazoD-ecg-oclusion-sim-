@@ -448,7 +448,8 @@ button.ghost:hover {
   margin-bottom: var(--sp-2);
 }
 .case-head-row #case-search {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
 }
 .switch {
   display: flex;
@@ -457,6 +458,7 @@ button.ghost:hover {
   font-size: var(--fs-xs);
   color: var(--muted);
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .finding-list {
@@ -656,8 +658,8 @@ table.meas tr:nth-child(even) {
   .sidebar {
     width: 200px;
   }
-  .metric-card {
-    flex: 1 1 calc(33% - 8px);
+  .metric-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 @media (max-width: 900px) {
@@ -706,8 +708,8 @@ table.meas tr:nth-child(even) {
     overflow-x: auto;
     white-space: nowrap;
   }
-  .metric-card {
-    flex: 1 1 calc(50% - 8px);
+  .metric-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .monitor-strip {
     height: 90px;
@@ -731,14 +733,14 @@ table.meas tr:nth-child(even) {
 /* Metric cards row */
 .metric-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: var(--sp-2);
   padding: 4px 10px 8px;
   border-top: 1px solid var(--border);
   background: var(--panel);
 }
 .metric-card {
-  min-width: 110px;
+  min-width: 0;
   background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -751,8 +753,11 @@ table.meas tr:nth-child(even) {
   color: var(--muted);
 }
 .metric-card .mc-value {
-  font-size: 15px;
+  font-size: var(--fs-lg);
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .metric-card .mc-sub {
   font-size: 10px;
