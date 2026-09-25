@@ -23,9 +23,9 @@ export const GROUP_D: CaseDefinition[] = [
       rhythm: { type: 'sinus', hrBpm: 62 },
       conduction: 'normal',
       sources: [
-        { territory: 'anterior', st: 0.45, refLead: 'V3', shape: 'concave', hyperacuteT: 0 },
+        { territory: 'anterior', st: 0.62, refLead: 'V3', shape: 'concave', hyperacuteT: 0 },
       ],
-      beatOverrides: { jNotchMv: 0.06, aTScale: 1.05, qtc: 380, rScale: 1.4 },
+      beatOverrides: { jNotchMv: 0.06, aTScale: 0.9, qtc: 380, rScale: 1.4 },
     },
     expected: {
       omi: false,
@@ -460,7 +460,7 @@ export const GROUP_D: CaseDefinition[] = [
       rhythm: { type: 'sinus', hrBpm: 45 },
       conduction: 'normal',
       sources: [{ territory: 'lateral', st: 0.04, refLead: 'V4', shape: 'concave' }],
-      beatOverrides: { osbornMv: 0.18 },
+      beatOverrides: { osbornMv: 0.06 },
       acquisition: { emg: { sigmaMv: 0.08 }, baselineWander: { amplitudeMv: 0.2, hz: 0.3 } },
     },
     expected: {

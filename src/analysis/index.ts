@@ -1,8 +1,9 @@
 import type { Ecg12, LeadId, ConductionSpec } from '../engine/index.js';
 import { LEAD_IDS } from '../engine/index.js';
 import { measureEcg, type Measurements } from './measure.js';
+import { measureFromDelineation } from './blindMeasure.js';
 import { delineate, type Delineation } from './delineate/delineate.js';
-import { auditDelineation } from './audit.js';
+import { auditDelineation, auditMeasurements, type MeasurementAudit } from './audit.js';
 import { GENERAL_RULES } from './rules/general.js';
 import type { Finding, RuleContext } from './rules/types.js';
 import { stemiUdmi4 } from './rules/stemi-udmi4.js';
@@ -52,10 +53,16 @@ const GENERAL = GENERAL_RULES;
 
 /** Full analysis report. */
 export interface AnalysisReport {
+  /** Blind measurements (delineated fiducials on samples only) — what the
+   *  rule engine reads. */
   measurements: Measurements;
   findings: Finding[];
   /** Independent sample delineation, optionally audited against generator truth. */
   delineation: Delineation;
+  /** Fiducial-based reference measurement — audit only, never fed to rules. */
+  reference: Measurements;
+  /** Agreement between blind measurements and the fiducial reference. */
+  measurementAudit: MeasurementAudit;
   /** Composite OMI verdict (§8 `omi-composite`). */
   omi: Finding;
 }
@@ -104,20 +111,27 @@ function notApplicable(f: Finding): Finding {
   return out;
 }
 
-/** Run the full analysis on an ECG (§8). */
+/** Run the full analysis on an ECG (§8). Measurements are computed from
+ *  samples + the independent delineation only; the fiducial path is the
+ *  informative audit reference. */
 export function analyzeEcg(ecg: Ecg12, opts: AnalyzeOptions = {}): AnalysisReport {
   const source = opts.source ?? 'clean';
+  const signal = source === 'acquired' ? ecg.leads : ecg.clean;
   const rawDelineation = delineate({
     fs: ecg.fs,
-    leads: source === 'acquired' ? ecg.leads : ecg.clean,
+    leads: signal,
   });
+  const reference = measureEcg(ecg, source);
+  const blindMeasurements = measureFromDelineation(rawDelineation, signal, ecg.fs);
+  const measurementAudit = auditMeasurements(blindMeasurements, reference);
   const ctx: RuleContext = {
-    measurements: measureEcg(ecg, source),
+    measurements: blindMeasurements,
     delineation: ecg.schedule
       ? auditDelineation(rawDelineation, {
           fiducials: ecg.beats,
           schedule: ecg.schedule,
           fs: ecg.fs,
+          qrsAxisDeg: reference.qrsAxisDeg,
         })
       : rawDelineation,
     patient: { sex: opts.sex ?? 'M', age: opts.age ?? 60 },
@@ -145,11 +159,21 @@ export function analyzeEcg(ecg: Ecg12, opts: AnalyzeOptions = {}): AnalysisRepor
   });
   const findings = [...omiFindings, ...GENERAL.map((r) => r(ctx))];
   const omi = omiComposite(omiFindings);
-  return { measurements: ctx.measurements, delineation: ctx.delineation, findings, omi };
+  return {
+    measurements: ctx.measurements,
+    delineation: ctx.delineation,
+    reference,
+    measurementAudit,
+    findings,
+    omi,
+  };
 }
 
-export { measureEcg, mm } from './measure.js';
-export type { Measurements, LeadMeasurement } from './measure.js';
+export { measureEcg, measureSignal, mm } from './measure.js';
+export type { Measurements, LeadMeasurement, MeasureInput, BeatFiducials } from './measure.js';
+export { measureFromDelineation } from './blindMeasure.js';
+export { auditMeasurements } from './audit.js';
+export type { MeasurementAudit } from './audit.js';
 export type { Finding, RuleContext } from './rules/types.js';
 export { delineate } from './delineate/delineate.js';
 export type { Delineation, DelineatedBeat } from './delineate/delineate.js';

@@ -82,6 +82,12 @@ compara cada métrica con los fiduciales del generador y la retira si se desvía
 las tolerancias (FC 5 %, PR 25 ms, QRS 20 ms, QT 40 ms, eje 25°). Las reglas solo están
 validadas en sus poblaciones originales. No usar para decisiones clínicas.
 
+Las reglas diagnósticas (OMI/ST y generales) se alimentan de **mediciones ciegas**:
+el pipeline `samples → delineate → measureFromDelineation → rules` nunca toca los
+fiduciales del generador. La medición fiducial (`measureEcg`) sobrevive solo como
+referencia de auditoría: `measurementAudit` compara ST y amplitud T por derivación y
+reporta discordancias (usable / revisión / no disponible) sin alterar los hallazgos.
+
 ## Licencia
 
 MIT — ver [LICENSE](LICENSE).

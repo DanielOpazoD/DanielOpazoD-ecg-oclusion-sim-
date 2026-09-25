@@ -31,4 +31,8 @@ for (const c of CASES) {
   });
   const pos = rep.findings.filter((x) => x.positive).map((x) => x.id);
   console.log(`POS   ${pos.join(', ') || '—'}`);
+  const ma = rep.measurementAudit;
+  console.log(
+    `AUDIT ${ma.status}${ma.stDiscordant.length ? ' ST: ' + ma.stDiscordant.join(',') : ''}${ma.tDiscordant.length ? ' T: ' + ma.tDiscordant.join(',') : ''}`,
+  );
 }

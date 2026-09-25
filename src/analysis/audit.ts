@@ -1,11 +1,55 @@
-import type { Fiducials, Schedule } from '../engine/index.js';
+import type { Fiducials, LeadId, Schedule } from '../engine/index.js';
+import { LEAD_IDS } from '../engine/index.js';
 import type { Delineation } from './delineate/delineate.js';
-import { unavailable } from './delineate/evidence.js';
+import { unavailable, type EvidenceStatus } from './delineate/evidence.js';
+import type { Measurements } from './measure.js';
 
 export interface AuditTruth {
   fiducials: Fiducials[];
   schedule: Schedule;
   fs: number;
+  /** Frontal QRS axis of the fiducial reference measurement (degrees). */
+  qrsAxisDeg?: number | null;
+}
+
+/** Per-lead agreement between the blind measurement and the reference. */
+export interface MeasurementAudit {
+  stDiscordant: LeadId[];
+  maxStDeltaMv: number;
+  tDiscordant: LeadId[];
+  status: EvidenceStatus;
+  note: string;
+}
+
+/**
+ * Compare the blind (delineated-signal) measurements against the fiducial
+ * reference. Informative only — never alters measurements or findings.
+ */
+export function auditMeasurements(blind: Measurements, ref: Measurements): MeasurementAudit {
+  const stDiscordant: LeadId[] = [];
+  const tDiscordant: LeadId[] = [];
+  let maxStDeltaMv = 0;
+  for (const l of LEAD_IDS) {
+    const b = blind.perLead[l];
+    const r = ref.perLead[l];
+    const dSt = Math.abs(b.stJ - r.stJ);
+    if (dSt > maxStDeltaMv) maxStDeltaMv = dSt;
+    if (dSt > 0.05) stDiscordant.push(l);
+    const signFlip =
+      Math.sign(b.tAmp) !== Math.sign(r.tAmp) && Math.abs(b.tAmp) > 0.1 && Math.abs(r.tAmp) > 0.1;
+    if (Math.abs(b.tAmp - r.tAmp) > 0.1 || signFlip) tDiscordant.push(l);
+  }
+  // Status is driven by the 12 standard leads; extra leads (V7–V9, V3R, V4R)
+  // are still listed for information.
+  const std = new Set<string>(LEAD_IDS.slice(0, 12));
+  const discordant = new Set([...stDiscordant, ...tDiscordant].filter((l) => std.has(l))).size;
+  const status: EvidenceStatus =
+    discordant === 0 ? 'usable' : discordant <= 2 ? 'review' : 'unavailable';
+  const note =
+    status === 'usable'
+      ? 'Medición ciega concordante con la referencia sintética.'
+      : `Medición ciega discordante con la referencia sintética en ${[...stDiscordant, ...tDiscordant.filter((l) => !stDiscordant.includes(l))].join(', ')} — revisa el punto J y la amplitud T.`;
+  return { stDiscordant, maxStDeltaMv, tDiscordant, status, note };
 }
 
 /**
@@ -53,5 +97,10 @@ export function auditDelineation(d: Delineation, truth: AuditTruth): Delineation
   const qt = trueQt.length ? trueQt.reduce((a, b) => a + b, 0) / trueQt.length : null;
   if (out.qtMs !== null && qt !== null && Math.abs(out.qtMs - qt) > 40)
     setUnavailable('qt', 'QT retirado: discrepa >40 ms de la referencia sintética.');
+  if (out.axisDeg.qrs !== null && truth.qrsAxisDeg != null) {
+    const diff = Math.abs(((out.axisDeg.qrs - truth.qrsAxisDeg + 540) % 360) - 180);
+    if (diff > 25)
+      setUnavailable('axis', 'Eje retirado: discrepa >25° de la referencia sintética.');
+  }
   return out;
 }
