@@ -388,7 +388,7 @@ export const GROUP_G: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['heart-rate', 'avr-diffuse-std', 'pathological-q'],
+      positiveFindings: ['heart-rate', 'avr-diffuse-std'],
       negativeFindings: ['rr-irregular', 'wide-qrs', 'omi-composite'],
       diagnosis: 'Taquicardia supraventricular (TRNAV)',
       distractors: ['Flutter auricular 2:1', 'Taquicardia sinusal', 'Taquicardia ventricular'],

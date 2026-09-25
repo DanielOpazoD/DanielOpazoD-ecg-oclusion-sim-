@@ -27,17 +27,8 @@ export const GROUP_J: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: [
-        'wide-qrs',
-        'bundle-branch-morphology',
-        'stemi-udmi4',
-        'reciprocal-avl',
-        'pathological-q',
-        'axis-deviation',
-      ],
-      negativeFindings: ['av-dissociation'],
-      rulesMiss:
-        'La morfología rSR′ y la discordancia del BRD activan las reglas de oclusión; el BRD es la lesión real.',
+      positiveFindings: ['wide-qrs', 'bundle-branch-morphology'],
+      negativeFindings: ['stemi-udmi4', 'pathological-q', 'axis-deviation', 'av-dissociation'],
       diagnosis: 'Bloqueo completo de rama derecha',
       distractors: [
         'Bloqueo completo de rama izquierda',
@@ -83,10 +74,8 @@ export const GROUP_J: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['stemi-udmi4', 'rv-involvement', 'reciprocal-avl', 'pathological-q'],
-      negativeFindings: ['wide-qrs'],
-      rulesMiss:
-        'La r′ en V1 del BRD incompleto imita un patrón posterior y activa las reglas de oclusión; es una variante de conducción.',
+      positiveFindings: [],
+      negativeFindings: ['stemi-udmi4', 'rv-involvement', 'pathological-q', 'wide-qrs'],
       diagnosis: 'Bloqueo incompleto de rama derecha',
       distractors: ['Bloqueo completo de rama derecha', 'Normalidad', 'Síndrome de Brugada'],
     },
@@ -261,7 +250,7 @@ export const GROUP_J: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['pathological-q'],
+      positiveFindings: ['wide-qrs', 'bundle-branch-morphology', 'axis-deviation'],
       negativeFindings: ['omi-composite'],
       diagnosis: 'Bloqueo bifascicular BRD + HBAI',
       distractors: [
@@ -308,7 +297,7 @@ export const GROUP_J: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['pr-prolonged'],
+      positiveFindings: ['wide-qrs', 'bundle-branch-morphology', 'pr-prolonged', 'axis-deviation'],
       negativeFindings: ['omi-composite'],
       diagnosis: 'Bloqueo trifascicular (BRD + HBAI + BAV 1.º)',
       distractors: [
