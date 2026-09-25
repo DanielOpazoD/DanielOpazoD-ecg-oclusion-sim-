@@ -12,8 +12,8 @@ export function clinicalPanel(el: HTMLElement, c: CaseDefinition | null, state: 
   }
   const v = c.vignette;
   el.innerHTML = `
-    <div class="card">
-      <h3>Vignette clínica</h3>
+    <div class="card vignette">
+      <h3 class="section-title">Vignette clínica</h3>
       <p><span class="badge muted">${v.age} años · ${v.sex === 'M' ? 'Varón' : 'Mujer'}</span>
          ${v.symptomsOnsetMin ? `<span class="badge warn">desde inicio ${v.symptomsOnsetMin} min</span>` : ''}</p>
       <p>${escapeHtml(v.history)}</p>

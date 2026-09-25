@@ -13,7 +13,7 @@ import { renderMetricCards, metricCards } from './panels/metricCards.js';
 import { teachingPanel } from './panels/teachingPanel.js';
 import { labPanel } from './panels/labPanel.js';
 import { timelineBar } from './panels/timelineBar.js';
-import { renderCaseBrowser, selectCase, currentCase } from './modes/casesMode.js';
+import { renderCaseBrowser, selectCase, currentCase, CATEGORY_LABELS } from './modes/casesMode.js';
 import { renderQuizPanel, startQuiz, QUIZ_FINDING_CHOICES } from './modes/quizMode.js';
 import { formatReport, copyReport } from './export.js';
 import { exportPng300 } from './export/png.js';
@@ -26,7 +26,7 @@ export function mount(root: HTMLElement): void {
   root.innerHTML = `
     <header class="app-header">
       <a class="skip-link" href="#ecg-canvas">Saltar al ECG</a>
-      <div class="brand">ECG Lab<span class="sub">Simulador clínico · OMI Lab (isquemia)</span></div>
+      <div class="brand">ECG Lab<span class="sub">Simulador educativo · ECG 12 derivaciones</span></div>
       <nav class="mode-tabs" role="tablist" aria-label="Modo">
         <button data-mode="cases" role="tab" aria-label="Casos">Casos</button>
         <button data-mode="lab" role="tab" aria-label="Laboratorio">Laboratorio</button>
@@ -34,20 +34,23 @@ export function mount(root: HTMLElement): void {
         <button data-mode="quiz" role="tab" aria-label="Quiz">Quiz</button>
       </nav>
       <div class="header-spacer"></div>
-      <div class="export-menu">
-        <button id="btn-export" aria-label="Exportar" aria-haspopup="menu" aria-expanded="false">Exportar ▾</button>
-        <div class="export-pop" id="export-pop" hidden style="display:none">
-          <button id="btn-export-png" aria-label="Exportar PNG 300 dpi">PNG (300 dpi)</button>
-          <button id="btn-export-json" aria-label="Exportar JSON">JSON del escenario</button>
-          <button id="btn-copy-link" aria-label="Copiar enlace">Copiar enlace</button>
-          <button id="btn-copy-report" aria-label="Copiar informe">Copiar informe</button>
+      <div class="header-actions">
+        <div class="export-menu">
+          <button id="btn-export" aria-label="Exportar" aria-haspopup="menu" aria-expanded="false">Exportar ▾</button>
+          <div class="export-pop" id="export-pop" hidden style="display:none">
+            <button id="btn-export-png" aria-label="Exportar PNG 300 dpi">PNG (300 dpi)</button>
+            <button id="btn-export-json" aria-label="Exportar JSON">JSON del escenario</button>
+            <button id="btn-copy-link" aria-label="Copiar enlace">Copiar enlace</button>
+            <button id="btn-copy-report" aria-label="Copiar informe">Copiar informe</button>
+          </div>
         </div>
+        <button id="btn-about" class="ghost" aria-label="Ayuda" title="Ayuda y atajos (?)">?</button>
       </div>
-      <button id="btn-about" aria-label="Ayuda">?</button>
     </header>
     <div class="app-main">
       <aside class="sidebar" id="sidebar"></aside>
       <section class="center">
+        <div class="context-bar" id="context-bar"></div>
         <div class="toolbar" id="toolbar"></div>
         <div class="ecg-wrap" id="ecg-wrap">
           <div class="ecg-paper"><canvas id="ecg-canvas" role="img" tabindex="-1" aria-label="Trazado ECG"></canvas></div>
@@ -76,6 +79,7 @@ export function mount(root: HTMLElement): void {
   const panelTabs = root.querySelector<HTMLElement>('#panel-tabs')!;
   const panelBody = root.querySelector<HTMLElement>('#panel-body')!;
   const ecgWrap = root.querySelector<HTMLElement>('#ecg-wrap')!;
+  const contextBar = root.querySelector<HTMLElement>('#context-bar')!;
   const liveEl = root.querySelector<HTMLElement>('#live')!;
   const modeTabs = root.querySelector<HTMLElement>('.mode-tabs')!;
 
@@ -111,15 +115,17 @@ export function mount(root: HTMLElement): void {
 
   const sel = (
     id: string,
-    opts: (string | number)[],
+    caption: string,
+    opts: { v: string | number; label: string }[],
     value: string | number,
     onchange: (v: string) => void,
   ) => {
     const l = document.createElement('label');
-    l.innerHTML = `<select id="${id}">${opts
+    l.className = 'tb-field';
+    l.innerHTML = `<span>${caption}</span><select id="${id}">${opts
       .map(
-        (v) =>
-          `<option value="${v}" ${String(v) === String(value) ? 'selected' : ''}>${v}</option>`,
+        (o) =>
+          `<option value="${o.v}" ${String(o.v) === String(value) ? 'selected' : ''}>${o.label}</option>`,
       )
       .join('')}</select>`;
     l.querySelector('select')!.addEventListener('change', (e) =>
@@ -135,34 +141,80 @@ export function mount(root: HTMLElement): void {
     const setView = (patch: Partial<ViewState>) =>
       store.update({ view: { ...store.get().view, ...patch } });
     toolbar.append(
-      sel('v-layout', ['3x4', '3x4+II', '3x4+3strips', '6x2', '12x1'], s.view.layout, (v) =>
-        setView({ layout: v as ViewState['layout'] }),
+      sel(
+        'v-layout',
+        'Formato',
+        [
+          { v: '3x4', label: '3×4' },
+          { v: '3x4+II', label: '3×4 + II' },
+          { v: '3x4+3strips', label: '3×4 + 3 tiras' },
+          { v: '6x2', label: '6×2' },
+          { v: '12x1', label: '12×1' },
+        ],
+        s.view.layout,
+        (v) => setView({ layout: v as ViewState['layout'] }),
       ),
-      sel('v-speed', [25, 50], s.view.speedMmS, (v) => setView({ speedMmS: Number(v) as 25 | 50 })),
-      sel('v-gain', [5, 10, 20], s.view.gainMmMv, (v) =>
-        setView({ gainMmMv: Number(v) as 5 | 10 | 20 }),
+      sel(
+        'v-speed',
+        'Velocidad',
+        [
+          { v: 25, label: '25 mm/s' },
+          { v: 50, label: '50 mm/s' },
+        ],
+        s.view.speedMmS,
+        (v) => setView({ speedMmS: Number(v) as 25 | 50 }),
       ),
-      sel('v-strip', [10, 30, 60], s.view.stripS, (v) =>
-        setView({ stripS: Number(v) as 10 | 30 | 60 }),
+      sel(
+        'v-gain',
+        'Ganancia',
+        [
+          { v: 5, label: '5 mm/mV' },
+          { v: 10, label: '10 mm/mV' },
+          { v: 20, label: '20 mm/mV' },
+        ],
+        s.view.gainMmMv,
+        (v) => setView({ gainMmMv: Number(v) as 5 | 10 | 20 }),
+      ),
+      sel(
+        'v-strip',
+        'Duración',
+        [
+          { v: 10, label: '10 s' },
+          { v: 30, label: '30 s' },
+          { v: 60, label: '60 s' },
+        ],
+        s.view.stripS,
+        (v) => setView({ stripS: Number(v) as 10 | 30 | 60 }),
       ),
     );
-    const mk = (label: string, checked: boolean, on: (v: boolean) => void) => {
-      const l = document.createElement('label');
-      l.innerHTML = `<input type="checkbox" ${checked ? 'checked' : ''}> ${label}`;
-      l.querySelector('input')!.addEventListener('change', (e) =>
-        on((e.target as HTMLInputElement).checked),
-      );
-      return l;
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    const mk = (label: string, checked: boolean, on: (v: boolean) => void, title?: string) => {
+      const b = document.createElement('button');
+      b.textContent = label;
+      b.setAttribute('aria-pressed', String(checked));
+      if (title) b.title = title;
+      b.addEventListener('click', () => on(!checked));
+      seg.appendChild(b);
     };
-    toolbar.append(
-      mk('Cabrera', s.view.cabrera, (v) => setView({ cabrera: v })),
-      mk('simultáneo', s.view.simultaneous, (v) => setView({ simultaneous: v })),
-      mk('limpia', s.view.showClean, (v) => setView({ showClean: v })),
-      mk('extra', s.view.extraLeads, (v) => setView({ extraLeads: v })),
-      mk('marcadores', s.view.markers, (v) => setView({ markers: v })),
+    mk('Cabrera', s.view.cabrera, (v) => setView({ cabrera: v }));
+    mk('Simultáneo', s.view.simultaneous, (v) => setView({ simultaneous: v }));
+    mk(
+      'Limpia',
+      s.view.showClean,
+      (v) => setView({ showClean: v }),
+      'Mostrar la señal sin ruido ni filtros',
     );
+    mk(
+      'Extra',
+      s.view.extraLeads,
+      (v) => setView({ extraLeads: v }),
+      'Derivaciones adicionales V7–V9 / V3R–V4R',
+    );
+    mk('Marcadores', s.view.markers, (v) => setView({ markers: v }));
+    toolbar.appendChild(seg);
     const info = document.createElement('span');
-    info.className = 'kbd';
+    info.className = 'kbd mono';
     info.style.marginLeft = 'auto';
     info.textContent = `HP ${acq.highPassHz ?? 0.05} Hz · LP ${acq.lowPassHz ?? 150} Hz`;
     toolbar.appendChild(info);
@@ -307,8 +359,41 @@ export function mount(root: HTMLElement): void {
     }
   };
 
+  const renderContextBar = () => {
+    const s = store.get();
+    const c = currentCase();
+    if (s.mode === 'monitor') {
+      contextBar.style.display = 'none';
+      return;
+    }
+    contextBar.style.display = '';
+    const badge = (t: string) => `<span class="badge muted">${t}</span>`;
+    if (s.mode === 'lab') {
+      const ref = c ? (isBlind(s) ? `caso ${CASES.indexOf(c) + 1}` : c.id) : null;
+      contextBar.innerHTML = `<h2>Laboratorio</h2>${ref ? badge(`basado en ${ref}`) : badge('escenario libre')}`;
+      return;
+    }
+    if (isBlind(s) || s.mode === 'quiz') {
+      const n = c ? CASES.indexOf(c) + 1 : '—';
+      contextBar.innerHTML = `<h2>Caso ${n}</h2>${badge('Modo ciego')}`;
+      return;
+    }
+    if (!c) {
+      contextBar.innerHTML = '<h2>Sin caso</h2>';
+      return;
+    }
+    const bits: string[] = [badge(CATEGORY_LABELS[c.category])];
+    if (c.difficulty)
+      bits.push(`<span class="dots" title="Dificultad">${'●'.repeat(c.difficulty)}</span>`);
+    bits.push(badge(`${c.vignette.sex === 'M' ? 'Varón' : 'Mujer'} · ${c.vignette.age} a`));
+    const hasTl = (c.scenario.timeline?.length ?? 0) > 0;
+    if (hasTl) bits.push(badge(`t = ${s.tMin} min`));
+    contextBar.innerHTML = `<h2>${c.id} · ${c.title}</h2>${bits.join('')}`;
+  };
+
   const render = () => {
     const s = store.get();
+    renderContextBar();
     for (const b of root.querySelectorAll<HTMLButtonElement>('.mode-tabs button')) {
       b.setAttribute('aria-selected', String(b.dataset.mode === s.mode));
     }
@@ -457,8 +542,14 @@ export function mount(root: HTMLElement): void {
       <h2 id="about-title">ECG Lab</h2>
       <p>Simulador clínico de ECG de 12 derivaciones (ritmos, bloqueos, ectopía, marcapasos,
       electrolitos, OMI). Herramienta <strong>educativa</strong>: no es un dispositivo médico.</p>
-      <p>Teclas: <span class="kbd">espacio</span> play · <span class="kbd">←/→</span> tiempo ·
-      <span class="kbd">c</span> limpia · <span class="kbd">[ ]</span> caso anterior/siguiente.</p>
+      <table class="kbd-table">
+        <tr><td><span class="kbd">espacio</span></td><td>reproducir / pausar</td></tr>
+        <tr><td><span class="kbd">←/→</span></td><td>tiempo ±1 min (⇧ ±10)</td></tr>
+        <tr><td><span class="kbd">c</span></td><td>traza limpia</td></tr>
+        <tr><td><span class="kbd">[ ]</span></td><td>caso anterior / siguiente</td></tr>
+        <tr><td><span class="kbd">?</span></td><td>esta ayuda</td></tr>
+        <tr><td><span class="kbd">←/→</span> en pestañas</td><td>cambiar de pestaña</td></tr>
+      </table>
       <p>Versión 2.0 · Motor dipolar (MODEL.md) · ${CASES.length} casos clínicos.</p>
       <button id="about-close" class="primary">Cerrar</button></div>`;
     const close = () => {

@@ -6,6 +6,8 @@ export interface MetricCard {
   label: string;
   value: string;
   sub?: string | undefined;
+  /** Extra detail shown as the card tooltip (e.g. all QTc formulas). */
+  title?: string | undefined;
   status: 'usable' | 'review' | 'unavailable';
   note?: string | undefined;
 }
@@ -64,14 +66,16 @@ export function metricCards(
     },
     {
       label: 'QT / QTcF',
-      value: `${num(d?.qtMs ?? null)} / ${num(d?.qtc.fridericia ?? null)} ms`,
-      sub: qtcLine,
+      value: `${num(d?.qtMs ?? null)} ms`,
+      sub: `QTcF ${num(d?.qtc.fridericia ?? null)} ms`,
+      title: qtcLine,
       status: ev('qt').status,
       note: ev('qt').note,
     },
     {
-      label: 'Ejes P·QRS·T',
-      value: `${num(d?.axisDeg.p ?? null)}° / ${num(d?.axisDeg.qrs ?? null)}° / ${num(d?.axisDeg.t ?? null)}°`,
+      label: 'Eje QRS',
+      value: `${num(d?.axisDeg.qrs ?? null)}°`,
+      sub: d ? `P ${num(d.axisDeg.p)}° · T ${num(d.axisDeg.t)}°` : undefined,
       status: ev('axis').status,
       note: ev('axis').note,
     },
@@ -83,8 +87,8 @@ export function metricCards(
     },
     {
       label: 'Calidad',
-      value: d ? `${(d.noiseMv * 1000).toFixed(0)} µV RMS` : '—',
-      sub: d?.quality,
+      value: d ? `${(d.noiseMv * 1000).toFixed(0)} µV` : '—',
+      sub: d ? `RMS · ${d.quality}` : undefined,
       status: d ? (d.noiseMv < 0.03 ? 'usable' : 'review') : 'unavailable',
     },
   ];
@@ -102,6 +106,7 @@ export function renderMetricCards(el: HTMLElement, cards: MetricCard[]): void {
         : c.status === 'review'
           ? `<span class="ev-badge ev-review" title="${escapeAttr(c.note ?? 'revisar')}">◐</span>`
           : `<span class="ev-badge ev-na" title="${escapeAttr(c.note ?? 'no disponible')}">—</span>`;
+    if (c.title) card.title = c.title;
     card.innerHTML = `<div class="mc-label">${escapeHtml(c.label)} ${badge}</div>
       <div class="mc-value num">${escapeHtml(c.value)}</div>
       ${c.sub ? `<div class="mc-sub" title="${escapeAttr(c.sub)}">${escapeHtml(c.sub)}</div>` : ''}`;
