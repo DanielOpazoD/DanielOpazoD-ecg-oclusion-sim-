@@ -109,7 +109,7 @@ export const GROUP_N: CaseDefinition[] = [
       conduction: 'normal',
       sources: [],
       variability: false,
-      beatOverrides: { ...lowVoltageOverrides(), alternans: 0.3 },
+      beatOverrides: { ...lowVoltageOverrides(), alternans: 0.3, aTScale: 0.45 },
     },
     ecgAtMin: 0,
     expected: {
