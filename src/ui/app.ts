@@ -781,8 +781,7 @@ export function mount(root: HTMLElement): void {
         const d = report?.delineation;
         if (!d?.beats.length) return;
         const idx = pickBeat(d, tSec);
-        if (idx >= 0)
-          store.update({ view: { ...store.get().view, beatIdx: idx, beatOpen: true } });
+        if (idx >= 0) store.update({ view: { ...store.get().view, beatIdx: idx, beatOpen: true } });
       },
     },
   );
