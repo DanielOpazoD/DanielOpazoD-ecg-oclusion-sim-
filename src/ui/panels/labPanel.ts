@@ -1,4 +1,12 @@
-import type { InjurySource, Placement, RhythmSpec, ConductionSpec } from '../../engine/index.js';
+import type {
+  InjurySource,
+  Placement,
+  RhythmSpec,
+  ConductionSpec,
+  BeatOverrides,
+} from '../../engine/index.js';
+import { SavedCases } from '../../persistence/savedCases.js';
+import { exportScenarioJson, importScenarioJson } from '../../persistence/jsonIO.js';
 import { TERRITORIES } from '../../engine/index.js';
 import { store } from '../state/appState.js';
 import {
@@ -105,10 +113,31 @@ const REFLEADS = [
   'V4R',
 ];
 
+function accordion(title: string, open = false): { det: HTMLElement; body: HTMLElement } {
+  const det = document.createElement('details');
+  det.className = 'lab-acc';
+  det.open = open;
+  const sum = document.createElement('summary');
+  sum.textContent = title;
+  det.appendChild(sum);
+  const body = document.createElement('div');
+  body.className = 'lab-acc-body';
+  det.appendChild(body);
+  return { det, body };
+}
+
 /** Lab scenario editor: injury sources, rhythm, conduction, acquisition, seed. */
 export function labPanel(el: HTMLElement, onChange: () => void): void {
   const s = store.get().scenario;
   el.innerHTML = '';
+
+  const ritmo = accordion('Ritmo', true);
+  const cond = accordion('Conducción / eje');
+  const isq = accordion('Isquemia');
+  const repol = accordion('Repolarización / electrolitos');
+  const acqAcc = accordion('Adquisición');
+  const esc = accordion('Escenario / guardados');
+  el.append(ritmo.det, cond.det, isq.det, repol.det, acqAcc.det, esc.det);
 
   const srcCard = document.createElement('div');
   srcCard.className = 'card';
@@ -128,7 +157,7 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
     onChange();
   });
   srcCard.appendChild(addBtn);
-  el.appendChild(srcCard);
+  isq.body.appendChild(srcCard);
 
   const ctxCard = document.createElement('div');
   ctxCard.className = 'card';
@@ -156,7 +185,12 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
       onChange();
     }),
   );
-  ctxCard.appendChild(
+  ritmo.body.appendChild(ctxCard);
+
+  const condCard = document.createElement('div');
+  condCard.className = 'card';
+  condCard.innerHTML = '<h3>Conducción y contexto</h3>';
+  condCard.appendChild(
     selectRow(
       'Conducción',
       CONDUCTIONS as unknown as string[],
@@ -183,7 +217,105 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
       onChange();
     }),
   );
-  el.appendChild(ctxCard);
+  cond.body.appendChild(condCard);
+
+  // --- Repolarización / electrolitos --------------------------------------
+  const ov = s.beatOverrides ?? {};
+  const repCard = document.createElement('div');
+  repCard.className = 'card';
+  repCard.innerHTML = '<h3>Overrides globales (latido)</h3>';
+  const presetRow = document.createElement('div');
+  presetRow.className = 'field-row';
+  presetRow.innerHTML = `<label>Preajuste</label>
+    <select aria-label="Preajuste electrolitos">
+      <option value="">personalizado</option>
+      <option value="hyperkalemia">HiperK moderada</option>
+      <option value="hyperkalemiaSevere">HiperK severa</option>
+      <option value="hypokalemia">HipoK</option>
+      <option value="hypocalcemia">HipoCa</option>
+      <option value="hypercalcemia">HiperCa</option>
+      <option value="longQt">QT largo</option>
+      <option value="shortQt">QT corto</option>
+      <option value="digoxin">Digitálico</option>
+      <option value="osborn">Osborn</option>
+      <option value="lowVoltage">Bajo voltaje</option>
+    </select>`;
+  presetRow.querySelector('select')!.addEventListener('change', (e) => {
+    const v = (e.target as HTMLSelectElement).value;
+    if (!v) return;
+    void applyPreset(v);
+  });
+  const applyPreset = async (v: string) => {
+    const eng = await import('../../engine/index.js');
+    const presets: Record<string, () => NonNullable<typeof s.beatOverrides>> = {
+      hyperkalemia: eng.hyperkalemiaOverrides,
+      hyperkalemiaSevere: eng.severeHyperkalemiaOverrides,
+      hypokalemia: eng.hypokalemiaOverrides,
+      hypocalcemia: eng.hypocalcemiaOverrides,
+      hypercalcemia: eng.hypercalcemiaOverrides,
+      longQt: eng.longQtOverrides,
+      shortQt: eng.shortQtOverrides,
+      digoxin: eng.digoxinOverrides,
+      osborn: () => ({ osbornMv: 0.15 }),
+      lowVoltage: eng.lowVoltageOverrides,
+    };
+    const fn = presets[v];
+    if (!fn) return;
+    mutateScenario((sc) => {
+      sc.beatOverrides = { ...(sc.beatOverrides ?? {}), ...fn() };
+    });
+    onChange();
+  };
+  repCard.appendChild(presetRow);
+  const setOv = (key: string, v: number | null) => {
+    mutateScenario((sc) => {
+      const o: BeatOverrides = { ...(sc.beatOverrides ?? {}) };
+      if (v === null || v === 0) delete o[key as keyof BeatOverrides];
+      else (o as Record<string, number>)[key] = v;
+      sc.beatOverrides = o;
+    });
+    onChange();
+  };
+  const ovNum = (k: string) => (ov as Record<string, unknown>)[k];
+  repCard.appendChild(
+    sliderRow('QTc (ms)', Number(ovNum('qtc') ?? 0), 0, 600, 5, (v) => setOv('qtc', v || null)),
+  );
+  repCard.appendChild(
+    sliderRow('Escala T', Number(ovNum('aTScale') ?? 0), 0, 2, 0.05, (v) =>
+      setOv('aTScale', v || null),
+    ),
+  );
+  repCard.appendChild(
+    sliderRow('ST horizontal (ms)', Number(ovNum('stSegmentMs') ?? 0), -80, 200, 5, (v) =>
+      setOv('stSegmentMs', v || null),
+    ),
+  );
+  repCard.appendChild(
+    sliderRow('Onda U (mV)', Number(ovNum('uWaveMv') ?? 0), 0, 0.3, 0.01, (v) =>
+      setOv('uWaveMv', v || null),
+    ),
+  );
+  repCard.appendChild(
+    sliderRow('ST sag (mV)', Number(ovNum('stSagMv') ?? 0), 0, 0.2, 0.01, (v) =>
+      setOv('stSagMv', v || null),
+    ),
+  );
+  repCard.appendChild(
+    sliderRow('Osborn (mV)', Number(ovNum('osbornMv') ?? 0), 0, 0.3, 0.01, (v) =>
+      setOv('osbornMv', v || null),
+    ),
+  );
+  repCard.appendChild(
+    sliderRow('Escala QRS', Number(ovNum('qrsWidthScale') ?? 0), 0, 2, 0.05, (v) =>
+      setOv('qrsWidthScale', v || null),
+    ),
+  );
+  repCard.appendChild(
+    sliderRow('Alternans', Number(ovNum('alternans') ?? 0), 0, 0.5, 0.01, (v) =>
+      setOv('alternans', v || null),
+    ),
+  );
+  repol.body.appendChild(repCard);
 
   const acq = s.acquisition ?? {};
   const acqCard = document.createElement('div');
@@ -260,7 +392,7 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
       PLACEMENT_LABELS,
     ),
   );
-  el.appendChild(acqCard);
+  acqAcc.body.appendChild(acqCard);
 
   const seedCard = document.createElement('div');
   seedCard.className = 'card';
@@ -283,23 +415,67 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
     });
     onChange();
   });
-  const copy = btn('Copiar escenario JSON', () => {
-    void navigator.clipboard?.writeText(JSON.stringify(store.get().scenario, null, 2));
+  const copy = btn('Exportar JSON', () => {
+    void navigator.clipboard?.writeText(exportScenarioJson(store.get().scenario));
   });
-  const load = btn('Cargar JSON', () => {
+  const load = btn('Importar JSON', () => {
     const txt = prompt('Pega el JSON del escenario:');
     if (!txt) return;
     try {
-      const sc = JSON.parse(txt) as typeof s;
+      const sc = importScenarioJson(txt);
       store.update({ scenario: sc });
       onChange();
-    } catch {
-      alert('JSON inválido.');
+    } catch (err) {
+      alert(`JSON inválido: ${err instanceof Error ? err.message : String(err)}`);
     }
   });
   btns.append(rnd, copy, load);
   seedCard.appendChild(btns);
-  el.appendChild(seedCard);
+
+  // Saved scenarios (localStorage).
+  const saved = new SavedCases();
+  const savedCard = document.createElement('div');
+  savedCard.className = 'card';
+  savedCard.innerHTML = '<h3>Guardados</h3>';
+  const renderSaved = () => {
+    savedCard.innerHTML = '<h3>Guardados</h3>';
+    for (const c of saved.list()) {
+      const row = document.createElement('div');
+      row.className = 'field-row';
+      const nm = document.createElement('button');
+      nm.textContent = c.name;
+      nm.style.flex = '1';
+      nm.style.textAlign = 'left';
+      nm.addEventListener('click', () => {
+        store.update({ scenario: structuredClone(c.scenario) });
+        onChange();
+      });
+      const del = btn('✕', () => {
+        saved.remove(c.name);
+        renderSaved();
+      });
+      row.append(nm, del);
+      savedCard.appendChild(row);
+    }
+    const row = document.createElement('div');
+    row.className = 'field-row';
+    row.innerHTML =
+      '<input type="text" placeholder="Nombre…" aria-label="Nombre del escenario" style="flex:1">';
+    const save = btn('Guardar', () => {
+      const name = (row.querySelector('input') as HTMLInputElement).value;
+      try {
+        saved.save(name, structuredClone(store.get().scenario));
+        renderSaved();
+      } catch {
+        alert('Nombre vacío.');
+      }
+    });
+    row.appendChild(save);
+    savedCard.appendChild(row);
+  };
+  renderSaved();
+  seedCard.appendChild(savedCard);
+  esc.body.appendChild(seedCard);
 }
 
 function sourceEditor(src: InjurySource, i: number, onChange: () => void): HTMLElement {
