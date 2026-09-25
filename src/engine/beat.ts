@@ -208,6 +208,11 @@ interface QrsComponent {
   sigma: number;
   dir: Vec3;
   gain: number;
+  /** Logistic decay mu/sigma applied to this component's gain — makes a
+   * terminal force stop inside the stated QRS duration instead of fading
+   * over tens of ms (keeps the J point at baseline while the morphology
+   * still reads wide to a slope-energy delineator). */
+  cut?: [number, number];
 }
 
 /** Baseline QRS components (§2.2 McSharry extended to 3D). */
@@ -255,10 +260,14 @@ function qrsComponents(params: BeatParams): QrsComponent[] {
       );
     }
     case 'irbbb':
-      // Small terminal rightward vector: rSR' in V1, QRS 100–110.
+      // Small terminal right-anterior-superior vector: rSR' in V1, QRS
+      // 100–110 ms. Rightward enough to write R' in V1 / terminal r in aVR,
+      // but with small frontal projection so the mean axis stays put and
+      // aVL keeps a visible R. Tight σ so the tail ends inside the QRS
+      // (J returns to baseline).
       return scaleSigma([
         ...normalQrs().map((c) => ({ ...c, gain: c.gain * rScale })),
-        { mu: 85, sigma: 12, dir: normalize([-0.8, 0.1, -0.55]), gain: 0.3 },
+        { mu: 80, sigma: 9, dir: normalize([-0.35, -0.35, -0.85]), gain: 0.3, cut: [101, 3] },
       ]);
     case 'lafb':
       return scaleSigma(
@@ -279,7 +288,7 @@ function qrsComponents(params: BeatParams): QrsComponent[] {
         rotateToFrontalAxis(
           [
             ...normalQrs().map((c) => ({ ...c, gain: c.gain * rScale })),
-            { mu: 85, sigma: 18, dir: normalize([-0.8, 0.1, -0.55]), gain: 0.55 },
+            { mu: 92, sigma: 16, dir: normalize([-0.35, -0.35, -0.85]), gain: 0.55, cut: [120, 3] },
           ],
           -50,
         ),
@@ -289,7 +298,7 @@ function qrsComponents(params: BeatParams): QrsComponent[] {
         rotateToFrontalAxis(
           [
             ...normalQrs().map((c) => ({ ...c, gain: c.gain * rScale })),
-            { mu: 85, sigma: 18, dir: normalize([-0.8, 0.1, -0.55]), gain: 0.55 },
+            { mu: 92, sigma: 16, dir: normalize([-0.35, -0.35, -0.85]), gain: 0.55, cut: [120, 3] },
           ],
           110,
         ),
@@ -314,7 +323,7 @@ function qrsComponents(params: BeatParams): QrsComponent[] {
     case 'rbbb':
       return [
         ...normalQrs().map((c) => ({ ...c, gain: c.gain * rScale })),
-        { mu: 85, sigma: 18, dir: normalize([-0.8, 0.1, -0.55]), gain: 0.55 },
+        { mu: 92, sigma: 16, dir: normalize([-0.35, -0.35, -0.85]), gain: 0.55, cut: [120, 3] },
       ];
     case 'paced':
       // LBBB-like morphology with superior axis (§5.2).
@@ -349,9 +358,13 @@ function tDirection(params: BeatParams): Vec3 {
       // negative in V5–V6.
       return normalize([-0.68, 0.27, -0.68]);
     case 'rbbb': {
-      // Discordant T only in V1–V2: blend −(right-anterior) component.
-      return normalize(add(U_T, scale(normalize([-0.8, 0.1, -0.55]), -0.35)));
+      // Secondary repolarization: T points away from the terminal vector,
+      // inverting in V1–V2 while lateral T stays upright.
+      return normalize(add(U_T, scale(normalize([-0.35, -0.35, -0.85]), -0.7)));
     }
+    case 'irbbb':
+      // Incomplete RBBB: the secondary T inversion barely reaches V1.
+      return normalize(add(U_T, scale(normalize([-0.35, -0.35, -0.85]), -0.4)));
     case 'lvh-strain':
       return normalize(add(U_T, scale(normalize([0.72, 0.62, 0.3]), -0.9)));
     case 'rvh':
@@ -374,6 +387,11 @@ function discordantSt(params: BeatParams): Vec3 {
     case 'lvh-strain':
       // Tilted -x so lateral I/aVL/V5-V6 carry the strain depression (case D03).
       return scale(normalize([-0.8, -0.5, -0.35]), 0.11 * A_QRS * 1.8);
+    case 'rbbb':
+      // Secondary J/ST: slight depression in V1–V2 (opposite to the R').
+      return scale(normalize([0.515, -0.157, 0.917]), 0.026 * A_QRS);
+    case 'irbbb':
+      return scale(normalize([0.515, -0.157, 0.917]), 0.014 * A_QRS);
     default:
       return [0, 0, 0];
   }
@@ -447,7 +465,8 @@ export function generateBeatDipole(params: BeatParams, tauMs: number): Vec3 {
   // --- QRS (§2.2, §5.2) --- (P waves are separate atrial events; see
   // generatePDipole / scenario.ts)
   for (const c of qrsComponents(params)) {
-    h = add(h, scale(rotZ(c.dir), qrsGain * c.gain * gaussian(tauMs, c.mu, c.sigma)));
+    const cut = c.cut ? 1 / (1 + Math.exp((tauMs - c.cut[0]) / c.cut[1])) : 1;
+    h = add(h, scale(rotZ(c.dir), qrsGain * c.gain * cut * gaussian(tauMs, c.mu, c.sigma)));
   }
   // Ectopic ventricular beat (PVC/AIVR): single wide bizarre component (§5.1).
   if (params.ventricularOrigin) {
