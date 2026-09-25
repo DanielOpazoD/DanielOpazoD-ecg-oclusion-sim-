@@ -133,6 +133,17 @@ describe('delineate', () => {
     expect(r.delineation.evidence.pr.status).not.toBe('usable');
   });
 
+  it('QRS axis stable at fast irregular rates (afib 140 ≈ sinus 72)', () => {
+    const s = generateEcg({ ...sinus, seed: 9, rhythm: { type: 'sinus', hrBpm: 72 } });
+    const a = generateEcg({ ...sinus, seed: 9, rhythm: { type: 'afib', hrBpm: 140 } });
+    const ds = delineate({ fs: s.fs, leads: s.clean });
+    const da = delineate({ fs: a.fs, leads: a.clean });
+    expect(ds.axisDeg.qrs).not.toBeNull();
+    expect(da.axisDeg.qrs).not.toBeNull();
+    const diff = Math.abs(((da.axisDeg.qrs! - ds.axisDeg.qrs! + 540) % 360) - 180);
+    expect(diff).toBeLessThan(25);
+  });
+
   it('dextrocardia: P still delineates and no false AV dissociation', () => {
     const e = generateEcg({
       ...sinus,

@@ -211,7 +211,7 @@ export const GROUP_G: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['heart-rate', 'rr-irregular', 'axis-deviation'],
+      positiveFindings: ['heart-rate', 'rr-irregular'],
       negativeFindings: ['pacing'],
       diagnosis: 'Fibrilación auricular con respuesta rápida',
       distractors: ['Flutter auricular variable', 'Taquicardia auricular multifocal', 'TSV'],
@@ -300,7 +300,7 @@ export const GROUP_G: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['heart-rate', 'flutter-waves', 'axis-deviation'],
+      positiveFindings: ['heart-rate', 'flutter-waves'],
       negativeFindings: ['rr-irregular'],
       diagnosis: 'Flutter auricular con conducción 2:1',
       distractors: ['Taquicardia sinusal', 'TSV por reentrada nodal', 'FA con respuesta rápida'],
@@ -344,7 +344,7 @@ export const GROUP_G: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['rr-irregular', 'pr-prolonged', 'axis-deviation', 'flutter-waves'],
+      positiveFindings: ['rr-irregular', 'pr-prolonged', 'flutter-waves'],
       negativeFindings: ['pacing'],
       diagnosis: 'Flutter auricular con conducción variable',
       distractors: ['Fibrilación auricular', 'Taquicardia auricular multifocal', 'TSV'],

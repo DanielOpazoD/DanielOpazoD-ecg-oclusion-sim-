@@ -81,7 +81,7 @@ export const GROUP_M: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['peaked-t', 'heart-rate', 'axis-deviation'],
+      positiveFindings: ['peaked-t', 'heart-rate'],
       negativeFindings: ['omi-composite'],
       diagnosis: 'Hiperpotasemia severa',
       distractors: [

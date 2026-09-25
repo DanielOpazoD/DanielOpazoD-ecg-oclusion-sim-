@@ -199,7 +199,7 @@ export const GROUP_I: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['rr-irregular', 'axis-deviation'],
+      positiveFindings: ['rr-irregular'],
       negativeFindings: ['omi-composite'],
       diagnosis: 'Bloqueo AV de alto grado 3:1',
       distractors: ['Bradicardia sinusal', 'Bloqueo AV completo', 'Ritmo idioventricular'],

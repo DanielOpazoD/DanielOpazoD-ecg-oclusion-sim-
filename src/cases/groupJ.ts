@@ -83,13 +83,7 @@ export const GROUP_J: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: [
-        'axis-deviation',
-        'stemi-udmi4',
-        'rv-involvement',
-        'reciprocal-avl',
-        'pathological-q',
-      ],
+      positiveFindings: ['stemi-udmi4', 'rv-involvement', 'reciprocal-avl', 'pathological-q'],
       negativeFindings: ['wide-qrs'],
       rulesMiss:
         'La r′ en V1 del BRD incompleto imita un patrón posterior y activa las reglas de oclusión; es una variante de conducción.',

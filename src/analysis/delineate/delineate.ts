@@ -319,9 +319,25 @@ export function delineate(input: DelineationInput, opts: { windowS?: number } = 
         }
       if (te <= tp + 2) te = Math.min(tHi, tp + Math.round(0.2 * fs));
     }
-    const iVal = signal.I![p]! - b[0]!;
-    const iiVal = signal.II![p]! - b[1]!;
-    qrsAxes.push(axis(iVal, iiVal));
+    // QRS axis from the signed area over [on, off] of the delineated beat —
+    // a single peak sample is unstable at fast/irregular rates where the
+    // tallest sample can sit off the dominant deflection. Reference is the
+    // isoelectric segment just before onset (the peak-centred baseline
+    // lands inside the QRS at fast rates).
+    const qBase = names.map((l) => {
+      const lo = Math.max(0, on - Math.round(0.04 * fs));
+      const hi = Math.max(lo + 1, on - Math.round(0.01 * fs));
+      return median(Array.from(signal[l]!.slice(lo, hi)));
+    });
+    const iBase = qBase[names.indexOf('I')] ?? 0;
+    const iiBase = qBase[names.indexOf('II')] ?? 0;
+    let iArea = 0;
+    let iiArea = 0;
+    for (let i = on; i <= off && i < n; i++) {
+      iArea += signal.I![i]! - iBase;
+      iiArea += signal.II![i]! - iiBase;
+    }
+    qrsAxes.push(axis(iArea, iiArea));
     if (pOn !== undefined) {
       prs.push(((on - pOn) * 1000) / fs);
       pAxes.push(axis(signal.I![pp]! - b[0]!, signal.II![pp]! - b[1]!));
