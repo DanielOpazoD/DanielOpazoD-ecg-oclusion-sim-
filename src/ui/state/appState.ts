@@ -1,4 +1,5 @@
 import type { Scenario } from '../../engine/index.js';
+import type { CaseCategory } from '../../cases/types.js';
 import { defaultScenario } from '../../engine/index.js';
 import { getCase } from '../../cases/index.js';
 import { createStore } from './store.js';
@@ -7,7 +8,13 @@ import { createStore } from './store.js';
 export interface ViewState {
   speedMmS: 25 | 50;
   gainMmMv: 5 | 10 | 20;
-  layout: '3x4' | '3x4+II' | '6x2' | '12x1';
+  layout: '3x4' | '3x4+II' | '3x4+3strips' | '6x2' | '12x1';
+  /** Cabrera lead order for limb leads (−aVR). */
+  cabrera: boolean;
+  /** Simultaneous (continuous) vs sequential column traces. */
+  simultaneous: boolean;
+  /** Rhythm-strip duration in seconds. */
+  stripS: 10 | 30 | 60;
   /** Show clean (ground-truth) trace overlay. */
   showClean: boolean;
   /** Show V7–V9 / V3R–V4R extra row. */
@@ -17,8 +24,8 @@ export interface ViewState {
   markers: boolean;
 }
 
-export type Mode = 'cases' | 'lab' | 'quiz';
-export type PanelTab = 'clinical' | 'findings' | 'measurements' | 'teaching' | 'lab' | 'reveal';
+export type Mode = 'cases' | 'lab' | 'monitor' | 'quiz';
+export type PanelTab = 'clinical' | 'findings' | 'teaching' | 'beat' | 'vectors' | 'lab' | 'reveal';
 
 export interface QuizState {
   order: string[];
@@ -58,6 +65,11 @@ export interface AppState {
   analysisSource: 'clean' | 'acquired';
   /** Case ids whose verdict was revealed while blind mode is on. */
   revealedCaseIds: string[];
+  /** Case-browser category filter. */
+  caseFilter: CaseCategory | 'all';
+  /** Case-browser free-text search. */
+  caseSearch: string;
+  /** Monitor freeze + beep live in the Monitor instance, not the store. */
 }
 
 /** True when diagnosis content must be hidden (quiz, or blind + not yet revealed). */
@@ -83,6 +95,9 @@ export const store = createStore<AppState>({
     speedMmS: 25,
     gainMmMv: 10,
     layout: '3x4+II',
+    cabrera: false,
+    simultaneous: false,
+    stripS: 10,
     showClean: false,
     extraLeads: false,
     theme: savedTheme,
@@ -101,6 +116,8 @@ export const store = createStore<AppState>({
   panelTab: 'findings',
   analysisSource: 'clean',
   revealedCaseIds: [],
+  caseFilter: 'all',
+  caseSearch: '',
 });
 
 export function setTheme(theme: 'dark' | 'light'): void {
