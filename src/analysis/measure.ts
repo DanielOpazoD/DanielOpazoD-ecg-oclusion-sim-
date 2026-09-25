@@ -187,7 +187,16 @@ function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): Le
     }
     if (x < -sAmp) sAmp = -x;
   }
+  // A Q wave is negativity before the FIRST positive deflection — in an
+  // rSR′ complex (RBBB) the S between r and R′ must not count as Q.
+  let firstR = rIdx;
   for (let i = qrsOnset; i < rIdx; i++) {
+    if (rel(i) > Math.max(0.04, rAmp * 0.1)) {
+      firstR = i;
+      break;
+    }
+  }
+  for (let i = qrsOnset; i < firstR; i++) {
     const x = rel(i);
     if (x < -qAmp) {
       qAmp = -x;

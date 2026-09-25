@@ -1,39 +1,37 @@
 import type { LeadId } from '../../engine/index.js';
-import { anyContiguousPair, finding, type Rule } from './types.js';
-
-const SET: LeadId[] = [
-  'I',
-  'II',
-  'III',
-  'aVF',
-  'aVL',
-  'V1',
-  'V2',
-  'V3',
-  'V4',
-  'V5',
-  'V6',
-  'V7',
-  'V8',
-  'V9',
-];
+import { finding, type Rule } from './types.js';
 
 /**
- * Pathological Q waves (§8, [1]): Q ≥ 40 ms or ≥ 25 % of R in 2 contiguous.
+ * Pathological Q waves (§8, [1]): Q ≥ 30 ms and ≥ 1 mm, or Q/R ≥ 0.25, in
+ * ≥ 2 contiguous leads of the SAME territory. aVR is excluded; an isolated
+ * Q in III or aVL alone is never positive.
  */
+const TERRITORIES: { name: string; leads: LeadId[] }[] = [
+  { name: 'inferior', leads: ['II', 'III', 'aVF'] },
+  { name: 'lateral', leads: ['I', 'aVL', 'V5', 'V6'] },
+  { name: 'anterior', leads: ['V1', 'V2', 'V3', 'V4'] },
+];
+
 export const pathologicalQ: Rule = (ctx) => {
   // QS in V1–V3 is expected morphology in LBBB/paced — skip.
   const qrsOk = ctx.conduction !== 'lbbb' && ctx.conduction !== 'paced';
-  const hits = anyContiguousPair(ctx, SET, (l) => {
+  const hasQ = (l: LeadId) => {
     const m = ctx.measurements.perLead[l];
-    if (!qrsOk) return false;
+    if (!qrsOk || !m) return false;
     // QS complex (R lost to necrosis): counts as pathological Q.
     if (m.rAmp < 0.15) return m.qAmp >= 0.15 && m.qDurMs >= 40;
-    // Small physiologic septal dips are not pathological: require a
-    // meaningful R (≥3 mm) and q ≥ 0.8 mm before applying the spec criteria.
-    if (m.rAmp < 0.3 || m.qAmp < 0.08) return false;
-    return m.qDurMs >= 40 || m.qAmp / m.rAmp >= 0.25;
-  });
+    if (m.qAmp < 0.1 || m.qDurMs < 30) return false;
+    return m.qAmp >= 0.1 || m.qAmp / Math.max(m.rAmp, 0.01) >= 0.25;
+  };
+  const hits: LeadId[] = [];
+  const territories: string[] = [];
+  for (const t of TERRITORIES) {
+    const n = t.leads.filter(hasQ);
+    if (n.length >= 2) {
+      hits.push(...n);
+      territories.push(t.name);
+    }
+  }
   const positive = hits.length >= 2;
   return finding(
     'pathological-q',
@@ -42,8 +40,8 @@ export const pathologicalQ: Rule = (ctx) => {
     hits,
     { count: hits.length },
     positive
-      ? `Q patológica (≥40 ms o ≥25 % R) en contiguas: ${hits.join(', ')}.`
-      : 'Sin ondas Q patológicas en derivaciones contiguas.',
+      ? `Q patológica en territorio ${territories.join('+')}: ${hits.join(', ')}.`
+      : 'Sin ondas Q patológicas (≥30 ms y ≥1 mm, o ≥25 % R) en 2+ derivaciones del mismo territorio.',
     [1],
   );
 };
