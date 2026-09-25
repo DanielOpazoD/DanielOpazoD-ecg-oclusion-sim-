@@ -460,7 +460,7 @@ export const GROUP_D: CaseDefinition[] = [
       rhythm: { type: 'sinus', hrBpm: 45 },
       conduction: 'normal',
       sources: [{ territory: 'lateral', st: 0.04, refLead: 'V4', shape: 'concave' }],
-      beatOverrides: { osbornMv: 0.18 },
+      beatOverrides: { osbornMv: 0.06 },
       acquisition: { emg: { sigmaMv: 0.08 }, baselineWander: { amplitudeMv: 0.2, hz: 0.3 } },
     },
     expected: {

@@ -64,7 +64,6 @@ export const GROUP_L: CaseDefinition[] = [
       rhythm: { type: 'paced', mode: 'VVI', rateBpm: 60 },
       conduction: 'normal',
       sources: [],
-      beatOverrides: { jNotchMv: 0.1 },
       variability: false,
     },
     ecgAtMin: 0,

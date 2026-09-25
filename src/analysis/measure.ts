@@ -308,31 +308,43 @@ function measureLead(sig: Float32Array, fs: number, beats: BeatFiducials[]): Lea
     qDurMs = Math.max(qDurMs, ((b - a) / fs) * 1000);
   }
   const qrsDurMs = ((j - qrsOnset) / fs) * 1000;
-  // Per-lead J refinement: the shared J fiducial can precede this lead's own
-  // descent end by a few ms (multi-lead delineation, terminal slurs). Move J
-  // forward only while the trace is still on the steep QRS tail — a slowly
-  // rising ST segment stays at its J-point value, never level-corrected.
-  let descRate = 0;
-  for (let i = qrsOnset + 2; i <= j - 2; i++)
-    descRate = Math.max(descRate, Math.abs(rel(i + 2) - rel(i - 2)) / 4);
-  const slopeTol = Math.max(0.08 * descRate, 0.003);
+  // Per-lead J refinement: the shared J fiducial can land inside this lead's
+  // terminal-QRS slur (multi-lead delineation; wide/paced/ventricular
+  // complexes). Walk forward — up to +40 ms — until the slope decays to the
+  // ST-segment slope level (estimated 60–100 ms after off) and holds.
   const slopeAt = (i: number) => Math.abs(v(i + 2) - v(i - 2)) / 4;
+  let stSlopeEst = 0.001;
+  {
+    const ss: number[] = [];
+    const lo = j + msToSamples(60, fs);
+    const hi = Math.min(j + msToSamples(100, fs), wave.length - 2, tEnd);
+    for (let i = lo; i < hi; i++) ss.push(slopeAt(i));
+    if (ss.length) stSlopeEst = median(ss);
+  }
+  const slopeTol = Math.max(2.5 * stSlopeEst, 0.003);
   const holdN = msToSamples(10, fs);
+  // Collect every sustained-quiet candidate in [j−5, j+40] ms; the J is the
+  // one closest in level to the shared fiducial — a very wide complex keeps
+  // walking to the ST slur's end, a late multi-lead off stays near home.
+  // J is the descent→plateau corner: among sustained-quiet candidates pick
+  // the one with the steepest slope in the 15 ms just before it — mid-descent
+  // noise flats lose to the real corner, wide slurs still walk forward.
   let jSt = j;
-  for (let i = Math.max(qrsOnset + 1, j - msToSamples(5, fs)); i <= j + msToSamples(15, fs); i++) {
+  let corner = 0;
+  const preN = msToSamples(15, fs);
+  for (let i = Math.max(qrsOnset + 1, j - msToSamples(2, fs)); i <= j + msToSamples(40, fs); i++) {
     let ok = true;
     for (let k = i; k < Math.min(i + holdN, wave.length - 2); k++)
       if (slopeAt(k) > slopeTol) {
         ok = false;
         break;
       }
-    // The segment must also be level-stable: a discordant T upslope (paced,
-    // LBBB, strain) can briefly satisfy the slope test — a real J plateau
-    // holds its level.
-    if (ok && Math.abs(v(i + holdN) - v(i)) > 0.12) ok = false;
-    if (ok) {
+    if (!ok) continue;
+    let pre = 0;
+    for (let k = Math.max(0, i - preN); k < i; k++) pre = Math.max(pre, slopeAt(k));
+    if (pre > corner) {
+      corner = pre;
       jSt = i;
-      break;
     }
   }
   const stJ = rel(jSt);
