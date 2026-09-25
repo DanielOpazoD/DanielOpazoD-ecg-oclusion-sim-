@@ -167,7 +167,7 @@ input[type='text'] {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
 }
 .right-panel {
   width: 380px;
@@ -254,7 +254,7 @@ input[type='text'] {
 
 .ecg-wrap {
   flex: 1;
-  min-height: 0;
+  min-height: 440px;
   overflow: auto;
   display: flex;
   flex-direction: column;
@@ -459,6 +459,144 @@ button.ghost:hover {
   color: var(--muted);
   white-space: nowrap;
   flex: 0 0 auto;
+}
+
+/* Beat reader card ("un latido, de cerca"). */
+.beat-reader {
+  margin: 10px;
+  padding: var(--sp-3) var(--sp-4);
+}
+.beat-reader .br-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.beat-reader .kicker {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.beat-reader h3 {
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: 0;
+  margin: 2px 0 var(--sp-2);
+}
+.br-title {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+}
+.br-chev {
+  color: var(--muted);
+  font-size: var(--fs-md);
+  transition: transform 0.15s;
+  padding-top: 4px;
+}
+.br-title[aria-expanded='false'] .br-chev {
+  transform: rotate(-90deg);
+}
+.beat-reader.collapsed .br-plot,
+.beat-reader.collapsed .br-foot,
+.beat-reader.collapsed .br-table-wrap,
+.beat-reader.collapsed .br-hint,
+.beat-reader.collapsed .br-nav {
+  display: none;
+}
+.br-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-md);
+}
+.br-count b {
+  font-weight: 600;
+}
+.br-controls button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 15px;
+}
+.br-plot svg {
+  display: block;
+}
+.br-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--sp-2);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+.br-left {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.br-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.br-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.br-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.br-meta {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: var(--fs-sm);
+}
+.br-table-wrap {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+.br-table-wrap[hidden] {
+  display: none;
+}
+.br-table table {
+  margin-top: var(--sp-2);
+  max-height: 160px;
+  overflow-y: auto;
+  display: block;
+}
+.br-table tr.cur {
+  background: var(--accent-soft);
+}
+.br-hint {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  margin: var(--sp-2) 0 0;
 }
 
 .finding-list {

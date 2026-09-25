@@ -25,6 +25,7 @@ export class Monitor {
   ) {}
 
   start(): void {
+    if (this.raf) return;
     this.lastTs = performance.now();
     const loop = (ts: number) => {
       this.draw(ts);

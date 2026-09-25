@@ -63,6 +63,49 @@ interface Cell {
   invert: boolean;
 }
 
+export interface GridGeometry {
+  /** device-independent px per mm actually used for the paper. */
+  ppm: number;
+  /** left/top margin in px. */
+  mx: number;
+  /** cell duration (s) per column. */
+  cellSec: number;
+  /** column count. */
+  cols: number;
+  /** grid rows (excluding strip + extra rows). */
+  rows: number;
+  /** full-width rhythm-strip rows. */
+  stripRows: number;
+  /** cell width / height in mm. */
+  cellWMm: number;
+  cellHMm: number;
+}
+
+/**
+ * Shared mm→px geometry between the renderer and pointer tools (calipers,
+ * beat picking). Mirrors exactly what {@link renderEcg} lays out.
+ */
+export function gridGeometry(canvas: HTMLCanvasElement, view: ViewState): GridGeometry {
+  const cssW = canvas.clientWidth || 900;
+  const cssH = canvas.clientHeight || 600;
+  const marginMm = 8;
+  const footerMm = 8;
+  const cellSec = layoutCellSeconds(view.layout);
+  const grid = leadOrderFor(view);
+  const cols = view.layout === '12x1' ? 1 : (grid[0]?.length ?? 1);
+  const rows =
+    view.layout === '12x1' ? STD12.length + (view.extraLeads ? EXTRA.length : 0) : grid.length;
+  const stripRows = view.layout === '3x4+II' ? 1 : view.layout === '3x4+3strips' ? 3 : 0;
+  const totalWidthMm = view.speedMmS * cellSec * cols;
+  const pxPerMm = (cssW - marginMm * 2 * pxGuess(view.speedMmS)) / totalWidthMm;
+  const ppm = Math.max(2, pxPerMm);
+  const mx = marginMm * ppm;
+  const gridH = cssH - footerMm * ppm - mx;
+  const extraRows = view.extraLeads && view.layout !== '12x1' ? 1 : 0;
+  const cellHMm = gridH / ppm / (rows + stripRows + extraRows);
+  return { ppm, mx, cellSec, cols, rows, stripRows, cellWMm: cellSec * view.speedMmS, cellHMm };
+}
+
 function layoutCellSeconds(layout: ViewState['layout']): number {
   switch (layout) {
     case '3x4':

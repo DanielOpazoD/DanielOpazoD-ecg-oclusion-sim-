@@ -1,4 +1,4 @@
-import type { Scenario } from '../../engine/index.js';
+import type { Scenario, LeadId } from '../../engine/index.js';
 import type { CaseCategory } from '../../cases/types.js';
 import { defaultScenario } from '../../engine/index.js';
 import { getCase } from '../../cases/index.js';
@@ -21,10 +21,17 @@ export interface ViewState {
   extraLeads: boolean;
   /** Tiny J-point ticks. */
   markers: boolean;
+  /** Selected beat index into delineation.beats (null → auto). */
+  beatIdx: number | null;
+  /** Lead shown in the beat-reader card. */
+  beatLead: LeadId;
+  /** Calipers mode: drag measures; off → click picks a beat. */
+  calipers: boolean;
+  beatOpen: boolean;
 }
 
 export type Mode = 'cases' | 'lab' | 'monitor' | 'quiz';
-export type PanelTab = 'clinical' | 'findings' | 'teaching' | 'beat' | 'vectors' | 'lab' | 'reveal';
+export type PanelTab = 'clinical' | 'findings' | 'teaching' | 'vectors' | 'lab' | 'reveal';
 
 export interface QuizState {
   order: string[];
@@ -98,6 +105,10 @@ export const store = createStore<AppState>({
     showClean: false,
     extraLeads: false,
     markers: false,
+    beatIdx: null,
+    beatLead: 'II',
+    calipers: false,
+    beatOpen: true,
   },
   playing: false,
   playSpeedMinPerS: 1,

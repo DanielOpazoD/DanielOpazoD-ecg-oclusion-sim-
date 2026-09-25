@@ -27,6 +27,10 @@ const view: ViewState = {
   showClean: false,
   extraLeads: false,
   markers: true,
+  beatIdx: null,
+  beatLead: 'II',
+  calipers: false,
+  beatOpen: true,
 };
 
 describe('urlState', () => {
@@ -276,6 +280,36 @@ describe('sidebar view switch leaves no residue', () => {
     store.update({ mode: 'cases' });
     expect(sidebar.querySelector('details')).toBeNull();
     expect(sidebar.querySelectorAll('.case-head').length).toBe(1);
+    root.remove();
+  });
+});
+
+describe('beat reader + monitor gating', () => {
+  it('monitor strip hidden outside monitor mode; beat card shows and steps beats', async () => {
+    const { mount } = await import('./app.js');
+    const { store } = await import('./state/appState.js');
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    (globalThis as { ResizeObserver?: unknown }).ResizeObserver ??= class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+    mount(root);
+    const strip = root.querySelector<HTMLElement>('#monitor-strip')!;
+    const card = root.querySelector<HTMLElement>('#beat-card')!;
+    expect(strip.style.display).toBe('none');
+    expect(card.textContent).toMatch(/Latido \d+ \/ \d+/);
+    // › increments the counter (store-driven re-render).
+    const before = card.textContent!;
+    card.querySelector<HTMLButtonElement>('#br-next')?.click();
+    await Promise.resolve();
+    expect(card.textContent).not.toBe(before);
+    expect(card.textContent).toMatch(/Latido 2 \//);
+    store.update({ mode: 'monitor' });
+    expect(strip.style.display).not.toBe('none');
+    expect(card.style.display).toBe('none');
+    store.update({ mode: 'cases' });
     root.remove();
   });
 });
