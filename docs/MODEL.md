@@ -320,3 +320,50 @@ Todas las reglas tienen tests con casos positivos y negativos construidos con el
 12. Todos los casos de la biblioteca: `expected.omi === rules.omiComposite.positive` **o** el caso
     declara explícitamente `expected.rulesMiss = true` (OMI que las reglas no detectan; se documenta
     el porqué en el caso). Cada caso enumera los `findings` esperados positivos y negativos.
+
+## 10. Schedule de eventos (v2)
+
+El ritmo ya no genera solo instantes de QRS: `schedule.ts` produce una lista ordenada de
+eventos atriales (`sinus`, `pac`, `flutter`, `f`) y ventriculares (`sinus`, `pvc`, `escape`,
+`paced`) más los spikes de marcapasos. Los ESV/ESA insertan un evento extra y reinician el
+nodo sinusal (los ESA) o introducen pausa compensatoria (los ESV). Los bloqueos AV deciden
+conducción por evento (Mobitz I/II, 2:1, alto grado, completo con escape yugal o
+ventricular). La FA usa un generador de RR irregular con suelo refractario
+(`max(0.38·base, 260 ms)`) y sin P. `vt`/`vf`/`torsades` producen latidos `ventricular` con
+`rrMs` propio; `asystole` produce solo eventos atriales si procede.
+
+## 11. Memoria QT y repolarización
+
+El QT efectivo de cada latido sigue una memoria exponencial hacia el QT de reposo
+corregido por RR (`repolarization.ts`): tras un RR corto el QT no se acorta del todo, lo
+que reproduce la dinámica QT-RR real y el patrón de torsades. Los overrides de caso
+(`stSegmentMs`, `qtc`, `tWidth50Ms`, `uAmp`, `osbornMv`, `aTScale`, `tSigmaScale`,
+`alternans`) modifican la plantilla por latido sin romper la coherencia entre derivaciones.
+
+## 12. Plantillas de conducción y pacing
+
+Cada `conduction` aplica una plantilla al dipolo QRS (retraso de la fuerza derecha en BRD,
+fuerzas tardías izquierdas en BRI, hemibloqueos como rotación de eje, WPW con onda delta).
+El QRS marcapasos usa la plantilla BRI con ST discordante (≤ 5 % de la S — no satisface
+Sgarbossa sin lesión). La dextrocardia es un `placement` de adquisición que invierte las
+proyecciones precordiales, no un ritmo.
+
+## 13. Señales continuas y `ModelScopeError`
+
+`scenario.ts` construye cada derivación como señal continua `Float32Array` de
+`durationS·fs` muestras (hasta 60 s para tiras largas); los latidos se insertan como
+gaussianas + Hermite sobre una línea base. Si la combinación pedida es físicamente
+imposible (solapamiento de QRS a tasas altas, intervalos negativos) `generateEcg` lanza
+`ModelScopeError` en lugar de devolver una señal corrupta; la UI lo reporta como error de
+escenario.
+
+## 14. Delineación independiente y auditoría
+
+`analysis/delineate` trabaja solo con muestras: supresión de spikes de marcapasos, picos
+R por energía multiderivación, bordes QRS por energía de pendiente suavizada (quiet-run
+≥ 12 ms, mín. 60 ms, máx. 200 ms), P por ventana `[on−260, on−60]` ms con score
+polaridad-agnóstico sobre II/aVR/V1/I referido a un suelo local, eje QRS por área
+integrada `[on, off]` sobre línea isoeléctrica previa al onset, T-end por tangente sobre
+la rama descendente. `audit.ts` compara cada mediana con los fiduciales del generador y
+retira (valor `null` + evidencia `unavailable`) lo que se desvíe: FC 5 %, PR 25 ms,
+QRS 20 ms, QT 40 ms, eje 25°. Las reglas ven solo métricas auditadas.
