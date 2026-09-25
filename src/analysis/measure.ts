@@ -1,10 +1,14 @@
 import type { Ecg12, LeadId } from '../engine/index.js';
 import { LEAD_IDS } from '../engine/index.js';
+import { median } from './delineate/statistics.js';
 
 /**
- * Measurements on the dominant sinus beat (MODEL.md §8).
- * Beats are located with engine fiducials — no detection — and the dominant
- * sinus beats are median-averaged per lead; pvc/aivr/escape beats excluded.
+ * Measurements on the dominant beat (MODEL.md §8).
+ * `measureSignal` works on a plain lead record + a caller-selected list of
+ * beat fiducials (sample indices) — it is agnostic about where those
+ * fiducials came from (generator truth or independent delineation).
+ * `measureEcg` is the fiducial-based reference path, kept for auditing only;
+ * it is never fed to the rule engine.
  */
 
 /** 1 mV = 10 mm. */
@@ -73,55 +77,130 @@ export interface Measurements {
   qrsWide: boolean;
 }
 
+/** Beat fiducials in sample indices. `pOnset` is −1 when there is no P. */
+export interface BeatFiducials {
+  pOnset: number;
+  qrsOnset: number;
+  j: number;
+  tEnd: number;
+}
+
+/** Inputs for the fiducial-agnostic measurement path. */
+export interface MeasureInput {
+  fs: number;
+  leads: Partial<Record<LeadId, Float32Array>>;
+  beats: BeatFiducials[];
+  rrMs: number | null;
+  prMs: number | null;
+  qtMs: number | null;
+  qrsAxisDeg: number | null;
+  tAxisDeg: number | null;
+}
+
 function msToSamples(ms: number, fs: number): number {
   return Math.round((ms / 1000) * fs);
 }
 
-function median(xs: number[]): number {
-  if (xs.length === 0) return 0;
-  const s = [...xs].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m]! : (s[m - 1]! + s[m]!) / 2;
-}
+const ZERO_LEAD: LeadMeasurement = {
+  baseline: 0,
+  stJ: 0,
+  st60: 0,
+  st80: 0,
+  stSlope: 0,
+  qDurMs: 0,
+  qAmp: 0,
+  rAmp: 0,
+  sAmp: 0,
+  qrsDurMs: 0,
+  jToR: 0,
+  tAmp: 0,
+  tArea: 0,
+  tSym: 0,
+  tQrsAreaRatio: 0,
+  tWidth50Ms: 0,
+  tTerminal: 0,
+  uAmp: 0,
+  tBiphasic: 0,
+  terminalMin: 0,
+};
 
 /**
- * Median-average the dominant sinus beats of `lead` over a window relative to
- * QRS onset; returns the averaged waveform and the representative fiducials.
+ * Median-average all given beats of `sig` over a window relative to each
+ * beat's QRS onset; returns the averaged waveform and the representative
+ * fiducials (median offsets relative to the averaged onset).
  */
 function dominantBeat(
-  ecg: Ecg12,
-  lead: LeadId,
-  source: 'clean' | 'acquired',
+  sig: Float32Array,
+  fs: number,
+  beats: BeatFiducials[],
 ): { wave: Float32Array; qrsOnset: number; j: number; tEnd: number; pOnset: number } | null {
-  // Dominant morphology: most frequent non-PVC type (escape/aivr rhythms are
-  // measured on their own beats, §8).
-  const counts = new Map<string, number>();
-  for (const b of ecg.beats) {
-    if (b.kind === 'pvc') continue;
-    counts.set(b.kind, (counts.get(b.kind) ?? 0) + 1);
-  }
-  const dominantType = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
-  const beats = ecg.beats.filter((b) => b.kind === dominantType);
-  if (beats.length === 0) return null;
-  const fs = ecg.fs;
   const pre = msToSamples(220, fs);
   const post = msToSamples(700, fs);
-  const sig = source === 'acquired' ? ecg.leads[lead] : ecg.clean[lead];
-  const segs: number[][] = [];
+  let segs: number[][] = [];
+  let kept: BeatFiducials[] = [];
   for (const b of beats) {
     const start = b.qrsOnset - pre;
     if (start < 0 || b.qrsOnset + post > sig.length) continue;
     const seg: number[] = [];
     for (let i = 0; i < pre + post; i++) seg.push(sig[start + i]!);
     segs.push(seg);
+    kept.push(b);
   }
   if (segs.length === 0) return null;
   const wave = new Float32Array(pre + post);
   for (let i = 0; i < wave.length; i++) wave[i] = median(segs.map((s) => s[i]!));
+  // Re-align each segment on the lag that best matches the first-pass median
+  // wave (bounded ±20 ms): delineated onsets jitter by a few ms, which
+  // smears sharp R peaks under median averaging.
+  const jMed0 = Math.round(median(kept.map((b) => b.j - b.qrsOnset)));
+  const wLo = pre - msToSamples(20, fs);
+  const wHi = Math.min(wave.length, pre + jMed0 + msToSamples(60, fs));
+  const segCorr = (seg: number[], shift: number) => {
+    let xy = 0;
+    let xx = 0;
+    let yy = 0;
+    for (let i = wLo; i < wHi; i++) {
+      const s = seg[i];
+      const w = wave[i - shift];
+      if (s === undefined || w === undefined) continue;
+      xy += s * w;
+      xx += s * s;
+      yy += w * w;
+    }
+    return xx > 0 && yy > 0 ? xy / Math.sqrt(xx * yy) : -1;
+  };
+  const maxLag = msToSamples(20, fs);
+  const segs2: number[][] = [];
+  const kept2: BeatFiducials[] = [];
+  for (const b of kept) {
+    const start = b.qrsOnset - pre;
+    const base: number[] = [];
+    for (let i = 0; i < pre + post; i++) base.push(sig[start + i]!);
+    let bestLag = 0;
+    let bestC = -Infinity;
+    for (let lag = -maxLag; lag <= maxLag; lag++) {
+      const c = segCorr(base, lag);
+      if (c > bestC) {
+        bestC = c;
+        bestLag = lag;
+      }
+    }
+    const shifted: number[] = [];
+    const s0 = b.qrsOnset - pre - bestLag;
+    if (s0 < 0 || s0 + pre + post > sig.length) continue;
+    for (let i = 0; i < pre + post; i++) shifted.push(sig[s0 + i]!);
+    segs2.push(shifted);
+    kept2.push(b);
+  }
+  if (segs2.length > 0) {
+    segs = segs2;
+    kept = kept2;
+    for (let i = 0; i < wave.length; i++) wave[i] = median(segs.map((s) => s[i]!));
+  }
   // Representative fiducials: median durations relative to qrsOnset.
-  const jMed = Math.round(median(beats.map((b) => b.j - b.qrsOnset)));
-  const tMed = Math.round(median(beats.map((b) => b.tEnd - b.qrsOnset)));
-  const pDeltas = beats.filter((b) => b.pOnset >= 0).map((b) => b.qrsOnset - b.pOnset);
+  const jMed = Math.round(median(kept.map((b) => b.j - b.qrsOnset)));
+  const tMed = Math.round(median(kept.map((b) => b.tEnd - b.qrsOnset)));
+  const pDeltas = kept.filter((b) => b.pOnset >= 0).map((b) => b.qrsOnset - b.pOnset);
   const pMed = pDeltas.length ? Math.round(median(pDeltas)) : -1;
   return {
     wave,
@@ -132,32 +211,10 @@ function dominantBeat(
   };
 }
 
-function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): LeadMeasurement {
-  const fs = ecg.fs;
-  const dom = dominantBeat(ecg, lead, source);
+function measureLead(sig: Float32Array, fs: number, beats: BeatFiducials[]): LeadMeasurement {
+  const dom = dominantBeat(sig, fs, beats);
   if (!dom) {
-    return {
-      baseline: 0,
-      stJ: 0,
-      st60: 0,
-      st80: 0,
-      stSlope: 0,
-      qDurMs: 0,
-      qAmp: 0,
-      rAmp: 0,
-      sAmp: 0,
-      qrsDurMs: 0,
-      jToR: 0,
-      tAmp: 0,
-      tArea: 0,
-      tSym: 0,
-      tQrsAreaRatio: 0,
-      tWidth50Ms: 0,
-      tTerminal: 0,
-      uAmp: 0,
-      tBiphasic: 0,
-      terminalMin: 0,
-    };
+    return { ...ZERO_LEAD };
   }
   const { wave, qrsOnset, j, tEnd } = dom;
   const clamp = (i: number) => Math.min(wave.length - 1, Math.max(0, i));
@@ -173,19 +230,47 @@ function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): Le
   baseline /= Math.max(1, cnt);
   const rel = (i: number) => v(i) - baseline;
 
-  // QRS amplitudes.
-  let rAmp = 0;
+  // QRS amplitudes: measured per beat on the raw signal (median across
+  // beats) — onset jitter smears sharp deflections on the averaged wave,
+  // which would collapse the R of paced/wide complexes.
+  const beatR: number[] = [];
+  const beatS: number[] = [];
+  for (const b of beats) {
+    let r = 0;
+    let s = 0;
+    for (
+      let i = Math.max(0, b.qrsOnset - msToSamples(10, fs));
+      i <= Math.min(b.j, sig.length - 1);
+      i++
+    ) {
+      const x = sig[i]! - baseline;
+      if (x > r) r = x;
+      if (x < -s) s = -x;
+    }
+    beatR.push(r);
+    beatS.push(s);
+  }
+  let rAmp = beatR.length ? median(beatR) : 0;
+  let sAmp = beatS.length ? median(beatS) : 0;
   let rIdx = qrsOnset;
-  let sAmp = 0;
   let qAmp = 0;
   let qIdx = qrsOnset;
-  for (let i = qrsOnset; i <= j; i++) {
-    const x = rel(i);
-    if (x > rAmp) {
-      rAmp = x;
-      rIdx = i;
+  {
+    let wR = 0;
+    for (let i = qrsOnset; i <= j; i++) {
+      const x = rel(i);
+      if (x > wR) {
+        wR = x;
+        rIdx = i;
+      }
     }
-    if (x < -sAmp) sAmp = -x;
+    if (rAmp <= 0 && wR > 0) rAmp = wR;
+    if (sAmp <= 0) {
+      for (let i = qrsOnset; i <= j; i++) {
+        const x = rel(i);
+        if (x < -sAmp) sAmp = -x;
+      }
+    }
   }
   // A Q wave is negativity before the FIRST positive deflection — in an
   // rSR′ complex (RBBB) the S between r and R′ must not count as Q.
@@ -223,13 +308,40 @@ function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): Le
     qDurMs = Math.max(qDurMs, ((b - a) / fs) * 1000);
   }
   const qrsDurMs = ((j - qrsOnset) / fs) * 1000;
-  const stJ = rel(j);
-  const st60 = rel(j + msToSamples(60, fs));
-  const st80 = rel(j + msToSamples(80, fs));
+  // Per-lead J refinement: the shared J fiducial can precede this lead's own
+  // descent end by a few ms (multi-lead delineation, terminal slurs). Move J
+  // forward only while the trace is still on the steep QRS tail — a slowly
+  // rising ST segment stays at its J-point value, never level-corrected.
+  let descRate = 0;
+  for (let i = qrsOnset + 2; i <= j - 2; i++)
+    descRate = Math.max(descRate, Math.abs(rel(i + 2) - rel(i - 2)) / 4);
+  const slopeTol = Math.max(0.08 * descRate, 0.003);
+  const slopeAt = (i: number) => Math.abs(v(i + 2) - v(i - 2)) / 4;
+  const holdN = msToSamples(10, fs);
+  let jSt = j;
+  for (let i = Math.max(qrsOnset + 1, j - msToSamples(5, fs)); i <= j + msToSamples(15, fs); i++) {
+    let ok = true;
+    for (let k = i; k < Math.min(i + holdN, wave.length - 2); k++)
+      if (slopeAt(k) > slopeTol) {
+        ok = false;
+        break;
+      }
+    // The segment must also be level-stable: a discordant T upslope (paced,
+    // LBBB, strain) can briefly satisfy the slope test — a real J plateau
+    // holds its level.
+    if (ok && Math.abs(v(i + holdN) - v(i)) > 0.12) ok = false;
+    if (ok) {
+      jSt = i;
+      break;
+    }
+  }
+  const stJ = rel(jSt);
+  const st60 = rel(jSt + msToSamples(60, fs));
+  const st80 = rel(jSt + msToSamples(80, fs));
   const stSlope = (st80 - stJ) / 0.08;
 
   // T metrics over [junction, tEnd]; junction ≈ 1/3 of the way (§8).
-  const junction = Math.round(j + (tEnd - j) * (110 / 340));
+  const junction = Math.round(jSt + (tEnd - jSt) * (110 / 340));
   let tAmp = 0;
   let tPeak = junction;
   for (let i = j; i <= tEnd; i++) {
@@ -256,11 +368,28 @@ function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): Le
   while (wEnd > tPeak && Math.abs(rel(wEnd)) < half) wEnd--;
   const tWidth50Ms = ((wEnd - wStart) / fs) * 1000;
   let uAmp = 0;
-  const uLo = Math.min(wave.length - 1, tEnd + msToSamples(40, fs));
+  // Anchor the U window to the T peak, not T end: when the delineated T end
+  // runs late (T–U fusion in hypokalaemia), a window relative to tEnd
+  // misses the U wave entirely.
+  const uLo = Math.min(wave.length - 1, tPeak + msToSamples(150, fs));
   const uHi = Math.min(wave.length - 1, tEnd + msToSamples(220, fs));
   for (let i = uLo; i <= uHi; i++) {
     const x = rel(i);
     if (Math.abs(x) > Math.abs(uAmp)) uAmp = x;
+  }
+  // Per-beat T/U amplitudes (median across beats): alternans and onset
+  // jitter damp the averaged wave, which would shrink or inflate these.
+  {
+    const tAmps: number[] = [];
+    for (const b of beats) {
+      let ta = 0;
+      for (let i = Math.max(0, b.j); i <= Math.min(b.tEnd, sig.length - 1); i++) {
+        const x = sig[i]! - baseline;
+        if (Math.abs(x) > ta) ta = x;
+      }
+      tAmps.push(ta);
+    }
+    if (tAmps.length) tAmp = median(tAmps);
   }
   let tTerminal = 0;
   for (let i = Math.max(junction, tEnd - msToSamples(120, fs)); i <= tEnd; i++) {
@@ -303,13 +432,38 @@ function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): Le
 }
 
 /**
- * Measure the whole ECG (§8). Averages the dominant sinus beats per lead,
- * then derives intervals, rates and frontal axes.
+ * Measure a lead record given beat fiducials and global interval hints.
+ * The fiducial source (generator truth vs independent delineation) is
+ * irrelevant — this is the path the rule engine reads.
+ */
+export function measureSignal(input: MeasureInput): Measurements {
+  const perLead = {} as Record<LeadId, LeadMeasurement>;
+  for (const id of LEAD_IDS) {
+    const sig = input.leads[id];
+    perLead[id] = sig ? measureLead(sig, input.fs, input.beats) : { ...ZERO_LEAD };
+  }
+
+  const rrMs = input.rrMs ?? 0;
+  const hrBpm = rrMs > 0 ? 60000 / rrMs : 60;
+  const qt = input.qtMs ?? 0;
+  const qtcBazett = rrMs > 0 ? qt / Math.sqrt(rrMs / 1000) : qt;
+  const prMs = input.prMs ?? -1;
+  const qrsWide = LEAD_IDS.some((l) => perLead[l].qrsDurMs >= 120);
+
+  const net = (l: LeadId) => perLead[l].rAmp - perLead[l].sAmp;
+  const qrsAxisDeg = input.qrsAxisDeg ?? (Math.atan2(net('aVF'), net('I')) * 180) / Math.PI;
+  const tAxisDeg = input.tAxisDeg ?? (Math.atan2(perLead.aVF.tAmp, perLead.I.tAmp) * 180) / Math.PI;
+
+  return { perLead, qt, qtcBazett, prMs, hrBpm, qrsAxisDeg, tAxisDeg, qrsWide };
+}
+
+/**
+ * Fiducial-based reference measurement — used ONLY as the audit reference
+ * for the blind path; never fed to the rule engine.
  */
 export function measureEcg(ecg: Ecg12, source: 'clean' | 'acquired' = 'clean'): Measurements {
-  const perLead = {} as Record<LeadId, LeadMeasurement>;
-  for (const id of LEAD_IDS) perLead[id] = measureLead(ecg, id, source);
-
+  // Dominant morphology: most frequent non-PVC kind (escape/aivr rhythms are
+  // measured on their own beats, §8).
   const counts = new Map<string, number>();
   for (const b of ecg.beats) {
     if (b.kind === 'pvc') continue;
@@ -317,19 +471,27 @@ export function measureEcg(ecg: Ecg12, source: 'clean' | 'acquired' = 'clean'): 
   }
   const dominantType = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'sinus';
   const sinus = ecg.beats.filter((b) => b.kind === dominantType);
+  const beats: BeatFiducials[] = sinus.map((b) => ({
+    pOnset: b.pOnset,
+    qrsOnset: b.qrsOnset,
+    j: b.j,
+    tEnd: b.tEnd,
+  }));
+  const leads = source === 'acquired' ? ecg.leads : ecg.clean;
   const rrMs = median(
     sinus.slice(1).map((b, i) => (b.qrsOnset - sinus[i]!.qrsOnset) / (ecg.fs / 1000)),
   );
-  const hrBpm = rrMs > 0 ? 60000 / rrMs : 60;
   const rep = sinus[Math.floor(sinus.length / 2)] ?? ecg.beats[0];
-  const qt = rep ? ((rep.tEnd - rep.qrsOnset) / ecg.fs) * 1000 : 0;
-  const qtcBazett = rrMs > 0 ? qt / Math.sqrt(rrMs / 1000) : qt;
+  const qtMs = rep ? ((rep.tEnd - rep.qrsOnset) / ecg.fs) * 1000 : 0;
   const prMs = rep && rep.pOnset >= 0 ? ((rep.qrsOnset - rep.pOnset) / ecg.fs) * 1000 : -1;
-  const qrsWide = LEAD_IDS.some((l) => perLead[l].qrsDurMs >= 120);
-
-  const net = (l: LeadId) => perLead[l].rAmp - perLead[l].sAmp;
-  const qrsAxisDeg = (Math.atan2(net('aVF'), net('I')) * 180) / Math.PI;
-  const tAxisDeg = (Math.atan2(perLead.aVF.tAmp, perLead.I.tAmp) * 180) / Math.PI;
-
-  return { perLead, qt, qtcBazett, prMs, hrBpm, qrsAxisDeg, tAxisDeg, qrsWide };
+  return measureSignal({
+    fs: ecg.fs,
+    leads,
+    beats,
+    rrMs: rrMs > 0 ? rrMs : null,
+    prMs: prMs >= 0 ? prMs : null,
+    qtMs,
+    qrsAxisDeg: null,
+    tAxisDeg: null,
+  });
 }

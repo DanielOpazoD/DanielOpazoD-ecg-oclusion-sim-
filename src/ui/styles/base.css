@@ -238,6 +238,12 @@ input[type='text'] {
   color: var(--muted);
   border: 1px solid var(--border);
 }
+.badge.blind-chip {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
 
 .ecg-wrap {
   flex: 1;

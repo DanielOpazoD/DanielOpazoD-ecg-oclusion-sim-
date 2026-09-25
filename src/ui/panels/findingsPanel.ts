@@ -63,8 +63,14 @@ export function findingsPanel(
   const head = document.createElement('div');
   head.className = 'card';
   const stemi = report.findings.find((f) => f.id === 'stemi-udmi4');
+  const audit = report.measurementAudit;
   head.innerHTML = `
-    <h3>Veredicto</h3>
+    <h3>Veredicto <span class="badge muted blind-chip" title="Mediciones obtenidas solo de la señal y la delineación independiente">Medido en señal (ciego)</span></h3>
+    ${
+      audit && audit.status !== 'usable'
+        ? `<p><span class="ev-badge ev-${audit.status === 'review' ? 'review' : 'na'}" title="${audit.note}">⚠ medición</span> <small>${audit.note}</small></p>`
+        : ''
+    }
     <p>
       <span class="badge ${report.omi.positive ? 'danger' : 'ok'}">${
         report.omi.positive ? 'OMI probable' : 'Sin criterios de oclusión'

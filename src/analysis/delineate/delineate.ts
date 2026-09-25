@@ -193,11 +193,25 @@ export function delineate(input: DelineationInput, opts: { windowS?: number } = 
     const offFrac = tailN > 0 && sustained / tailN > 0.7 ? 0.18 : null;
     if (offFrac !== null) {
       const hiOff = eFloor + offFrac * (ePeak - eFloor);
+      // Plateau floor: lowest multi-lead magnitude over the quiet window —
+      // the true J is where the QRS descent first falls back to this level.
+      let pl = Infinity;
+      for (let i = off; i < Math.min(off + Math.round(0.04 * fs), n); i++)
+        pl = Math.min(pl, magnitude(i));
+      if (!Number.isFinite(pl)) pl = 0;
+      let cross = -1;
       for (let i = off; i > p; i--)
         if (eSmooth(i) >= hiOff) {
-          off = i + 1;
+          cross = i;
           break;
         }
+      if (cross > 0) {
+        for (let i = cross; i <= off; i++)
+          if (magnitude(i) <= pl * 1.08 + 0.01) {
+            off = i;
+            break;
+          }
+      }
       // Deep-dip-then-rebound: a ventricular tail that truly goes quiet
       // (<5% peak) then rises again (>12%) belongs to the complex — the
       // true J sits at the end of the tail, cross at 10% instead.
@@ -257,6 +271,17 @@ export function delineate(input: DelineationInput, opts: { windowS?: number } = 
       const s = pScore(i);
       if (s > 2.9) continue;
       if (pp < 0 || s > pScore(pp)) pp = i;
+    }
+    // Second chance: short-PR rhythms (WPW, accelerated junctional) park the
+    // P peak inside the standard 60 ms margin — extend to 30 ms before the
+    // onset when the in-window candidate is below the acceptance floor.
+    // The score ceiling still rejects the QRS foot itself.
+    if (pp < 0 || pScore(pp) < 0.6) {
+      for (let i = pHi; i < on - Math.round(0.03 * fs); i++) {
+        const s = pScore(i);
+        if (s > 2.9) continue;
+        if (pp < 0 || s > pScore(pp)) pp = i;
+      }
     }
     const pAmpScore = pp >= 0 && availP.length ? pScore(pp) : 0;
     const pMag = pp >= 0 ? magnitude(pp) : 0;
