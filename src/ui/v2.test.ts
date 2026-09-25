@@ -256,3 +256,28 @@ describe('a11y — wireTablist roving tabindex', () => {
     box.remove();
   });
 });
+
+describe('a11y — app mount roving tabindex on mode tabs', () => {
+  it('selected mode tab has tabindex 0; ArrowRight activates the next', async () => {
+    const { mount } = await import('./app.js');
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    (globalThis as { ResizeObserver?: unknown }).ResizeObserver ??= class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+    mount(root);
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('.mode-tabs button')];
+    const selected = tabs.findIndex((t) => t.getAttribute('aria-selected') === 'true');
+    expect(selected).toBeGreaterThanOrEqual(0);
+    for (let i = 0; i < tabs.length; i++) expect(tabs[i]!.tabIndex).toBe(i === selected ? 0 : -1);
+    tabs[selected]!.focus();
+    root
+      .querySelector('.mode-tabs')!
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    expect(document.activeElement).toBe(tabs[(selected + 1) % tabs.length]);
+    expect(tabs[(selected + 1) % tabs.length]!.tabIndex).toBe(0);
+    root.remove();
+  });
+});

@@ -312,6 +312,7 @@ export function mount(root: HTMLElement): void {
     for (const b of root.querySelectorAll<HTMLButtonElement>('.mode-tabs button')) {
       b.setAttribute('aria-selected', String(b.dataset.mode === s.mode));
     }
+    wireTablist(modeTabs);
     sidebar.style.display = s.mode === 'monitor' ? 'none' : '';
     // Monitor mode: full-width sweep, no 12-lead toolbar / paper / timeline.
     const mon = s.mode === 'monitor';
@@ -357,7 +358,6 @@ export function mount(root: HTMLElement): void {
       store.update({ mode, playing: false, ...(mode === 'lab' ? { panelTab: 'findings' } : {}) });
     });
   }
-  wireTablist(modeTabs);
   const pop = root.querySelector<HTMLElement>('#export-pop')!;
   const btnExport = root.querySelector<HTMLElement>('#btn-export')!;
   const closePop = (refocus = false) => {
@@ -575,6 +575,13 @@ export function mount(root: HTMLElement): void {
   );
 
   window.addEventListener('resize', () => renderEcgCanvas());
+  // Panel-stack changes (e.g. mobile breakpoints) resize the wrap without a
+  // window resize — observe it so the canvas re-lays out.
+  let roTimer: ReturnType<typeof setTimeout> | undefined;
+  new ResizeObserver(() => {
+    clearTimeout(roTimer);
+    roTimer = setTimeout(() => renderEcgCanvas(), 80);
+  }).observe(ecgWrap);
   monitor.start();
 
   // URL state takes precedence over the default case on first load.
