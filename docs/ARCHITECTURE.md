@@ -79,6 +79,12 @@ congelado y bip WebAudio (respeta `prefers-reduced-motion`).
 - Propiedades (fast-check) en engine/math/delineate.
 - Aceptación por caso: cada caso genera su ECG en `ecgAtMin` y sus `positiveFindings` /
   `negativeFindings` se verifican contra el motor de reglas real.
+- Snapshots de regresión (`src/cases/signature.test.ts`): firma de señal por derivación
+  (`engine/signature.ts`) y resumen de análisis (OMI, hallazgos positivos, FC) por caso;
+  se actualizan a propósito con `npm run test:update` cuando el modelo cambia.
+- E2E (Playwright, `e2e/`): carga, búsqueda/teclado/accesibilidad, quiz, exportación PNG
+  y responsive, contra `vite dev` levantado por `webServer`. La pirámide es: propiedades y
+  unitarios en la base → aceptación por caso → snapshots → E2E en la punta.
 
 ## Determinismo
 

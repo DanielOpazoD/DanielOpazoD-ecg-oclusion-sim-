@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Verificación automatizada**: snapshots de firma de señal y de análisis por caso
+  (`engine/signature.ts`, `npm run test:update`), suite E2E con Playwright (smoke,
+  búsqueda, teclado, quiz, exportación PNG, responsive; job `e2e` en CI), y hooks
+  husky + lint-staged (`pre-commit` formato/lint, `pre-push` typecheck + tests).
+
 - **Accesibilidad y teclado**: roving tabindex en pestañas (modo y panel), «?» abre la
   ayuda con trampa de foco y Escape, menú de exportación navegable con flechas,
   `aria-expanded` en hallazgos, `aria-current` solo en el caso activo, skip link,
