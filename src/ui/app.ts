@@ -34,7 +34,7 @@ export function mount(root: HTMLElement): void {
       <div class="header-spacer"></div>
       <div class="export-menu">
         <button id="btn-export" aria-label="Exportar" aria-haspopup="true">Exportar ▾</button>
-        <div class="export-pop" id="export-pop" hidden>
+        <div class="export-pop" id="export-pop" hidden style="display:none">
           <button id="btn-export-png" aria-label="Exportar PNG 300 dpi">PNG (300 dpi)</button>
           <button id="btn-export-json" aria-label="Exportar JSON">JSON del escenario</button>
           <button id="btn-copy-link" aria-label="Copiar enlace">Copiar enlace</button>
@@ -50,9 +50,9 @@ export function mount(root: HTMLElement): void {
         <div class="toolbar" id="toolbar"></div>
         <div class="ecg-wrap" id="ecg-wrap">
           <div class="ecg-paper"><canvas id="ecg-canvas" aria-label="Trazado ECG"></canvas></div>
-          <div class="monitor-strip" id="monitor-strip"><canvas id="monitor-canvas" aria-label="Monitor"></canvas>
-            <div class="monitor-controls" id="monitor-controls"></div>
-          </div>
+        </div>
+        <div class="monitor-strip" id="monitor-strip"><canvas id="monitor-canvas" aria-label="Monitor"></canvas>
+          <div class="monitor-controls" id="monitor-controls"></div>
         </div>
         <div class="metric-row" id="metric-row"></div>
         <div class="timeline-bar" id="timeline"></div>
@@ -305,12 +305,19 @@ export function mount(root: HTMLElement): void {
       b.setAttribute('aria-selected', String(b.dataset.mode === s.mode));
     }
     sidebar.style.display = s.mode === 'monitor' ? 'none' : '';
-    ecgWrap.style.display = s.mode === 'monitor' ? 'none' : '';
+    // Monitor mode: full-width sweep, no 12-lead toolbar / paper / timeline.
+    const mon = s.mode === 'monitor';
+    ecgWrap.style.display = mon ? 'none' : '';
     monitorStrip.style.display = '';
-    if (s.mode === 'monitor') {
-      monitorStrip.classList.add('monitor-full');
-    } else {
-      monitorStrip.classList.remove('monitor-full');
+    toolbar.style.display = mon ? 'none' : '';
+    timelineEl.style.display = mon ? 'none' : '';
+    metricRow.style.display = mon ? 'none' : '';
+    monitorStrip.classList.toggle('monitor-full', mon);
+    // Non-ischaemic scenario: the timeline row disappears entirely.
+    if (!mon) {
+      const hasIsch =
+        s.scenario.sources.some((x) => x.st !== 0) || (s.scenario.timeline?.length ?? 0) > 0;
+      timelineEl.style.display = hasIsch ? '' : 'none';
     }
     if (s.mode === 'cases' || s.mode === 'quiz') {
       renderCaseBrowser(sidebar, (c) => selectCase(c));
@@ -336,12 +343,26 @@ export function mount(root: HTMLElement): void {
     setTheme(store.get().view.theme === 'dark' ? 'light' : 'dark');
   });
   const pop = root.querySelector<HTMLElement>('#export-pop')!;
-  root.querySelector('#btn-export')!.addEventListener('click', () => {
-    pop.hidden = !pop.hidden;
+  const closePop = () => {
+    pop.hidden = true;
+    pop.style.display = 'none';
+  };
+  const openPop = () => {
+    pop.hidden = false;
+    pop.style.display = '';
+  };
+  root.querySelector('#btn-export')!.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (pop.hidden) openPop();
+    else closePop();
   });
   document.addEventListener('click', (e) => {
-    if (!pop.hidden && !(e.target as HTMLElement).closest('.export-menu')) pop.hidden = true;
+    if (!pop.hidden && !(e.target as HTMLElement).closest('.export-menu')) closePop();
   });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !pop.hidden) closePop();
+  });
+  pop.addEventListener('click', () => closePop());
   root.querySelector('#btn-export-png')!.addEventListener('click', () => {
     pop.hidden = true;
     void exportPng300(

@@ -112,7 +112,7 @@ export function findingsPanel(
   if (na.length) {
     const det = document.createElement('details');
     det.className = 'na-group';
-    det.innerHTML = `<summary>No aplicables (QRS ancho) · ${na.length}</summary>`;
+    det.innerHTML = `<summary>No aplicables en este contexto · ${na.length}</summary>`;
     const list = document.createElement('div');
     for (const f of na) list.appendChild(findingRow(f, onHighlight));
     det.appendChild(list);

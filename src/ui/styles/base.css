@@ -262,6 +262,7 @@ input[type='text'] {
 
 .monitor-strip {
   height: 130px;
+  flex-shrink: 0;
   background: #10151a;
   border-top: 1px solid var(--border);
   position: relative;
@@ -645,4 +646,20 @@ table.meas tr:nth-child(even) {
 }
 .na-group .finding-chip {
   opacity: 0.5;
+}
+
+/* Rail overflow + lab form controls */
+.sidebar {
+  overflow-x: hidden;
+}
+.field-row input,
+.field-row select {
+  min-width: 0;
+  max-width: 100%;
+}
+.lab-acc-body .card {
+  overflow: hidden;
+}
+.field-row label {
+  min-width: 0;
 }

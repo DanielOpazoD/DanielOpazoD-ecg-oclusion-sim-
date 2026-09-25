@@ -32,16 +32,21 @@ export function metricCards(
     d?.rhythmRegularity === 'regular'
       ? 'regular'
       : d?.rhythmRegularity === 'regularly-irregular'
-        ? 'irregular organizada'
+        ? 'irregular organizado'
         : d?.rhythmRegularity === 'irregular'
           ? 'irregular'
           : '—';
+  // Atrial rate only adds information when it clearly differs from the
+  // ventricular rate (dissociation) or the ventricular rate is unknown.
+  const hrV = d?.hrBpm ?? null;
+  const atrialInformative =
+    d?.atrialRateBpm != null && (hrV === null || Math.abs(d.atrialRateBpm - hrV) > hrV * 0.1);
 
   return [
     {
       label: 'FC',
       value: `${num(d?.hrBpm ?? report?.measurements.hrBpm ?? null)} lpm`,
-      sub: d?.atrialRateBpm ? `auricular ${num(d.atrialRateBpm)}` : regularity,
+      sub: atrialInformative ? `auricular ${num(d.atrialRateBpm)}` : regularity,
       status: ev('hr').status,
       note: ev('hr').note,
     },

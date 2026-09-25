@@ -38,13 +38,22 @@ export function currentStreak(results: readonly QuizResult[]): number {
   return n;
 }
 
-/** Shuffle (seeded) the case ids and start a quiz session. */
+/** Shuffle (seeded) the filtered case ids and start a quiz session. */
 export function startQuiz(seed = Math.floor(Math.random() * 1e6)): void {
-  const order = CASES.map((c) => c.id);
-  let s = seed;
+  const s = store.get();
+  const query = (s.caseSearch ?? '').toLowerCase().trim();
+  const order = CASES.filter(
+    (c) =>
+      (s.caseFilter === 'all' || c.category === s.caseFilter) &&
+      (!query ||
+        c.id.toLowerCase().includes(query) ||
+        c.title.toLowerCase().includes(query) ||
+        (c.expected.diagnosis ?? '').toLowerCase().includes(query)),
+  ).map((c) => c.id);
+  let rng = seed;
   for (let i = order.length - 1; i > 0; i--) {
-    s = (s * 1664525 + 1013904223) % 4294967296;
-    const j = s % (i + 1);
+    rng = (rng * 1664525 + 1013904223) % 4294967296;
+    const j = rng % (i + 1);
     [order[i], order[j]] = [order[j]!, order[i]!];
   }
   store.update({
