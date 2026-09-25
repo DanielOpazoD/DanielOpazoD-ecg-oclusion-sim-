@@ -141,6 +141,7 @@ export function mount(root: HTMLElement): void {
   // Segmented-pair head on the paper card + «Vista» popover (the popover is a
   // persistent child of .ctx so changing a select doesn't tear it down).
   let vistaPop: HTMLElement | null = null;
+  const vistaToggleSyncs: Array<() => void> = [];
   const segBtn = (
     parent: HTMLElement,
     label: string,
@@ -282,6 +283,7 @@ export function mount(root: HTMLElement): void {
         sync();
       });
       tog.appendChild(b);
+      vistaToggleSyncs.push(sync);
       return sync;
     };
     mk(
@@ -498,6 +500,8 @@ export function mount(root: HTMLElement): void {
     syncSel('v-speed', s.view.speedMmS);
     syncSel('v-gain', s.view.gainMmMv);
     syncSel('v-strip', s.view.stripS);
+    // Toggles too (URL state / shortcuts can change them outside the popover).
+    for (const sync of vistaToggleSyncs) sync();
   };
 
   const render = () => {
@@ -777,7 +781,8 @@ export function mount(root: HTMLElement): void {
         const d = report?.delineation;
         if (!d?.beats.length) return;
         const idx = pickBeat(d, tSec);
-        if (idx >= 0) store.update({ view: { ...store.get().view, beatIdx: idx } });
+        if (idx >= 0)
+          store.update({ view: { ...store.get().view, beatIdx: idx, beatOpen: true } });
       },
     },
   );

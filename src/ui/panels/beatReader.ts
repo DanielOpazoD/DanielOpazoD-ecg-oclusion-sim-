@@ -33,7 +33,8 @@ export function renderBeatReader(
   const open = s.view.beatOpen;
   el.innerHTML = '';
   // Collapsed = fully hidden; the meas-line link is the only entry point.
-  el.style.display = open ? '' : 'none';
+  // Never shown in Monitor mode (app.ts hides it before this render runs).
+  el.style.display = open && s.mode !== 'monitor' ? '' : 'none';
   el.className = `card beat-reader${open ? '' : ' collapsed'}`;
   el.innerHTML = `
     <div class="br-head">

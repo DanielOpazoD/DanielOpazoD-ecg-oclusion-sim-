@@ -531,8 +531,9 @@ input[type='search'] {
   gap: var(--sp-2);
 }
 
-/* Measurements line: one card, label over value + evidence dots + beat link. */
-.meas {
+/* Measurements line: one card, label over value + evidence dots + beat link.
+   Scoped to .card so the beat reader's table.meas keeps table layout. */
+.card.meas {
   display: flex;
   align-items: center;
   gap: 28px;
@@ -1178,7 +1179,7 @@ table.meas td.lo {
     font-size: var(--fs-sm);
     padding: 6px 10px;
   }
-  .meas {
+  .card.meas {
     gap: 16px;
   }
   .monitor-strip {

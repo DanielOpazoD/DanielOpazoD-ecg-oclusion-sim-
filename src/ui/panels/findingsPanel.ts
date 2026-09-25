@@ -48,6 +48,25 @@ function groupOf(f: Finding): string {
 
 const NA_RATIONALE = 'No aplicable';
 
+// Findings that actually drive the OMI composite (mirrors
+// src/analysis/rules/omi-composite.ts); only these may "support occlusion".
+const OMI_TRIGGERS = new Set([
+  'de-winter',
+  'hyperacute-t',
+  'posterior-std',
+  'aslanger',
+  'sgarbossa-modified',
+  'barcelona',
+  'south-african-flag',
+  'terminal-qrs-distortion',
+  'wellens',
+]);
+const isOmiTrigger = (f: Finding) =>
+  OMI_TRIGGERS.has(f.id) || (f.id === 'smith-4v' && (f.score ?? 0) >= 18.2);
+
+// Persist the «criterios evaluados» expansion across re-renders (playback ticks).
+let allOpen = false;
+
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 const upper = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -58,9 +77,7 @@ const upper = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export function verdictSentence(report: AnalysisReport): string {
   const stemi = report.findings.find((f) => f.id === 'stemi-udmi4')?.positive;
   let s = stemi ? 'Cumple criterios STEMI.' : 'No cumple criterios STEMI.';
-  const posOmi = report.findings.filter(
-    (f) => f.positive && OMI_IDS.has(f.id) && f.id !== 'stemi-udmi4' && f.id !== 'omi-composite',
-  );
+  const posOmi = report.findings.filter((f) => f.positive && isOmiTrigger(f));
   if (posOmi.length) {
     const names = posOmi
       .slice(0, 2)
@@ -78,6 +95,8 @@ export function verdictSentence(report: AnalysisReport): string {
 export function leadRange(leads: LeadId[]): string {
   if (!leads.length) return '';
   const idx = (l: LeadId) => LEAD_IDS.indexOf(l);
+  // Ranges never cross lead families (limb · V1–V9 · right-sided).
+  const family = (l: LeadId) => (idx(l) < 6 ? 0 : idx(l) < 15 ? 1 : 2);
   const sorted = [...leads].sort((a, b) => idx(a) - idx(b));
   const parts: string[] = [];
   let run: LeadId[] = [sorted[0]!];
@@ -86,7 +105,8 @@ export function leadRange(leads: LeadId[]): string {
     run = [];
   };
   for (const l of sorted.slice(1)) {
-    if (idx(l) === idx(run[run.length - 1]!) + 1) run.push(l);
+    const prev = run[run.length - 1]!;
+    if (idx(l) === idx(prev) + 1 && family(l) === family(prev)) run.push(l);
     else {
       flush();
       run = [l];
@@ -151,11 +171,15 @@ export function findingsPanel(
   const more = document.createElement('button');
   more.className = 'more';
   more.id = 'find-all';
-  more.setAttribute('aria-expanded', 'false');
-  more.textContent = `Ver los ${applicable.length + na.length} criterios evaluados ›`;
   const all = document.createElement('div');
   all.id = 'find-all-list';
-  all.hidden = true;
+  all.hidden = !allOpen;
+  const moreLabel = () =>
+    all.hidden
+      ? `Ver los ${applicable.length + na.length} criterios evaluados ›`
+      : 'Ocultar criterios ‹';
+  more.setAttribute('aria-expanded', String(allOpen));
+  more.textContent = moreLabel();
   const groups = new Map<string, Finding[]>();
   for (const f of applicable) {
     const g = groupOf(f);
@@ -186,10 +210,9 @@ export function findingsPanel(
   }
   more.addEventListener('click', () => {
     all.hidden = !all.hidden;
-    more.setAttribute('aria-expanded', String(!all.hidden));
-    more.textContent = all.hidden
-      ? `Ver los ${applicable.length + na.length} criterios evaluados ›`
-      : 'Ocultar criterios ‹';
+    allOpen = !all.hidden;
+    more.setAttribute('aria-expanded', String(allOpen));
+    more.textContent = moreLabel();
   });
   find.appendChild(more);
   find.appendChild(all);
@@ -204,7 +227,7 @@ function findRow(
   const frag = document.createDocumentFragment();
   const btn = document.createElement('button');
   btn.className = 'f';
-  // Límite evidence (score < 1 or rationale says so) gets a warning dot.
+  // Borderline evidence (score < 1 or rationale says so) gets a warning dot.
   const borderline =
     f.positive && ((f.score !== undefined && f.score < 1) || /l[íi]mite/i.test(f.rationale));
   const dot = na || !f.positive ? 'n' : borderline ? 'w' : '';
