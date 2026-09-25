@@ -134,10 +134,8 @@ export const GROUP_J: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['wide-qrs', 'bundle-branch-morphology', 'av-dissociation'],
+      positiveFindings: ['wide-qrs', 'bundle-branch-morphology'],
       negativeFindings: ['sgarbossa', 'sgarbossa-modified', 'barcelona', 'omi-composite'],
-      rulesMiss:
-        'La T discordante del BRI puntúa como actividad auricular organizada en el detector de P y simula disociación AV; el ritmo real es sinusal.',
       diagnosis: 'Bloqueo completo de rama izquierda',
       distractors: [
         'Bloqueo completo de rama derecha',
