@@ -190,7 +190,8 @@ describe('metric cards evidence mapping', () => {
     expect(byLabel['QRS']!.status).toBe('review');
     expect(byLabel['QT / QTcF']!.status).toBe('unavailable');
     expect(byLabel['FC']!.value).toContain('72');
-    expect(byLabel['QT / QTcF']!.sub).toContain('Fridericia');
+    expect(byLabel['QT / QTcF']!.sub).toContain('QTcF');
+    expect(byLabel['QT / QTcF']!.title).toContain('Fridericia');
   });
   it('null delineation → unavailable', () => {
     const cards = metricCards(null, null);
@@ -254,6 +255,28 @@ describe('a11y — wireTablist roving tabindex', () => {
     box.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
     expect(document.activeElement).toBe(tabs[1]);
     box.remove();
+  });
+});
+
+describe('sidebar view switch leaves no residue', () => {
+  it('laboratorio → casos clears lab accordions, exactly one case-head', async () => {
+    const { mount } = await import('./app.js');
+    const { store } = await import('./state/appState.js');
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    (globalThis as { ResizeObserver?: unknown }).ResizeObserver ??= class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+    mount(root);
+    const sidebar = root.querySelector<HTMLElement>('#sidebar')!;
+    store.update({ mode: 'lab' });
+    expect(sidebar.querySelector('details')).not.toBeNull();
+    store.update({ mode: 'cases' });
+    expect(sidebar.querySelector('details')).toBeNull();
+    expect(sidebar.querySelectorAll('.case-head').length).toBe(1);
+    root.remove();
   });
 });
 

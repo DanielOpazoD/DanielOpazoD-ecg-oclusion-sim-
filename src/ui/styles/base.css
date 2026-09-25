@@ -1,6 +1,15 @@
 /* ECG Lab — light theme. */
 :root {
   color-scheme: light;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 15px;
+  --fs-xl: 18px;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
   --bg: #f4f6f8;
   --panel: #ffffff;
   --panel-2: #f0f3f6;
@@ -186,7 +195,7 @@ input[type='text'] {
   border-bottom: 2px solid transparent;
 }
 .panel-tabs button[aria-selected='true'] {
-  color: var(--accent);
+  color: var(--text);
   border-bottom-color: var(--accent);
 }
 .panel-body {
@@ -295,13 +304,17 @@ input[type='text'] {
 }
 
 .case-item {
-  display: block;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--sp-2);
+  align-items: center;
   width: 100%;
   text-align: left;
   border: none;
   background: transparent;
-  padding: 7px 8px;
+  padding: 6px 8px;
   border-radius: 6px;
+  border-left: 2px solid transparent;
   color: var(--text);
   cursor: pointer;
 }
@@ -309,20 +322,161 @@ input[type='text'] {
   background: var(--panel-2);
 }
 .case-item[aria-current='true'] {
-  background: rgb(45 212 191 / 0.12);
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
   color: var(--accent);
 }
+.case-item .case-id {
+  font-family: ui-monospace, monospace;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+.case-item .case-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .case-item .dots {
-  float: right;
   color: var(--warning);
   letter-spacing: 2px;
+  font-size: var(--fs-xs);
 }
-.group-h {
-  margin: 12px 4px 4px;
-  font-size: 11px;
+/* Shared section/group heading: small caps with a hairline rule. */
+.section-title {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
   color: var(--muted);
+  margin: var(--sp-3) 0 var(--sp-1);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+/* Tiny mono badge carrying the case-group letter inside a section title. */
+.g-badge {
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 4px;
+  color: var(--muted);
+}
+
+/* Case context bar above the toolbar: title + badges for the loaded case. */
+.context-bar {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4) 0;
+  flex-wrap: wrap;
+}
+.context-bar h2 {
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  margin: 0;
+}
+.context-bar .dots {
+  color: var(--warning);
+  letter-spacing: 2px;
+  font-size: var(--fs-sm);
+}
+
+/* Right-hand header cluster (export menu + help). */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+button.ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  width: 26px;
+  height: 26px;
+  padding: 0;
+}
+button.ghost:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+/* Labelled toolbar fields: caption above the select. */
+.tb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+.tb-field select {
+  font-size: var(--fs-sm);
+}
+/* Segmented toggle group for view options. */
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.seg button {
+  border: none;
+  background: transparent;
+  padding: 4px 10px;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  border-radius: 0;
+}
+.seg button[aria-pressed='true'] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Compact blind-mode switch next to the case search. */
+.case-head-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.case-head-row #case-search {
+  flex: 1;
+}
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.finding-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vignette p {
+  line-height: 1.5;
+}
+
+.kbd-table {
+  border-collapse: collapse;
+  margin: var(--sp-2) 0;
+  font-size: var(--fs-sm);
+}
+.kbd-table td {
+  padding: 2px var(--sp-3) 2px 0;
+  vertical-align: top;
 }
 
 .finding-chip {
@@ -576,16 +730,15 @@ table.meas tr:nth-child(even) {
 
 /* Metric cards row */
 .metric-row {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: var(--sp-2);
   padding: 4px 10px 8px;
-  flex-wrap: wrap;
   border-top: 1px solid var(--border);
   background: var(--panel);
 }
 .metric-card {
-  flex: 1 1 110px;
-  min-width: 100px;
+  min-width: 110px;
   background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -657,8 +810,8 @@ table.meas tr:nth-child(even) {
   margin-bottom: 8px;
 }
 .cat-chip {
-  font-size: 11px;
-  padding: 3px 8px;
+  font-size: var(--fs-xs);
+  padding: 2px 8px;
   border-radius: 10px;
 }
 .cat-chip[aria-pressed='true'] {

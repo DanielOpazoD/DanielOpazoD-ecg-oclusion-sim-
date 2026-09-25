@@ -130,8 +130,9 @@ function accordion(title: string, open = false): { det: HTMLElement; body: HTMLE
 export function labPanel(el: HTMLElement, onChange: () => void): void {
   const s = store.get().scenario;
   el.innerHTML = '';
+  el.dataset['view'] = 'lab';
 
-  const ritmo = accordion('Ritmo', true);
+  const ritmo = accordion('Ritmo y paciente', true);
   const cond = accordion('Conducción / eje');
   const isq = accordion('Isquemia');
   const repol = accordion('Repolarización / electrolitos');
@@ -141,7 +142,7 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
 
   const srcCard = document.createElement('div');
   srcCard.className = 'card';
-  srcCard.innerHTML = '<h3>Fuentes de lesión</h3>';
+  srcCard.innerHTML = '<h3 class="section-title">Fuentes de lesión</h3>';
   s.sources.forEach((src, i) => {
     srcCard.appendChild(sourceEditor(src, i, onChange));
   });
@@ -161,7 +162,7 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
 
   const ctxCard = document.createElement('div');
   ctxCard.className = 'card';
-  ctxCard.innerHTML = '<h3>Contexto</h3>';
+
   ctxCard.appendChild(
     selectRow(
       'Ritmo',
@@ -189,7 +190,7 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
 
   const condCard = document.createElement('div');
   condCard.className = 'card';
-  condCard.innerHTML = '<h3>Conducción y contexto</h3>';
+  condCard.innerHTML = '<h3 class="section-title">Conducción y contexto</h3>';
   condCard.appendChild(
     selectRow(
       'Conducción',
@@ -223,7 +224,7 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
   const ov = s.beatOverrides ?? {};
   const repCard = document.createElement('div');
   repCard.className = 'card';
-  repCard.innerHTML = '<h3>Overrides globales (latido)</h3>';
+  repCard.innerHTML = '<h3 class="section-title">Overrides globales (latido)</h3>';
   const presetRow = document.createElement('div');
   presetRow.className = 'field-row';
   presetRow.innerHTML = `<label>Preajuste</label>
@@ -320,7 +321,7 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
   const acq = s.acquisition ?? {};
   const acqCard = document.createElement('div');
   acqCard.className = 'card';
-  acqCard.innerHTML = '<h3>Adquisición</h3>';
+  acqCard.innerHTML = '<h3 class="section-title">Adquisición</h3>';
   acqCard.appendChild(
     sliderRow('Wander (mV)', acq.baselineWander?.amplitudeMv ?? 0, 0, 0.5, 0.01, (v) => {
       mutateAcq((a) => {
@@ -396,7 +397,7 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
 
   const seedCard = document.createElement('div');
   seedCard.className = 'card';
-  seedCard.innerHTML = '<h3>Escenario</h3>';
+  seedCard.innerHTML = '<h3 class="section-title">Escenario</h3>';
   const seedRow = document.createElement('div');
   seedRow.className = 'field-row';
   seedRow.innerHTML = `<label>Semilla</label><input type="number" id="seed" value="${s.seed}" style="width:90px">`;
@@ -436,9 +437,9 @@ export function labPanel(el: HTMLElement, onChange: () => void): void {
   const saved = new SavedCases();
   const savedCard = document.createElement('div');
   savedCard.className = 'card';
-  savedCard.innerHTML = '<h3>Guardados</h3>';
+  savedCard.innerHTML = '<h3 class="section-title">Guardados</h3>';
   const renderSaved = () => {
-    savedCard.innerHTML = '<h3>Guardados</h3>';
+    savedCard.innerHTML = '<h3 class="section-title">Guardados</h3>';
     for (const c of saved.list()) {
       const row = document.createElement('div');
       row.className = 'field-row';

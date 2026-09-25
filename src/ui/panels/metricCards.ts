@@ -6,6 +6,8 @@ export interface MetricCard {
   label: string;
   value: string;
   sub?: string | undefined;
+  /** Extra detail shown as the card tooltip (e.g. all QTc formulas). */
+  title?: string | undefined;
   status: 'usable' | 'review' | 'unavailable';
   note?: string | undefined;
 }
@@ -64,8 +66,9 @@ export function metricCards(
     },
     {
       label: 'QT / QTcF',
-      value: `${num(d?.qtMs ?? null)} / ${num(d?.qtc.fridericia ?? null)} ms`,
-      sub: qtcLine,
+      value: `${num(d?.qtMs ?? null)} ms`,
+      sub: `QTcF ${num(d?.qtc.fridericia ?? null)} ms`,
+      title: qtcLine,
       status: ev('qt').status,
       note: ev('qt').note,
     },
@@ -102,6 +105,7 @@ export function renderMetricCards(el: HTMLElement, cards: MetricCard[]): void {
         : c.status === 'review'
           ? `<span class="ev-badge ev-review" title="${escapeAttr(c.note ?? 'revisar')}">◐</span>`
           : `<span class="ev-badge ev-na" title="${escapeAttr(c.note ?? 'no disponible')}">—</span>`;
+    if (c.title) card.title = c.title;
     card.innerHTML = `<div class="mc-label">${escapeHtml(c.label)} ${badge}</div>
       <div class="mc-value num">${escapeHtml(c.value)}</div>
       ${c.sub ? `<div class="mc-sub" title="${escapeAttr(c.sub)}">${escapeHtml(c.sub)}</div>` : ''}`;

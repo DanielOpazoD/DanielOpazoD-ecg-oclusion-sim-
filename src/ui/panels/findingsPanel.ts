@@ -108,10 +108,11 @@ export function findingsPanel(
     const items = groups.get(g);
     if (!items?.length) continue;
     const h = document.createElement('div');
-    h.className = 'group-h';
+    h.className = 'section-title';
     h.textContent = g;
     el.appendChild(h);
     const list = document.createElement('div');
+    list.className = 'finding-list';
     for (const f of items) list.appendChild(findingRow(f, onHighlight));
     el.appendChild(list);
   }
@@ -120,6 +121,7 @@ export function findingsPanel(
     det.className = 'na-group';
     det.innerHTML = `<summary>No aplicables en este contexto · ${na.length}</summary>`;
     const list = document.createElement('div');
+    list.className = 'finding-list';
     for (const f of na) list.appendChild(findingRow(f, onHighlight));
     det.appendChild(list);
     el.appendChild(det);

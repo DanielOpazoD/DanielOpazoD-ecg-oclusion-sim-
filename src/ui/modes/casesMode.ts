@@ -2,7 +2,7 @@ import { CASES, getCase } from '../../cases/index.js';
 import type { CaseCategory, CaseDefinition } from '../../cases/types.js';
 import { store } from '../state/appState.js';
 
-const GROUP_NAMES: Record<CaseDefinition['group'], string> = {
+export const GROUP_NAMES: Record<CaseDefinition['group'], string> = {
   A: 'STEMI evidente',
   B: 'OMI sutil / equivalentes',
   C: 'Subendocárdica / aVR',
@@ -19,7 +19,7 @@ const GROUP_NAMES: Record<CaseDefinition['group'], string> = {
   N: 'Estructural y otros',
 };
 
-const CATEGORY_LABELS: Record<CaseCategory, string> = {
+export const CATEGORY_LABELS: Record<CaseCategory, string> = {
   oclusion: 'Isquemia/OMI',
   ritmo: 'Ritmo',
   ectopia: 'Ectopia',
@@ -55,16 +55,19 @@ export function renderCaseBrowser(el: HTMLElement, onSelect: (c: CaseDefinition)
   // Persistent head: the search input must survive store-driven re-renders or
   // it loses focus after every keystroke. Build it once; afterwards only the
   // list below is rebuilt.
+  // Sidebar swap guard: another mode may have left its DOM behind — clear it
+  // so the case browser doesn't get appended below lab/quiz controls.
+  if (el.dataset['view'] !== 'cases') el.innerHTML = '';
   let head = el.querySelector<HTMLElement>('.case-head');
   if (!head) {
     head = document.createElement('div');
     head.className = 'case-head';
     head.innerHTML = `
-      <input type="search" id="case-search" placeholder="Buscar caso…" aria-label="Buscar caso"
-        style="width:100%;margin-bottom:6px">
-      <label style="display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:8px">
-        <input type="checkbox" id="blind" ${state.blind ? 'checked' : ''}> Modo ciego
-      </label>
+      <div class="case-head-row">
+        <input type="search" id="case-search" placeholder="Buscar caso…" aria-label="Buscar caso">
+        <label class="switch"><input type="checkbox" id="blind" aria-label="Modo ciego"
+          ${state.blind ? 'checked' : ''}> Ciego</label>
+      </div>
       <div class="cat-chips" id="cat-chips"></div>`;
     const cats = Object.keys(CATEGORY_LABELS) as CaseCategory[];
     const chipsEl = head.querySelector('#cat-chips')!;
@@ -105,6 +108,7 @@ export function renderCaseBrowser(el: HTMLElement, onSelect: (c: CaseDefinition)
     el.appendChild(list);
   }
   list.innerHTML = '';
+  el.dataset['view'] = 'cases';
   const query = (state.caseSearch ?? '').toLowerCase().trim();
 
   const matches = (c: CaseDefinition) =>
@@ -131,14 +135,14 @@ export function renderCaseBrowser(el: HTMLElement, onSelect: (c: CaseDefinition)
     const cases = CASES.filter((x) => x.group === g && matches(x));
     if (!cases.length) continue;
     const h = document.createElement('div');
-    h.className = 'group-h';
-    h.textContent = `${g} — ${GROUP_NAMES[g]}`;
+    h.className = 'section-title';
+    h.innerHTML = `<span class="g-badge">${g}</span> ${GROUP_NAMES[g]}`;
     list.appendChild(h);
     for (const c of cases) {
       const b = document.createElement('button');
       b.className = 'case-item';
       if (state.caseId === c.id) b.setAttribute('aria-current', 'true');
-      b.innerHTML = `${c.id} · ${escapeHtml(c.title)} <span class="dots">${'●'.repeat(c.difficulty)}</span>`;
+      b.innerHTML = `<span class="case-id">${c.id}</span><span class="case-title">${escapeHtml(c.title)}</span><span class="dots">${'●'.repeat(c.difficulty)}</span>`;
       b.addEventListener('click', () => onSelect(c));
       list.appendChild(b);
     }
