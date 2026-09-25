@@ -369,7 +369,8 @@ export function mount(root: HTMLElement): void {
     contextBar.style.display = '';
     const badge = (t: string) => `<span class="badge muted">${t}</span>`;
     if (s.mode === 'lab') {
-      contextBar.innerHTML = `<h2>Laboratorio</h2>${c ? badge(`basado en ${c.id}`) : badge('escenario libre')}`;
+      const ref = c ? (isBlind(s) ? `caso ${CASES.indexOf(c) + 1}` : c.id) : null;
+      contextBar.innerHTML = `<h2>Laboratorio</h2>${ref ? badge(`basado en ${ref}`) : badge('escenario libre')}`;
       return;
     }
     if (isBlind(s) || s.mode === 'quiz') {
