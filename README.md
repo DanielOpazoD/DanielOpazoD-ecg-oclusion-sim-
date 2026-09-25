@@ -67,7 +67,11 @@ Ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/MODEL.md](docs/MODEL.md)
 | `Shift` + `←`/`→` | t −10 / +10 minutos                       |
 | `c`               | Alternar traza limpia (verdad)            |
 | `[` / `]`         | Caso anterior / siguiente                 |
+| `?`               | Ayuda                                     |
 | `Esc`             | Limpiar calipers / cerrar menús           |
+
+Las pestañas de modo y panel se navegan con `←`/`→`/`Inicio`/`Fin` (roving
+tabindex); el enlace «Saltar al ECG» (Tab) lleva directamente al trazado.
 
 ## Calidad
 

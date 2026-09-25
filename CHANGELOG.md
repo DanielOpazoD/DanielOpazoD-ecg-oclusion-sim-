@@ -7,10 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Accesibilidad y teclado**: roving tabindex en pestañas (modo y panel), «?» abre la
+  ayuda con trampa de foco y Escape, menú de exportación navegable con flechas,
+  `aria-expanded` en hallazgos, `aria-current` solo en el caso activo, skip link,
+  `role="img"` + `aria-label` dinámico en el canvas, región live con el veredicto,
+  `.sr-only`, breakpoint `prefers-contrast: more`.
+
 ### Changed
 
 - **Tema claro único**: papel ECG clásico rojo pálido sobre blanco cálido; se retira el
   modo oscuro (pantalla del monitor conserva metáfora de dispositivo oscuro).
+- **Responsive**: breakpoints a 1280 / 1100 / 900 / 600 px (apilado de paneles, chips
+  envolventes, tarjetas 33 %/50 %, monitor 90 px); `ResizeObserver` re-renderiza el
+  canvas al cambiar el layout.
+
+### Fixed
+
+- **Buscador de casos**: la cabecera del explorador es persistente y solo se re-renderiza
+  la lista — el input ya no pierde el foco al teclear; preservación genérica de foco y
+  selección en re-renders (`withFocusPreserved`).
 
 ### Added
 

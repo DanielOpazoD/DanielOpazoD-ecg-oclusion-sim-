@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import {
   encodeShareState,
@@ -194,5 +195,64 @@ describe('metric cards evidence mapping', () => {
   it('null delineation → unavailable', () => {
     const cards = metricCards(null, null);
     expect(cards[0]!.status).toBe('unavailable');
+  });
+});
+
+describe('a11y — case search keeps focus across renders', () => {
+  it('persistent head: input survives store-driven re-render', async () => {
+    const { renderCaseBrowser, selectCase } = await import('./modes/casesMode.js');
+    const { store } = await import('./state/appState.js');
+    const aside = document.createElement('aside');
+    document.body.appendChild(aside);
+    renderCaseBrowser(aside, (c) => selectCase(c));
+    const input = aside.querySelector<HTMLInputElement>('#case-search')!;
+    input.focus();
+    input.value = 'K0';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    // The store update re-runs the app render → renderCaseBrowser again.
+    renderCaseBrowser(aside, (c) => selectCase(c));
+    expect(document.activeElement?.id).toBe('case-search');
+    expect((document.activeElement as HTMLInputElement).value).toBe('K0');
+    const items = aside.querySelectorAll('.case-item');
+    expect(items.length).toBeGreaterThan(0);
+    for (const it of items) expect(it.textContent).toMatch(/K0/);
+    store.update({ caseSearch: '' });
+    aside.remove();
+  });
+});
+
+describe('a11y — wireTablist roving tabindex', () => {
+  it('arrow keys move focus and activate tabs', async () => {
+    const { wireTablist } = await import('./a11y.js');
+    const box = document.createElement('div');
+    box.setAttribute('role', 'tablist');
+    document.body.appendChild(box);
+    const clicked: number[] = [];
+    for (let i = 0; i < 3; i++) {
+      const b = document.createElement('button');
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(i === 0));
+      b.addEventListener('click', () => {
+        clicked.push(i);
+        for (const x of box.querySelectorAll('button'))
+          x.setAttribute('aria-selected', String(x === b));
+        wireTablist(box);
+      });
+      box.appendChild(b);
+    }
+    wireTablist(box);
+    const tabs = [...box.querySelectorAll('button')];
+    expect(tabs[0]!.tabIndex).toBe(0);
+    expect(tabs[1]!.tabIndex).toBe(-1);
+    tabs[0]!.focus();
+    box.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    expect(document.activeElement).toBe(tabs[1]);
+    expect(clicked).toEqual([1]);
+    expect(tabs[1]!.getAttribute('aria-selected')).toBe('true');
+    box.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    expect(document.activeElement).toBe(tabs[2]);
+    box.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    expect(document.activeElement).toBe(tabs[1]);
+    box.remove();
   });
 });
