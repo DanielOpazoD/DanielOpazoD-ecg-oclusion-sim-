@@ -27,6 +27,7 @@ export interface ViewState {
   beatLead: LeadId;
   /** Calipers mode: drag measures; off → click picks a beat. */
   calipers: boolean;
+  beatOpen: boolean;
 }
 
 export type Mode = 'cases' | 'lab' | 'monitor' | 'quiz';
@@ -107,6 +108,7 @@ export const store = createStore<AppState>({
     beatIdx: null,
     beatLead: 'II',
     calipers: false,
+    beatOpen: true,
   },
   playing: false,
   playSpeedMinPerS: 1,

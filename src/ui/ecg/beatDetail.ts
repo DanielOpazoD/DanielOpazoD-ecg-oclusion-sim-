@@ -80,24 +80,26 @@ export function renderBeatReaderSvg(
       `<line x1="${x.toFixed(1)}" y1="${plotTop}" x2="${x.toFixed(1)}" y2="${plotBot}" stroke="${grid}" stroke-dasharray="2 3"/>`,
     );
     parts.push(
-      `<text x="${x.toFixed(1)}" y="${plotBot + 14}" text-anchor="middle" font-size="10" fill="#64717f">${ms}</text>`,
+      `<text x="${x.toFixed(1)}" y="${plotBot + 14}" text-anchor="middle" font-size="11" fill="#64717f">${ms}</text>`,
     );
   }
-  const vStep = 0.2;
+  // y ticks: 0.5 mV step when the span is large, else 0.2; never more than 6.
+  let vStep = vmax - vmin > 1.2 ? 0.5 : 0.2;
+  while (Math.ceil(vmax / vStep) - Math.floor(vmin / vStep) > 6) vStep *= 2;
   for (let v = Math.ceil(vmin / vStep) * vStep; v <= vmax; v += vStep) {
     const y = py(v);
     parts.push(
       `<line x1="${xL}" y1="${y.toFixed(1)}" x2="${xR}" y2="${y.toFixed(1)}" stroke="${grid}" stroke-dasharray="2 3"/>`,
     );
     parts.push(
-      `<text x="${xL - 6}" y="${(y + 3).toFixed(1)}" text-anchor="end" font-size="10" fill="#64717f">${v.toFixed(1)}</text>`,
+      `<text x="${xL - 6}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="#64717f">${v.toFixed(1)}</text>`,
     );
   }
   parts.push(
-    `<text x="${xL - 6}" y="${plotTop - 4}" text-anchor="end" font-size="10" fill="#64717f">mV</text>`,
+    `<text x="${xL - 6}" y="${plotTop - 4}" text-anchor="end" font-size="11" fill="#64717f">mV</text>`,
   );
   parts.push(
-    `<text x="${xR}" y="${plotBot + 26}" text-anchor="end" font-size="10" fill="#64717f">ms desde QRS</text>`,
+    `<text x="${xR}" y="${plotBot + 26}" text-anchor="end" font-size="11" fill="#64717f">ms desde QRS</text>`,
   );
 
   // Fiducials + shaded QRS band.
@@ -113,7 +115,7 @@ export function renderBeatReaderSvg(
     const x = px(f.t);
     parts.push(
       `<line x1="${x.toFixed(1)}" y1="${plotTop}" x2="${x.toFixed(1)}" y2="${plotBot}" stroke="${f.color}" stroke-dasharray="4 3"/>`,
-      `<text x="${x.toFixed(1)}" y="${plotTop - 4}" text-anchor="middle" font-size="10" fill="${f.color}">${f.label}</text>`,
+      `<text x="${x.toFixed(1)}" y="${plotTop - 4}" text-anchor="middle" font-size="11" fill="${f.color}">${f.label}</text>`,
     );
   }
 
@@ -137,7 +139,7 @@ export function renderBeatReaderSvg(
       `<line x1="${x0.toFixed(1)}" y1="${y}" x2="${x1.toFixed(1)}" y2="${y}" stroke="${color}"/>`,
       `<line x1="${x0.toFixed(1)}" y1="${y - 4}" x2="${x0.toFixed(1)}" y2="${y + 4}" stroke="${color}"/>`,
       `<line x1="${x1.toFixed(1)}" y1="${y - 4}" x2="${x1.toFixed(1)}" y2="${y + 4}" stroke="${color}"/>`,
-      `<text x="${((x0 + x1) / 2).toFixed(1)}" y="${y - 6}" text-anchor="middle" font-size="11" font-weight="600" font-family="ui-monospace,monospace" fill="${color}">${label}</text>`,
+      `<text x="${((x0 + x1) / 2).toFixed(1)}" y="${y - 6}" text-anchor="middle" font-size="12" font-weight="600" font-family="ui-monospace,monospace" fill="${color}">${label}</text>`,
     );
   };
   if (b.pOnsetS !== undefined)

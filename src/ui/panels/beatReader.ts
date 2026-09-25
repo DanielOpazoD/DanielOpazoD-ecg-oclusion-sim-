@@ -16,7 +16,8 @@ const STATUS = {
 /**
  * «Un latido, de cerca» card below the paper: wide per-beat readout with
  * fiducials and PR/QRS/QT dimensions, beat picker ‹ ›, lead select and an
- * expandable per-beat measurements table.
+ * expandable per-beat measurements table. The whole card collapses via the
+ * title button (view.beatOpen).
  */
 export function renderBeatReader(
   el: HTMLElement,
@@ -29,29 +30,39 @@ export function renderBeatReader(
   const setView = (patch: Partial<AppState['view']>) =>
     store.update({ view: { ...s.view, ...patch } });
   const beats = delineation?.beats ?? [];
+  const open = s.view.beatOpen;
   el.innerHTML = '';
-  el.className = 'card beat-reader';
+  el.className = `card beat-reader${open ? '' : ' collapsed'}`;
   el.innerHTML = `
     <div class="br-head">
-      <div><div class="kicker">Lectura de la señal</div><h3>Un latido, de cerca</h3></div>
+      <button class="br-title" id="br-collapse" aria-expanded="${open}" aria-controls="br-body">
+        <span><span class="kicker">Lectura de la señal</span>
+          <h3>Un latido, de cerca</h3></span>
+        <span class="br-chev" aria-hidden="true">▾</span>
+      </button>
       <div class="br-controls"></div>
     </div>
-    <div class="br-plot"></div>
-    <div class="br-foot"></div>
-    <details class="br-detail"><summary>Ver detalle de las medidas</summary><div class="br-table"></div></details>
-    <p class="br-hint">Selecciona un complejo en el papel para ampliarlo.
-      <span class="mono">*J</span> estimado por el final del QRS.</p>`;
+    <div id="br-body" class="br-body">
+      <div class="br-plot"></div>
+      <div class="br-foot"></div>
+      <div class="br-table-wrap" id="br-table-wrap" hidden><div class="br-table"></div></div>
+      <p class="br-hint">Selecciona un complejo en el papel para ampliarlo.
+        <span class="mono">*J</span> estimado por el final del QRS.</p>
+    </div>`;
+  el.querySelector('#br-collapse')!.addEventListener('click', () =>
+    setView({ beatOpen: !store.get().view.beatOpen }),
+  );
   const ctr = el.querySelector<HTMLElement>('.br-controls')!;
   const plot = el.querySelector<HTMLElement>('.br-plot')!;
   const foot = el.querySelector<HTMLElement>('.br-foot')!;
-  const detail = el.querySelector<HTMLDetailsElement>('.br-detail')!;
+  const tableWrap = el.querySelector<HTMLElement>('.br-table-wrap')!;
   const table = el.querySelector<HTMLElement>('.br-table')!;
 
   if (!ecg || !beats.length) {
     plot.innerHTML = `<p class="mono" style="color:var(--muted);padding:12px 0">
       Sin latidos delineables en este trazado.</p>`;
-    el.querySelector('.br-foot')!.remove();
-    detail.remove();
+    foot.remove();
+    tableWrap.remove();
     return;
   }
 
@@ -66,11 +77,13 @@ export function renderBeatReader(
 
   ctr.innerHTML = `
     <span class="br-count">Latido <b>${idx + 1}</b> / ${beats.length}</span>
-    <button id="br-prev" aria-label="Latido anterior" ${idx <= 0 ? 'disabled' : ''}>‹</button>
-    <button id="br-next" aria-label="Latido siguiente" ${idx >= beats.length - 1 ? 'disabled' : ''}>›</button>
-    <select aria-label="Derivación">${STD_LEADS.map(
-      (l) => `<option value="${l}" ${l === lead ? 'selected' : ''}>${l}</option>`,
-    ).join('')}</select>`;
+    <span class="br-nav">
+      <button id="br-prev" aria-label="Latido anterior" ${idx <= 0 ? 'disabled' : ''}>‹</button>
+      <button id="br-next" aria-label="Latido siguiente" ${idx >= beats.length - 1 ? 'disabled' : ''}>›</button>
+      <select aria-label="Derivación">${STD_LEADS.map(
+        (l) => `<option value="${l}" ${l === lead ? 'selected' : ''}>${l}</option>`,
+      ).join('')}</select>
+    </span>`;
   ctr.querySelector('#br-prev')!.addEventListener('click', () => setView({ beatIdx: idx - 1 }));
   ctr.querySelector('#br-next')!.addEventListener('click', () => setView({ beatIdx: idx + 1 }));
   ctr
@@ -83,9 +96,20 @@ export function renderBeatReader(
 
   const st = STATUS[delineation!.evidence.qrs.status] ?? STATUS.unavailable;
   foot.innerHTML = `
-    <span class="br-status"><span class="br-dot" style="background:${st.color}"></span>
-      ${st.label}</span>
-    <span class="br-meta">${beats.length} latidos · resolución ${(1000 / ecg.fs).toFixed(0)} ms</span>`;
+    <div class="br-left">
+      <span class="br-status"><span class="br-dot" style="background:${st.color}"></span>
+        ${st.label}</span>
+      <span class="br-meta">${beats.length} latidos · resolución ${(1000 / ecg.fs).toFixed(0)} ms</span>
+    </div>
+    <button class="br-link" id="br-detail" aria-expanded="false"
+      aria-controls="br-table-wrap">Ver detalle de las medidas ›</button>`;
+  const detailBtn = foot.querySelector<HTMLButtonElement>('#br-detail')!;
+  detailBtn.addEventListener('click', () => {
+    const opening = tableWrap.hidden;
+    tableWrap.hidden = !opening;
+    detailBtn.setAttribute('aria-expanded', String(opening));
+    detailBtn.textContent = `Ver detalle de las medidas ${opening ? '‹' : '›'}`;
+  });
 
   // Per-beat measurements table (current row highlighted).
   const qtc = delineation!.qtc;
@@ -106,7 +130,7 @@ export function renderBeatReader(
       Bazett ${fmt(qtc.bazett)} · Fridericia ${fmt(qtc.fridericia)} · Framingham ${fmt(qtc.framingham)} · Hodges ${fmt(qtc.hodges)} ms</p>`;
 
   // Clicking a row selects that beat too.
-  table.querySelectorAll('tr.cur, tr:not(.cur)').forEach((tr, i) => {
+  table.querySelectorAll('tr').forEach((tr, i) => {
     if (i === 0) return; // header
     tr.addEventListener('click', () => {
       const n = Number(tr.querySelector('td')!.textContent);

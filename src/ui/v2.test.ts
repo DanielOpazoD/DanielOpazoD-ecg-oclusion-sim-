@@ -30,6 +30,7 @@ const view: ViewState = {
   beatIdx: null,
   beatLead: 'II',
   calipers: false,
+  beatOpen: true,
 };
 
 describe('urlState', () => {

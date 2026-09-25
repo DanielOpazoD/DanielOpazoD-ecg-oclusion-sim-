@@ -167,7 +167,7 @@ input[type='text'] {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
 }
 .right-panel {
   width: 380px;
@@ -254,7 +254,7 @@ input[type='text'] {
 
 .ecg-wrap {
   flex: 1;
-  min-height: 220px;
+  min-height: 440px;
   overflow: auto;
   display: flex;
   flex-direction: column;
@@ -483,7 +483,37 @@ button.ghost:hover {
 .beat-reader h3 {
   font-size: var(--fs-xl);
   font-weight: 600;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: 0;
   margin: 2px 0 var(--sp-2);
+}
+.br-title {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+}
+.br-chev {
+  color: var(--muted);
+  font-size: var(--fs-md);
+  transition: transform 0.15s;
+  padding-top: 4px;
+}
+.br-title[aria-expanded='false'] .br-chev {
+  transform: rotate(-90deg);
+}
+.beat-reader.collapsed .br-plot,
+.beat-reader.collapsed .br-foot,
+.beat-reader.collapsed .br-table-wrap,
+.beat-reader.collapsed .br-hint,
+.beat-reader.collapsed .br-nav {
+  display: none;
 }
 .br-controls {
   display: flex;
@@ -505,13 +535,31 @@ button.ghost:hover {
 }
 .br-foot {
   display: flex;
+  justify-content: space-between;
   align-items: center;
+  flex-wrap: nowrap;
   gap: var(--sp-2);
   font-size: var(--fs-md);
   font-weight: 600;
   border-top: 1px solid var(--border);
   padding-top: var(--sp-2);
   margin-top: var(--sp-1);
+}
+.br-left {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.br-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  white-space: nowrap;
 }
 .br-status {
   display: flex;
@@ -529,22 +577,12 @@ button.ghost:hover {
   font-weight: 400;
   font-size: var(--fs-sm);
 }
-.br-detail {
+.br-table-wrap {
   margin-top: var(--sp-2);
   font-size: var(--fs-sm);
 }
-.br-detail summary {
-  cursor: pointer;
-  color: var(--accent);
-  font-weight: 600;
-  text-align: right;
-  list-style: none;
-}
-.br-detail summary::after {
-  content: ' ›';
-}
-.br-detail[open] summary::after {
-  content: ' ‹';
+.br-table-wrap[hidden] {
+  display: none;
 }
 .br-table table {
   margin-top: var(--sp-2);
