@@ -7,6 +7,9 @@ test('beat reader card: steps beats, lead select changes svg, calipers toggle', 
   const card = page.locator('#beat-card');
   await expect(card).toBeVisible();
   await expect(card).toContainText(/Latido 1 \/ \d+/);
+  // Collapsed by default; the measurements-line link opens it.
+  await expect(card.locator('.br-plot svg')).toBeHidden();
+  await page.locator('#meas-beat').click();
   await expect(card.locator('.br-plot svg')).toBeVisible();
 
   await card.getByLabel('Latido siguiente').click();

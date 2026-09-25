@@ -15,7 +15,7 @@ import { renderMetricCards, metricCards } from './panels/metricCards.js';
 import { teachingPanel } from './panels/teachingPanel.js';
 import { labPanel } from './panels/labPanel.js';
 import { timelineBar } from './panels/timelineBar.js';
-import { renderCaseBrowser, selectCase, currentCase, CATEGORY_LABELS } from './modes/casesMode.js';
+import { renderCaseBrowser, selectCase, currentCase } from './modes/casesMode.js';
 import { renderQuizPanel, startQuiz, QUIZ_FINDING_CHOICES } from './modes/quizMode.js';
 import { formatReport, copyReport } from './export.js';
 import { exportPng300 } from './export/png.js';
@@ -28,7 +28,7 @@ export function mount(root: HTMLElement): void {
   root.innerHTML = `
     <header class="app-header">
       <a class="skip-link" href="#ecg-canvas">Saltar al ECG</a>
-      <div class="brand">ECG Lab<span class="sub">Simulador educativo · ECG 12 derivaciones</span></div>
+      <div class="brand">ECG Lab<span class="sub">Simulador educativo</span></div>
       <nav class="mode-tabs" role="tablist" aria-label="Modo">
         <button data-mode="cases" role="tab" aria-label="Casos">Casos</button>
         <button data-mode="lab" role="tab" aria-label="Laboratorio">Laboratorio</button>
@@ -38,7 +38,7 @@ export function mount(root: HTMLElement): void {
       <div class="header-spacer"></div>
       <div class="header-actions">
         <div class="export-menu">
-          <button id="btn-export" aria-label="Exportar" aria-haspopup="menu" aria-expanded="false">Exportar ▾</button>
+          <button id="btn-export" class="btn quiet" aria-label="Exportar" aria-haspopup="menu" aria-expanded="false">Exportar ▾</button>
           <div class="export-pop" id="export-pop" hidden style="display:none">
             <button id="btn-export-png" aria-label="Exportar PNG 300 dpi">PNG (300 dpi)</button>
             <button id="btn-export-json" aria-label="Exportar JSON">JSON del escenario</button>
@@ -46,23 +46,23 @@ export function mount(root: HTMLElement): void {
             <button id="btn-copy-report" aria-label="Copiar informe">Copiar informe</button>
           </div>
         </div>
-        <button id="btn-about" class="ghost" aria-label="Ayuda" title="Ayuda y atajos (?)">?</button>
+        <button id="btn-about" class="btn quiet" aria-label="Ayuda" title="Ayuda y atajos (?)">?</button>
       </div>
     </header>
     <div class="app-main">
       <aside class="sidebar" id="sidebar"></aside>
       <section class="center">
-        <div class="context-bar" id="context-bar"></div>
-        <div class="toolbar" id="toolbar"></div>
-        <div class="ecg-wrap" id="ecg-wrap">
+        <div class="ctx" id="context-bar"></div>
+        <div class="card ecg-wrap" id="ecg-wrap">
+          <div class="paperhead" id="paperhead"></div>
           <div class="ecg-paper"><canvas id="ecg-canvas" role="img" tabindex="-1" aria-label="Trazado ECG"></canvas></div>
         </div>
+        <div class="card meas" id="metric-row"></div>
         <div id="beat-card"></div>
         <div class="monitor-strip" id="monitor-strip"><canvas id="monitor-canvas" aria-label="Monitor"></canvas>
           <div class="monitor-controls" id="monitor-controls"></div>
         </div>
-        <div class="metric-row" id="metric-row"></div>
-        <div class="timeline-bar" id="timeline"></div>
+        <div class="card timeline-bar" id="timeline"></div>
       </section>
       <aside class="right-panel">
         <div class="panel-tabs" id="panel-tabs" role="tablist" aria-label="Panel"></div>
@@ -76,7 +76,7 @@ export function mount(root: HTMLElement): void {
   const monitorControls = root.querySelector<HTMLElement>('#monitor-controls')!;
   const monitorStrip = root.querySelector<HTMLElement>('#monitor-strip')!;
   const sidebar = root.querySelector<HTMLElement>('#sidebar')!;
-  const toolbar = root.querySelector<HTMLElement>('#toolbar')!;
+  const paperhead = root.querySelector<HTMLElement>('#paperhead')!;
   const timelineEl = root.querySelector<HTMLElement>('#timeline')!;
   const metricRow = root.querySelector<HTMLElement>('#metric-row')!;
   const panelTabs = root.querySelector<HTMLElement>('#panel-tabs')!;
@@ -138,13 +138,87 @@ export function mount(root: HTMLElement): void {
     return l;
   };
 
-  const renderToolbar = () => {
+  // Segmented-pair head on the paper card + «Vista» popover (the popover is a
+  // persistent child of .ctx so changing a select doesn't tear it down).
+  let vistaPop: HTMLElement | null = null;
+  const segBtn = (
+    parent: HTMLElement,
+    label: string,
+    pressed: boolean,
+    on: (v: boolean) => void,
+    title?: string,
+  ) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.setAttribute('aria-pressed', String(pressed));
+    if (title) b.title = title;
+    b.addEventListener('click', () => on(!pressed));
+    parent.appendChild(b);
+    return b;
+  };
+
+  const renderPaperhead = () => {
     const s = store.get();
     const acq = s.scenario.acquisition ?? {};
-    toolbar.innerHTML = '';
+    paperhead.innerHTML = '';
     const setView = (patch: Partial<ViewState>) =>
       store.update({ view: { ...store.get().view, ...patch } });
-    toolbar.append(
+    const g1 = document.createElement('div');
+    g1.className = 'seg';
+    segBtn(g1, 'Estándar', !s.view.cabrera, () => setView({ cabrera: false }));
+    segBtn(g1, 'Cabrera', s.view.cabrera, () => setView({ cabrera: true }));
+    const g2 = document.createElement('div');
+    g2.className = 'seg';
+    segBtn(g2, 'Adquirida', !s.view.showClean, () => setView({ showClean: false }));
+    segBtn(
+      g2,
+      'Limpia',
+      s.view.showClean,
+      () => setView({ showClean: true }),
+      'Mostrar la señal sin ruido ni filtros',
+    );
+    const g3 = document.createElement('div');
+    g3.className = 'seg';
+    segBtn(
+      g3,
+      'Calipers',
+      s.view.calipers,
+      (v) => setView({ calipers: v }),
+      'Medir Δt y ΔV arrastrando sobre el papel',
+    );
+    paperhead.append(g1, g2, g3);
+    if (s.view.calipers) {
+      const hint = document.createElement('span');
+      hint.className = 'kbd';
+      hint.textContent = 'Esc borra';
+      paperhead.appendChild(hint);
+    }
+    const info = document.createElement('span');
+    info.className = 'filters';
+    info.textContent = `${acq.highPassHz ?? 0.05}–${acq.lowPassHz ?? 150} Hz`;
+    paperhead.appendChild(info);
+  };
+
+  const LAYOUT_LABEL: Record<ViewState['layout'], string> = {
+    '3x4': '3×4',
+    '3x4+II': '3×4 + II',
+    '3x4+3strips': '3×4 + 3 tiras',
+    '6x2': '6×2',
+    '12x1': '12×1',
+  };
+
+  // Persistent «Vista» button + popover — survives context-line re-renders.
+  const vistaWrap = document.createElement('div');
+  vistaWrap.className = 'view';
+  vistaWrap.innerHTML = `<button class="btn quiet" id="btn-vista" aria-haspopup="true" aria-expanded="false"></button>`;
+  const buildVistaPop = () => {
+    const setView = (patch: Partial<ViewState>) =>
+      store.update({ view: { ...store.get().view, ...patch } });
+    vistaPop = document.createElement('div');
+    vistaPop.className = 'vista-pop';
+    vistaPop.id = 'vista-pop';
+    vistaPop.hidden = true;
+    vistaPop.append(
       sel(
         'v-layout',
         'Formato',
@@ -155,7 +229,7 @@ export function mount(root: HTMLElement): void {
           { v: '6x2', label: '6×2' },
           { v: '12x1', label: '12×1' },
         ],
-        s.view.layout,
+        store.get().view.layout,
         (v) => setView({ layout: v as ViewState['layout'] }),
       ),
       sel(
@@ -165,7 +239,7 @@ export function mount(root: HTMLElement): void {
           { v: 25, label: '25 mm/s' },
           { v: 50, label: '50 mm/s' },
         ],
-        s.view.speedMmS,
+        store.get().view.speedMmS,
         (v) => setView({ speedMmS: Number(v) as 25 | 50 }),
       ),
       sel(
@@ -176,7 +250,7 @@ export function mount(root: HTMLElement): void {
           { v: 10, label: '10 mm/mV' },
           { v: 20, label: '20 mm/mV' },
         ],
-        s.view.gainMmMv,
+        store.get().view.gainMmMv,
         (v) => setView({ gainMmMv: Number(v) as 5 | 10 | 20 }),
       ),
       sel(
@@ -187,54 +261,77 @@ export function mount(root: HTMLElement): void {
           { v: 30, label: '30 s' },
           { v: 60, label: '60 s' },
         ],
-        s.view.stripS,
+        store.get().view.stripS,
         (v) => setView({ stripS: Number(v) as 10 | 30 | 60 }),
       ),
     );
-    const seg = document.createElement('div');
-    seg.className = 'seg';
-    const mk = (label: string, checked: boolean, on: (v: boolean) => void, title?: string) => {
+    const tog = document.createElement('div');
+    tog.className = 'vista-toggles';
+    const mk = (label: string, get: () => boolean, on: (v: boolean) => void, title?: string) => {
       const b = document.createElement('button');
-      b.textContent = label;
-      b.setAttribute('aria-pressed', String(checked));
+      b.className = 'btn quiet';
+      b.dataset['tog'] = label;
       if (title) b.title = title;
-      b.addEventListener('click', () => on(!checked));
-      seg.appendChild(b);
+      const sync = () => {
+        b.textContent = label;
+        b.setAttribute('aria-pressed', String(get()));
+      };
+      sync();
+      b.addEventListener('click', () => {
+        on(!get());
+        sync();
+      });
+      tog.appendChild(b);
+      return sync;
     };
-    mk('Cabrera', s.view.cabrera, (v) => setView({ cabrera: v }));
-    mk('Simultáneo', s.view.simultaneous, (v) => setView({ simultaneous: v }));
     mk(
-      'Limpia',
-      s.view.showClean,
-      (v) => setView({ showClean: v }),
-      'Mostrar la señal sin ruido ni filtros',
+      'Marcadores',
+      () => store.get().view.markers,
+      (v) => setView({ markers: v }),
     );
     mk(
-      'Extra',
-      s.view.extraLeads,
+      'Extra (V7–V9 / V3R–V4R)',
+      () => store.get().view.extraLeads,
       (v) => setView({ extraLeads: v }),
       'Derivaciones adicionales V7–V9 / V3R–V4R',
     );
-    mk('Marcadores', s.view.markers, (v) => setView({ markers: v }));
     mk(
-      'Calipers',
-      s.view.calipers,
-      (v) => setView({ calipers: v }),
-      'Medir Δt y ΔV arrastrando sobre el papel',
+      'Simultáneo',
+      () => store.get().view.simultaneous,
+      (v) => setView({ simultaneous: v }),
+      'Las 12 derivaciones dibujadas en el mismo instante',
     );
-    toolbar.appendChild(seg);
-    if (s.view.calipers) {
-      const hint = document.createElement('span');
-      hint.className = 'kbd';
-      hint.textContent = 'Esc borra';
-      toolbar.appendChild(hint);
-    }
-    const info = document.createElement('span');
-    info.className = 'kbd mono';
-    info.style.marginLeft = 'auto';
-    info.textContent = `HP ${acq.highPassHz ?? 0.05} Hz · LP ${acq.lowPassHz ?? 150} Hz`;
-    toolbar.appendChild(info);
+    vistaPop.appendChild(tog);
+    vistaWrap.appendChild(vistaPop);
   };
+  buildVistaPop();
+  const btnVista = vistaWrap.querySelector<HTMLButtonElement>('#btn-vista')!;
+  const closeVista = (refocus = false) => {
+    vistaPop!.hidden = true;
+    btnVista.setAttribute('aria-expanded', 'false');
+    if (refocus) btnVista.focus();
+  };
+  btnVista.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (vistaPop!.hidden) {
+      vistaPop!.hidden = false;
+      btnVista.setAttribute('aria-expanded', 'true');
+    } else closeVista();
+  });
+  vistaPop!.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      closeVista(true);
+    }
+  });
+  // Esc closes the popover wherever focus is (a div popover is not focusable,
+  // so Escape usually lands on body).
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && vistaPop && !vistaPop.hidden) closeVista(true);
+  });
+  document.addEventListener('click', (e) => {
+    if (!vistaPop!.hidden && !(e.target as HTMLElement).closest('.ctx .view')) closeVista();
+  });
 
   const renderMonitorControls = () => {
     const s = store.get();
@@ -242,6 +339,7 @@ export function mount(root: HTMLElement): void {
     monitorControls.innerHTML = '';
     if (s.mode !== 'monitor') return;
     const freeze = document.createElement('button');
+    freeze.className = 'btn quiet';
     freeze.textContent = monitor.frozen ? 'Reanudar' : 'Congelar';
     freeze.setAttribute('aria-label', 'Congelar monitor');
     freeze.addEventListener('click', () => {
@@ -249,6 +347,7 @@ export function mount(root: HTMLElement): void {
       renderMonitorControls();
     });
     const beep = document.createElement('button');
+    beep.className = 'btn quiet';
     beep.textContent = monitor.beepOn ? 'Beep: on' : 'Beep: off';
     beep.setAttribute('aria-label', 'Pitido QRS');
     beep.addEventListener('click', () => {
@@ -256,6 +355,7 @@ export function mount(root: HTMLElement): void {
       renderMonitorControls();
     });
     const to12 = document.createElement('button');
+    to12.className = 'btn quiet';
     to12.textContent = 'Ir a 12 derivaciones';
     to12.addEventListener('click', () => store.update({ mode: 'cases' }));
     monitorControls.append(freeze, beep, to12);
@@ -284,19 +384,19 @@ export function mount(root: HTMLElement): void {
         ? [['clinical', 'Quiz']]
         : s.mode === 'monitor'
           ? [
+              ['findings', 'Lectura'],
               ['clinical', 'Clínica'],
-              ['findings', 'Hallazgos'],
             ]
           : s.mode === 'lab'
             ? [
-                ['findings', 'Hallazgos'],
+                ['findings', 'Lectura'],
                 ['vectors', 'Vectores'],
               ]
             : [
-                ['clinical', 'Clínica'],
                 ...(!isBlind(s)
                   ? ([
-                      ['findings', 'Hallazgos'],
+                      ['findings', 'Lectura'],
+                      ['clinical', 'Clínica'],
                       ['teaching', 'Docencia'],
                       ['vectors', 'Vectores'],
                     ] as Array<[typeof s.panelTab, string]>)
@@ -367,28 +467,37 @@ export function mount(root: HTMLElement): void {
       return;
     }
     contextBar.style.display = '';
-    const badge = (t: string) => `<span class="badge muted">${t}</span>`;
+    let title = 'Sin caso';
+    let meta = '';
     if (s.mode === 'lab') {
-      const ref = c ? (isBlind(s) ? `caso ${CASES.indexOf(c) + 1}` : c.id) : null;
-      contextBar.innerHTML = `<h2>Laboratorio</h2>${ref ? badge(`basado en ${ref}`) : badge('escenario libre')}`;
-      return;
-    }
-    if (isBlind(s) || s.mode === 'quiz') {
+      title = 'Laboratorio';
+      meta = c
+        ? isBlind(s)
+          ? `caso ${CASES.indexOf(c) + 1}`
+          : `basado en ${c.id}`
+        : 'escenario libre';
+    } else if (isBlind(s) || s.mode === 'quiz') {
       const n = c ? CASES.indexOf(c) + 1 : '—';
-      contextBar.innerHTML = `<h2>Caso ${n}</h2>${badge('Modo ciego')}`;
-      return;
+      title = `Caso ${n}`;
+      meta = 'Modo ciego';
+    } else if (c) {
+      title = c.title;
+      meta = `${c.vignette.sex === 'M' ? 'Varón' : 'Mujer'}, ${c.vignette.age} años`;
+      if ((c.scenario.timeline?.length ?? 0) > 0)
+        meta += ` · ${s.tMin.toFixed(0)} min de evolución`;
     }
-    if (!c) {
-      contextBar.innerHTML = '<h2>Sin caso</h2>';
-      return;
-    }
-    const bits: string[] = [badge(CATEGORY_LABELS[c.category])];
-    if (c.difficulty)
-      bits.push(`<span class="dots" title="Dificultad">${'●'.repeat(c.difficulty)}</span>`);
-    bits.push(badge(`${c.vignette.sex === 'M' ? 'Varón' : 'Mujer'} · ${c.vignette.age} a`));
-    const hasTl = (c.scenario.timeline?.length ?? 0) > 0;
-    if (hasTl) bits.push(badge(`t = ${s.tMin} min`));
-    contextBar.innerHTML = `<h2>${c.id} · ${c.title}</h2>${bits.join('')}`;
+    contextBar.innerHTML = `<h1>${title}</h1><span class="meta">${meta}</span>`;
+    contextBar.appendChild(vistaWrap);
+    btnVista.textContent = `Vista: ${LAYOUT_LABEL[s.view.layout]} · ${s.view.speedMmS} mm/s · ${s.view.gainMmMv} mm/mV ▾`;
+    // Keep popover selects in sync with the store.
+    const syncSel = (id: string, v: string | number) => {
+      const el = vistaWrap.querySelector<HTMLSelectElement>(`#${id}`);
+      if (el) el.value = String(v);
+    };
+    syncSel('v-layout', s.view.layout);
+    syncSel('v-speed', s.view.speedMmS);
+    syncSel('v-gain', s.view.gainMmMv);
+    syncSel('v-strip', s.view.stripS);
   };
 
   const render = () => {
@@ -407,7 +516,6 @@ export function mount(root: HTMLElement): void {
     if (mon) monitor.start();
     else monitor.stop();
     canvas.style.cursor = s.view.calipers ? 'crosshair' : '';
-    toolbar.style.display = mon ? 'none' : '';
     timelineEl.style.display = mon ? 'none' : '';
     metricRow.style.display = mon ? 'none' : '';
     monitorStrip.classList.toggle('monitor-full', mon);
@@ -422,7 +530,7 @@ export function mount(root: HTMLElement): void {
     } else if (s.mode === 'lab') {
       labPanel(sidebar, render);
     }
-    renderToolbar();
+    renderPaperhead();
     renderEcgCanvas();
     renderMonitorControls();
     renderBeatReader(beatCard, ecg, report?.delineation ?? null, s, render);

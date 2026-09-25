@@ -47,28 +47,31 @@ const MAX_MIN = 2880;
 export function timelineBar(el: HTMLElement, onChange: () => void): void {
   const state = store.get();
   const evs = state.scenario.timeline ?? [];
+  const evTxt = isBlind(state)
+    ? ''
+    : evs
+        .slice()
+        .sort((a, b) => a.atMin - b.atMin)
+        .map((e) => `${KIND_LABEL[e.kind]} @${e.atMin}′`)
+        .join(' · ') || 'Oclusión @0′';
+  const sub =
+    evTxt +
+    (isBlind(state) || evs.some((e) => e.kind === 'reperfusion') ? '' : ' · sin reperfusión');
   el.innerHTML = `
-    <div class="timeline-meta">
-      <button id="tl-play" aria-label="${state.playing ? 'Pausar' : 'Reproducir'}">${
-        state.playing ? '⏸' : '▶'
-      }</button>
-      <strong class="mono">t = ${state.tMin.toFixed(0)} min</strong>
-      ${isBlind(state) ? '' : `<span class="badge muted">${phaseLabel(state.scenario, state.tMin)}</span>`}
-      <span>${
-        state.mode === 'quiz' || state.blind
-          ? ''
-          : evs
-              .slice()
-              .sort((a, b) => a.atMin - b.atMin)
-              .map((e) => `${KIND_LABEL[e.kind]} @${e.atMin}'`)
-              .join(' · ')
-      }</span>
-      <span style="flex:1"></span>
-      <label>velocidad
-        <select id="tl-speed">
+    <div class="tl-head">
+      <div><h3>Evolución · ${state.tMin.toFixed(0)} min${
+        isBlind(state) ? '' : ` · ${phaseLabel(state.scenario, state.tMin)}`
+      }</h3><span class="tl-sub">${sub}</span></div>
+      <div class="seg" role="group" aria-label="Evolución">
+        <button id="tl-play" aria-label="${state.playing ? 'Pausar' : 'Reproducir'}">${
+          state.playing ? '⏸' : '▶'
+        }</button>
+        ${isBlind(state) ? '' : '<button id="tl-rep">+Reperfusión</button><button id="tl-reocc">+Reoclusión</button>'}
+      </div>
+      <label class="tl-speed">velocidad
+        <select id="tl-speed" aria-label="Velocidad de reproducción">
           ${[1, 5, 20].map((v) => `<option value="${v}" ${v === state.playSpeedMinPerS ? 'selected' : ''}>×${v}</option>`).join('')}
         </select></label>
-      ${isBlind(state) ? '' : '<button id="tl-rep">+ Reperfusión</button><button id="tl-reocc">+ Reoclusión</button>'}
     </div>
     <input type="range" id="tl-range" min="0" max="${MAX_MIN}" step="1" value="${state.tMin}" aria-label="Tiempo en minutos">`;
 

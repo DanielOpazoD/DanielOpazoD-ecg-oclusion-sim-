@@ -11,15 +11,19 @@ export function clinicalPanel(el: HTMLElement, c: CaseDefinition | null, state: 
     return;
   }
   const v = c.vignette;
+  // Bold lead-in = first sentence of the vignette history.
+  const dot = v.history.indexOf('. ');
+  const lead = dot > 0 ? v.history.slice(0, dot + 1) : '';
+  const rest = dot > 0 ? v.history.slice(dot + 1) : v.history;
   el.innerHTML = `
-    <div class="card vignette">
-      <h3 class="section-title">Vignette clínica</h3>
-      <p><span class="badge muted">${v.age} años · ${v.sex === 'M' ? 'Varón' : 'Mujer'}</span>
-         ${v.symptomsOnsetMin ? `<span class="badge warn">desde inicio ${v.symptomsOnsetMin} min</span>` : ''}</p>
-      <p>${escapeHtml(v.history)}</p>
-      ${v.vitals ? `<p class="mono">Constantes: ${escapeHtml(v.vitals)}</p>` : ''}
-      ${v.troponin ? `<p class="mono">Troponina: ${escapeHtml(v.troponin)}</p>` : ''}
-      ${isBlind(state) ? '' : '<button id="open-lab" style="margin-top:8px">Abrir en laboratorio</button>'}
+    <div class="card pat">
+      <p>${lead ? `<b>${escapeHtml(lead)}</b> ` : ''}${escapeHtml(rest)}</p>
+      <p class="meta">${v.age} años · ${v.sex === 'M' ? 'Varón' : 'Mujer'}${
+        v.symptomsOnsetMin ? ` · inicio ${v.symptomsOnsetMin} min` : ''
+      }${v.vitals ? ` · Constantes: ${escapeHtml(v.vitals)}` : ''}${
+        v.troponin ? ` · Troponina: ${escapeHtml(v.troponin)}` : ''
+      }</p>
+      ${isBlind(state) ? '' : '<button id="open-lab" class="btn quiet" style="margin-top:8px">Abrir en laboratorio</button>'}
     </div>`;
   el.querySelector('#open-lab')?.addEventListener('click', () => {
     // Keep the case scenario + tMin; just switch to lab mode.
