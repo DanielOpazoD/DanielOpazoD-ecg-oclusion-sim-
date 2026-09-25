@@ -496,6 +496,9 @@ table.meas tr:nth-child(even) {
 [data-theme='dark'] {
   --paper: #101418;
   --trace: #e8f0ff;
+  /* Same grid hue as light paper, only softer: minor ~0.18, major ~0.38. */
+  --grid-minor: rgba(243 201 201 / 0.18);
+  --grid-major: rgba(227 154 154 / 0.38);
 }
 
 /* Metric cards row */

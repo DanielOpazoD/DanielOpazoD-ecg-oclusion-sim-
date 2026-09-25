@@ -124,14 +124,19 @@ export class Monitor {
       ctx.fillText('CONGELADO', w - 82, h - 8);
     }
 
-    // Big HR numeric + beep on each QRS crossing the sweep bar.
+    // Big HR numeric, capped and backed so it never swallows the trace.
     const hr = del?.hrBpm ?? null;
+    const hrFs = Math.round(Math.min(Math.max(64, w * 0.09), 120));
+    const label = hr === null ? '--' : hr.toFixed(0);
+    ctx.font = `700 ${hrFs}px system-ui`;
+    const tw = ctx.measureText(label).width;
+    ctx.fillStyle = 'rgb(10 14 18 / 0.55)';
+    ctx.fillRect(w - tw - hrFs * 0.9 - 20, 8, tw + hrFs * 0.9 + 14, hrFs + 26);
     ctx.fillStyle = '#3ef0c8';
-    ctx.font = `700 ${Math.round(h * 0.3)}px system-ui`;
     ctx.textAlign = 'right';
-    ctx.fillText(hr === null ? '--' : hr.toFixed(0), w - 14, h * 0.32);
+    ctx.fillText(label, w - 14, hrFs + 6);
     ctx.font = '11px system-ui';
-    ctx.fillText('lpm', w - 14, h * 0.32 + 14);
+    ctx.fillText('lpm', w - 14, hrFs + 22);
     ctx.textAlign = 'left';
 
     if (this.beepOn && !this.frozen && del) {
