@@ -6,7 +6,9 @@ import { renderEcg } from './ecg/renderer.js';
 import { Monitor } from './ecg/monitor.js';
 import { renderVectorView } from './ecg/vectorView.js';
 import { attachCalipers } from './ecg/calipers.js';
-import { renderBeatDetailSvg } from './ecg/beatDetail.js';
+import { pickBeat } from './ecg/beatDetail.js';
+import { renderBeatReader } from './panels/beatReader.js';
+
 import { clinicalPanel } from './panels/clinicalPanel.js';
 import { findingsPanel } from './panels/findingsPanel.js';
 import { renderMetricCards, metricCards } from './panels/metricCards.js';
@@ -55,6 +57,7 @@ export function mount(root: HTMLElement): void {
         <div class="ecg-wrap" id="ecg-wrap">
           <div class="ecg-paper"><canvas id="ecg-canvas" role="img" tabindex="-1" aria-label="Trazado ECG"></canvas></div>
         </div>
+        <div id="beat-card"></div>
         <div class="monitor-strip" id="monitor-strip"><canvas id="monitor-canvas" aria-label="Monitor"></canvas>
           <div class="monitor-controls" id="monitor-controls"></div>
         </div>
@@ -80,6 +83,7 @@ export function mount(root: HTMLElement): void {
   const panelBody = root.querySelector<HTMLElement>('#panel-body')!;
   const ecgWrap = root.querySelector<HTMLElement>('#ecg-wrap')!;
   const contextBar = root.querySelector<HTMLElement>('#context-bar')!;
+  const beatCard = root.querySelector<HTMLElement>('#beat-card')!;
   const liveEl = root.querySelector<HTMLElement>('#live')!;
   const modeTabs = root.querySelector<HTMLElement>('.mode-tabs')!;
 
@@ -212,7 +216,19 @@ export function mount(root: HTMLElement): void {
       'Derivaciones adicionales V7–V9 / V3R–V4R',
     );
     mk('Marcadores', s.view.markers, (v) => setView({ markers: v }));
+    mk(
+      'Calipers',
+      s.view.calipers,
+      (v) => setView({ calipers: v }),
+      'Medir Δt y ΔV arrastrando sobre el papel',
+    );
     toolbar.appendChild(seg);
+    if (s.view.calipers) {
+      const hint = document.createElement('span');
+      hint.className = 'kbd';
+      hint.textContent = 'Esc borra';
+      toolbar.appendChild(hint);
+    }
     const info = document.createElement('span');
     info.className = 'kbd mono';
     info.style.marginLeft = 'auto';
@@ -274,7 +290,6 @@ export function mount(root: HTMLElement): void {
           : s.mode === 'lab'
             ? [
                 ['findings', 'Hallazgos'],
-                ['beat', 'Latido'],
                 ['vectors', 'Vectores'],
               ]
             : [
@@ -283,7 +298,6 @@ export function mount(root: HTMLElement): void {
                   ? ([
                       ['findings', 'Hallazgos'],
                       ['teaching', 'Docencia'],
-                      ['beat', 'Latido'],
                       ['vectors', 'Vectores'],
                     ] as Array<[typeof s.panelTab, string]>)
                   : ([['reveal', 'Revelar']] as Array<[typeof s.panelTab, string]>)),
@@ -327,20 +341,6 @@ export function mount(root: HTMLElement): void {
       case 'teaching':
         teachingPanel(panelBody, c);
         break;
-      case 'beat': {
-        const wrap = document.createElement('div');
-        wrap.className = 'card';
-        wrap.innerHTML = '<h3>Latido (delineado vs verdad)</h3>';
-        const svg = renderBeatDetailSvg(ecg!, report?.delineation ?? null, 'II', {
-          showTruth: true,
-        });
-        const d = document.createElement('div');
-        d.innerHTML =
-          svg + renderBeatDetailSvg(ecg!, report?.delineation ?? null, 'V1', { showTruth: true });
-        wrap.appendChild(d);
-        panelBody.appendChild(wrap);
-        break;
-      }
       case 'vectors': {
         const wrap = document.createElement('div');
         wrap.className = 'card';
@@ -402,7 +402,11 @@ export function mount(root: HTMLElement): void {
     // Monitor mode: full-width sweep, no 12-lead toolbar / paper / timeline.
     const mon = s.mode === 'monitor';
     ecgWrap.style.display = mon ? 'none' : '';
-    monitorStrip.style.display = '';
+    monitorStrip.style.display = mon ? '' : 'none';
+    beatCard.style.display = mon ? 'none' : '';
+    if (mon) monitor.start();
+    else monitor.stop();
+    canvas.style.cursor = s.view.calipers ? 'crosshair' : '';
     toolbar.style.display = mon ? 'none' : '';
     timelineEl.style.display = mon ? 'none' : '';
     metricRow.style.display = mon ? 'none' : '';
@@ -421,6 +425,7 @@ export function mount(root: HTMLElement): void {
     renderToolbar();
     renderEcgCanvas();
     renderMonitorControls();
+    renderBeatReader(beatCard, ecg, report?.delineation ?? null, s, render);
     renderMetricCards(metricRow, metricCards(report?.delineation ?? null, report));
     renderRightPanel();
     timelineBar(timelineEl, render);
@@ -656,14 +661,17 @@ export function mount(root: HTMLElement): void {
 
   attachCalipers(
     canvas,
-    () => {
-      const s = store.get();
-      const cellSec = s.view.layout === '12x1' ? 10 : s.view.layout === '6x2' ? 5 : 2.5;
-      const cols = s.view.layout === '12x1' ? 1 : s.view.layout === '6x2' ? 6 : 3;
-      const pxPerMm = (canvas.clientWidth - 16) / (s.view.speedMmS * cellSec * cols);
-      return { pxPerMm, marginPx: 8 };
-    },
+    () => store.get().view,
     () => store.get().view.gainMmMv,
+    {
+      isOn: () => store.get().view.calipers,
+      onPick: (tSec) => {
+        const d = report?.delineation;
+        if (!d?.beats.length) return;
+        const idx = pickBeat(d, tSec);
+        if (idx >= 0) store.update({ view: { ...store.get().view, beatIdx: idx } });
+      },
+    },
   );
 
   window.addEventListener('resize', () => renderEcgCanvas());
@@ -674,7 +682,7 @@ export function mount(root: HTMLElement): void {
     clearTimeout(roTimer);
     roTimer = setTimeout(() => renderEcgCanvas(), 80);
   }).observe(ecgWrap);
-  monitor.start();
+  if (store.get().mode === 'monitor') monitor.start();
 
   // URL state takes precedence over the default case on first load.
   const url = readUrlState();
