@@ -148,8 +148,10 @@ function findingRow(f: Finding, onHighlight: (leads: LeadId[] | null) => void): 
           : `[${n}]`;
       })
       .join(' ')}</p>`;
+  chip.setAttribute('aria-expanded', 'false');
   chip.addEventListener('click', () => {
     detail.hidden = !detail.hidden;
+    chip.setAttribute('aria-expanded', String(!detail.hidden));
     onHighlight(detail.hidden ? null : f.leads);
   });
   frag.appendChild(chip);

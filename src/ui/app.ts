@@ -18,12 +18,14 @@ import { renderQuizPanel, startQuiz, QUIZ_FINDING_CHOICES } from './modes/quizMo
 import { formatReport, copyReport } from './export.js';
 import { exportPng300 } from './export/png.js';
 import { readUrlState, shareUrl } from '../persistence/urlState.js';
+import { withFocusPreserved, wireTablist } from './a11y.js';
 import type { LeadId } from '../engine/index.js';
 
 /** Mount the whole app into #app. */
 export function mount(root: HTMLElement): void {
   root.innerHTML = `
     <header class="app-header">
+      <a class="skip-link" href="#ecg-canvas">Saltar al ECG</a>
       <div class="brand">ECG Lab<span class="sub">Simulador clínico · OMI Lab (isquemia)</span></div>
       <nav class="mode-tabs" role="tablist" aria-label="Modo">
         <button data-mode="cases" role="tab" aria-label="Casos">Casos</button>
@@ -33,7 +35,7 @@ export function mount(root: HTMLElement): void {
       </nav>
       <div class="header-spacer"></div>
       <div class="export-menu">
-        <button id="btn-export" aria-label="Exportar" aria-haspopup="true">Exportar ▾</button>
+        <button id="btn-export" aria-label="Exportar" aria-haspopup="menu" aria-expanded="false">Exportar ▾</button>
         <div class="export-pop" id="export-pop" hidden style="display:none">
           <button id="btn-export-png" aria-label="Exportar PNG 300 dpi">PNG (300 dpi)</button>
           <button id="btn-export-json" aria-label="Exportar JSON">JSON del escenario</button>
@@ -48,7 +50,7 @@ export function mount(root: HTMLElement): void {
       <section class="center">
         <div class="toolbar" id="toolbar"></div>
         <div class="ecg-wrap" id="ecg-wrap">
-          <div class="ecg-paper"><canvas id="ecg-canvas" aria-label="Trazado ECG"></canvas></div>
+          <div class="ecg-paper"><canvas id="ecg-canvas" role="img" tabindex="-1" aria-label="Trazado ECG"></canvas></div>
         </div>
         <div class="monitor-strip" id="monitor-strip"><canvas id="monitor-canvas" aria-label="Monitor"></canvas>
           <div class="monitor-controls" id="monitor-controls"></div>
@@ -57,10 +59,11 @@ export function mount(root: HTMLElement): void {
         <div class="timeline-bar" id="timeline"></div>
       </section>
       <aside class="right-panel">
-        <div class="panel-tabs" id="panel-tabs"></div>
-        <div class="panel-body" id="panel-body"></div>
+        <div class="panel-tabs" id="panel-tabs" role="tablist" aria-label="Panel"></div>
+        <div class="panel-body" id="panel-body" role="tabpanel"></div>
       </aside>
-    </div>`;
+    </div>
+    <div id="live" class="sr-only" aria-live="polite"></div>`;
 
   const canvas = root.querySelector<HTMLCanvasElement>('#ecg-canvas')!;
   const monitorCanvas = root.querySelector<HTMLCanvasElement>('#monitor-canvas')!;
@@ -73,6 +76,8 @@ export function mount(root: HTMLElement): void {
   const panelTabs = root.querySelector<HTMLElement>('#panel-tabs')!;
   const panelBody = root.querySelector<HTMLElement>('#panel-body')!;
   const ecgWrap = root.querySelector<HTMLElement>('#ecg-wrap')!;
+  const liveEl = root.querySelector<HTMLElement>('#live')!;
+  const modeTabs = root.querySelector<HTMLElement>('.mode-tabs')!;
 
   let ecg: Ecg12 | null = null;
   let report: AnalysisReport | null = null;
@@ -191,6 +196,10 @@ export function mount(root: HTMLElement): void {
   const renderEcgCanvas = () => {
     if (!ecg) return;
     const s = store.get();
+    canvas.setAttribute(
+      'aria-label',
+      `ECG 12 derivaciones, ${s.caseId ?? 'laboratorio'}, ${s.view.layout}, ${s.view.speedMmS} mm/s, ${s.view.gainMmMv} mm/mV`,
+    );
     const acq = s.scenario.acquisition ?? {};
     renderEcg(canvas, ecg, s.view, {
       highlightLeads: highlight ?? [],
@@ -231,6 +240,8 @@ export function mount(root: HTMLElement): void {
     panelTabs.innerHTML = '';
     for (const [t, label] of tabs) {
       const b = document.createElement('button');
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-controls', 'panel-body');
       b.setAttribute('aria-selected', String(t === effectiveTab));
       b.textContent = label;
       b.addEventListener('click', () => {
@@ -244,6 +255,7 @@ export function mount(root: HTMLElement): void {
       });
       panelTabs.appendChild(b);
     }
+    wireTablist(panelTabs);
     panelBody.innerHTML = '';
     if (s.mode === 'quiz') {
       renderQuizPanel(panelBody, QUIZ_FINDING_CHOICES, render);
@@ -300,6 +312,7 @@ export function mount(root: HTMLElement): void {
     for (const b of root.querySelectorAll<HTMLButtonElement>('.mode-tabs button')) {
       b.setAttribute('aria-selected', String(b.dataset.mode === s.mode));
     }
+    wireTablist(modeTabs);
     sidebar.style.display = s.mode === 'monitor' ? 'none' : '';
     // Monitor mode: full-width sweep, no 12-lead toolbar / paper / timeline.
     const mon = s.mode === 'monitor';
@@ -326,7 +339,17 @@ export function mount(root: HTMLElement): void {
     renderMetricCards(metricRow, metricCards(report?.delineation ?? null, report));
     renderRightPanel();
     timelineBar(timelineEl, render);
+    const verdict = report
+      ? `Veredicto: ${report.omi.positive ? 'OMI probable' : 'Sin criterios de oclusión'}${report.findings.find((f) => f.id === 'stemi-udmi4')?.positive ? ' · Criterios STEMI' : ''}`
+      : '';
+    if (verdict !== lastVerdict) {
+      lastVerdict = verdict;
+      liveEl.textContent = verdict;
+    }
   };
+  const renderSafe = () => withFocusPreserved(render);
+
+  let lastVerdict = '';
 
   // --- Header buttons ------------------------------------------------------
   for (const b of root.querySelectorAll<HTMLButtonElement>('.mode-tabs button')) {
@@ -336,15 +359,20 @@ export function mount(root: HTMLElement): void {
     });
   }
   const pop = root.querySelector<HTMLElement>('#export-pop')!;
-  const closePop = () => {
+  const btnExport = root.querySelector<HTMLElement>('#btn-export')!;
+  const closePop = (refocus = false) => {
     pop.hidden = true;
     pop.style.display = 'none';
+    btnExport.setAttribute('aria-expanded', 'false');
+    if (refocus) btnExport.focus();
   };
   const openPop = () => {
     pop.hidden = false;
     pop.style.display = '';
+    btnExport.setAttribute('aria-expanded', 'true');
+    pop.querySelector('button')?.focus();
   };
-  root.querySelector('#btn-export')!.addEventListener('click', (e) => {
+  btnExport.addEventListener('click', (e) => {
     e.stopPropagation();
     if (pop.hidden) openPop();
     else closePop();
@@ -352,8 +380,19 @@ export function mount(root: HTMLElement): void {
   document.addEventListener('click', (e) => {
     if (!pop.hidden && !(e.target as HTMLElement).closest('.export-menu')) closePop();
   });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !pop.hidden) closePop();
+  pop.addEventListener('keydown', (e) => {
+    const items = [...pop.querySelectorAll<HTMLElement>('button')];
+    const i = items.indexOf(document.activeElement as HTMLElement);
+    if (e.key === 'ArrowDown' && i >= 0) {
+      e.preventDefault();
+      items[(i + 1) % items.length]!.focus();
+    } else if (e.key === 'ArrowUp' && i >= 0) {
+      e.preventDefault();
+      items[(i - 1 + items.length) % items.length]!.focus();
+    } else if (e.key === 'Escape') {
+      e.stopPropagation();
+      closePop(true);
+    }
   });
   pop.addEventListener('click', () => closePop());
   root.querySelector('#btn-export-png')!.addEventListener('click', () => {
@@ -410,23 +449,51 @@ export function mount(root: HTMLElement): void {
     if (report)
       void copyReport(formatReport(report, { tMin: store.get().tMin, caseId: store.get().caseId }));
   });
-  root.querySelector('#btn-about')!.addEventListener('click', () => {
+  const openAbout = () => {
+    if (document.querySelector('.modal-backdrop')) return;
     const back = document.createElement('div');
     back.className = 'modal-backdrop';
-    back.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
-      <h2>ECG Lab</h2>
+    back.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="about-title">
+      <h2 id="about-title">ECG Lab</h2>
       <p>Simulador clínico de ECG de 12 derivaciones (ritmos, bloqueos, ectopía, marcapasos,
       electrolitos, OMI). Herramienta <strong>educativa</strong>: no es un dispositivo médico.</p>
       <p>Teclas: <span class="kbd">espacio</span> play · <span class="kbd">←/→</span> tiempo ·
       <span class="kbd">c</span> limpia · <span class="kbd">[ ]</span> caso anterior/siguiente.</p>
       <p>Versión 2.0 · Motor dipolar (MODEL.md) · ${CASES.length} casos clínicos.</p>
       <button id="about-close" class="primary">Cerrar</button></div>`;
-    back.querySelector('#about-close')!.addEventListener('click', () => back.remove());
+    const close = () => {
+      back.remove();
+      root.querySelector<HTMLElement>('#btn-about')!.focus();
+    };
+    back.querySelector('#about-close')!.addEventListener('click', close);
     back.addEventListener('click', (e) => {
-      if (e.target === back) back.remove();
+      if (e.target === back) close();
+    });
+    back.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        close();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const focusables = [
+        ...back.querySelectorAll<HTMLElement>('button, a[href], [tabindex]:not([tabindex="-1"])'),
+      ];
+      if (!focusables.length) return;
+      const first = focusables[0]!;
+      const last = focusables[focusables.length - 1]!;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     });
     document.body.appendChild(back);
-  });
+    back.querySelector<HTMLElement>('#about-close')!.focus();
+  };
+  root.querySelector('#btn-about')!.addEventListener('click', openAbout);
 
   // --- Keyboard ------------------------------------------------------------
   document.addEventListener('keydown', (e) => {
@@ -449,6 +516,12 @@ export function mount(root: HTMLElement): void {
         break;
       case 'c':
         store.update({ view: { ...s.view, showClean: !s.view.showClean } });
+        break;
+      case '?':
+        openAbout();
+        break;
+      case '/':
+        if (e.shiftKey) openAbout();
         break;
       case '[':
       case ']': {
@@ -484,9 +557,9 @@ export function mount(root: HTMLElement): void {
     if (sig !== lastSig) {
       lastSig = sig;
       regenerate();
-      render();
+      renderSafe();
     } else {
-      render();
+      renderSafe();
     }
   });
 
@@ -503,6 +576,13 @@ export function mount(root: HTMLElement): void {
   );
 
   window.addEventListener('resize', () => renderEcgCanvas());
+  // Panel-stack changes (e.g. mobile breakpoints) resize the wrap without a
+  // window resize — observe it so the canvas re-lays out.
+  let roTimer: ReturnType<typeof setTimeout> | undefined;
+  new ResizeObserver(() => {
+    clearTimeout(roTimer);
+    roTimer = setTimeout(() => renderEcgCanvas(), 80);
+  }).observe(ecgWrap);
   monitor.start();
 
   // URL state takes precedence over the default case on first load.
@@ -515,7 +595,7 @@ export function mount(root: HTMLElement): void {
     });
   }
   regenerate();
-  render();
+  renderSafe();
 
   // Start quiz lazily when entering the mode.
   store.subscribe((s) => {
