@@ -73,8 +73,9 @@ export function metricCards(
       note: ev('qt').note,
     },
     {
-      label: 'Ejes P·QRS·T',
-      value: `${num(d?.axisDeg.p ?? null)}°·${num(d?.axisDeg.qrs ?? null)}°·${num(d?.axisDeg.t ?? null)}°`,
+      label: 'Eje QRS',
+      value: `${num(d?.axisDeg.qrs ?? null)}°`,
+      sub: d ? `P ${num(d.axisDeg.p)}° · T ${num(d.axisDeg.t)}°` : undefined,
       status: ev('axis').status,
       note: ev('axis').note,
     },
@@ -86,8 +87,8 @@ export function metricCards(
     },
     {
       label: 'Calidad',
-      value: d ? `${(d.noiseMv * 1000).toFixed(0)} µV RMS` : '—',
-      sub: d?.quality,
+      value: d ? `${(d.noiseMv * 1000).toFixed(0)} µV` : '—',
+      sub: d ? `RMS · ${d.quality}` : undefined,
       status: d ? (d.noiseMv < 0.03 ? 'usable' : 'review') : 'unavailable',
     },
   ];
