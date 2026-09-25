@@ -4,6 +4,7 @@ import { generateEcg } from '../engine/index.js';
 import type { Scenario } from '../engine/index.js';
 import { delineate } from './delineate/delineate.js';
 import { analyzeEcg } from './index.js';
+import { getCase } from '../cases/index.js';
 
 const sinus: Scenario = {
   seed: 7,
@@ -96,6 +97,40 @@ describe('delineate', () => {
         25,
       );
     }
+  });
+
+  it('P delineates under large STE/hyperacute T (A01, A02, B01, B02)', () => {
+    for (const id of ['A01', 'A02', 'B01', 'B02']) {
+      const c = getCase(id)!;
+      const e = generateEcg(c.scenario, c.ecgAtMin ?? 0);
+      const d = delineate({ fs: e.fs, leads: e.clean });
+      const pr = median(
+        e.beats.filter((b) => b.pOnset >= 0).map((b) => ((b.qrsOnset - b.pOnset) / e.fs) * 1000),
+      );
+      expect(d.prMs, `${id}: prMs ${d.prMs} vs truth ${pr}`).not.toBeNull();
+      expect(Math.abs(d.prMs! - pr)).toBeLessThan(25);
+    }
+  });
+
+  it('QT under STE: A01 within ±35 ms; sinus HRV reads regular', () => {
+    const c = getCase('A01')!;
+    const e = generateEcg(c.scenario, c.ecgAtMin ?? 0);
+    const d = delineate({ fs: e.fs, leads: e.clean });
+    const qt = median(e.beats.map((b) => ((b.tEnd - b.qrsOnset) / e.fs) * 1000));
+    expect(Math.abs(d.qtMs! - qt)).toBeLessThan(35);
+    const s = generateEcg({ ...sinus, seed: 11, variability: true });
+    expect(delineate({ fs: s.fs, leads: s.clean }).rhythmRegularity).toBe('regular');
+  });
+
+  it('ventricular context: PR is never usable', () => {
+    const c = getCase('K02')!;
+    const e = generateEcg(c.scenario, c.ecgAtMin ?? 0);
+    const r = analyzeEcg(e, {
+      sex: c.vignette.sex,
+      age: c.vignette.age,
+      conduction: c.scenario.conduction,
+    });
+    expect(r.delineation.evidence.pr.status).not.toBe('usable');
   });
 
   it('dextrocardia: P still delineates and no false AV dissociation', () => {

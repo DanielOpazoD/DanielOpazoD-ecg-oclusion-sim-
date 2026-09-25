@@ -125,6 +125,14 @@ export function analyzeEcg(ecg: Ecg12, opts: AnalyzeOptions = {}): AnalysisRepor
     conduction: opts.conduction ?? 'normal',
     qrsContext: qrsContextOf(ecg, opts.conduction ?? 'normal'),
   };
+  // Over a ventricular rhythm a detected "P→QRS association" is at best
+  // retrograde coincidence — PR is never usable.
+  if (ctx.qrsContext === 'ventricular' && ctx.delineation.evidence.pr.status === 'usable') {
+    ctx.delineation.evidence.pr = {
+      status: 'review',
+      note: 'QRS de origen ventricular: la asociación P–QRS no es fiable.',
+    };
+  }
   const wide = ['lbbb', 'paced', 'ventricular'].includes(ctx.qrsContext);
   const omiFindings = RULES.map((r) => {
     const f = r(ctx);

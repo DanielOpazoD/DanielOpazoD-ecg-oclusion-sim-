@@ -243,7 +243,7 @@ export const GROUP_I: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: ['av-dissociation', 'heart-rate', 'pr-prolonged', 'wide-qrs'],
+      positiveFindings: ['av-dissociation', 'heart-rate', 'wide-qrs'],
       negativeFindings: ['stemi-udmi4', 'omi-composite', 'pacing', 'flutter-waves'],
       diagnosis: 'Bloqueo AV completo con escape ventricular',
       distractors: ['Bradicardia sinusal', 'Ritmo idioventricular', 'Bloqueo AV 2:1'],

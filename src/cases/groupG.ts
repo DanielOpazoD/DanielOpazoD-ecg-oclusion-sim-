@@ -255,13 +255,7 @@ export const GROUP_G: CaseDefinition[] = [
     expected: {
       omi: false,
       activateCathLab: false,
-      positiveFindings: [
-        'heart-rate',
-        'rr-irregular',
-        'pr-prolonged',
-        'av-dissociation',
-        'flutter-waves',
-      ],
+      positiveFindings: ['heart-rate', 'rr-irregular', 'av-dissociation', 'flutter-waves'],
       negativeFindings: ['omi-composite'],
       rulesMiss:
         'Las ondas f y la conducción irregular hacen que el detector lea actividad auricular organizada y un patrón tipo flutter.',

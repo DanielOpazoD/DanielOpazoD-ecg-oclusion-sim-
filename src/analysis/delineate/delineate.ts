@@ -1,7 +1,7 @@
 import { detectVentricularCandidates } from './candidates.js';
 import type { DelineationInput } from './impulses.js';
 import { suppressImpulses, CORE_LEADS } from './impulses.js';
-import { circularMedian, median, spreadCv } from './statistics.js';
+import { circularMedian, median, spreadCv, spread } from './statistics.js';
 import { evidence, unavailable, type Evidence } from './evidence.js';
 
 export interface DelineatedBeat {
@@ -98,6 +98,10 @@ export function delineate(input: DelineationInput, opts: { windowS?: number } = 
   const pAxes: number[] = [];
   const tAxes: number[] = [];
   const signal = suppressed.signal.leads;
+  // Leads/scale for the per-window P score.
+  const P_LEADS = ['II', 'aVR', 'V1', 'I'] as const;
+  const P_SCALE: Record<string, number> = { I: 0.08, II: 0.12, aVR: 0.1, V1: 0.09 };
+  const availP = P_LEADS.filter((l) => signal[l] !== undefined);
   const magnitude = (i: number) =>
     Math.hypot(...names.map((l) => signal[l]![Math.max(0, Math.min(n - 1, i))]!));
   const slope = (i: number) =>
@@ -217,39 +221,104 @@ export function delineate(input: DelineationInput, opts: { windowS?: number } = 
     }
     off = Math.min(off, on + Math.round(0.2 * fs));
     on = Math.max(on, off - Math.round(0.2 * fs));
-    const amp = Math.max(
-      ...Array.from({ length: Math.max(1, endHi - onsetLo) }, (_, j) => magnitude(onsetLo + j)),
-    );
     if (off <= on || (off - on) / fs < 0.035 || (off - on) / fs > 0.3) {
       on = Math.max(onsetLo, p - Math.round(0.04 * fs));
       off = Math.min(endHi, p + Math.round(0.1 * fs));
     }
     const rr = (p - prev) / fs;
+    // P search: |signal| scored across II/aVR/V1/I in [on−260, on−60] ms,
+    // excluding the previous beat's QRS-onset−40 … tEnd+40 window so a
+    // merged STE/hyperacute-T plateau cannot masquerade as a P wave.
+    const prevBeat = beats.at(-1);
+    const prevEnd = prevBeat?.tEndS ?? prevBeat?.qrsEndS;
     const pLo = Math.max(
-      prev + Math.round(0.06 * fs),
-      on - Math.round(Math.min(0.35, rr * 0.45) * fs),
+      on - Math.round(0.26 * fs),
+      prevEnd !== undefined ? Math.round(prevEnd * fs) + Math.round(0.04 * fs) : 0,
+      prevBeat !== undefined ? Math.round(prevBeat.qrsOnsetS * fs) - Math.round(0.04 * fs) : 0,
     );
-    const pHi = on - Math.round(0.03 * fs);
-    let pp = pLo;
-    for (let i = pLo; i < pHi; i++) if (magnitude(i) > magnitude(pp)) pp = i;
-    const pAmp = magnitude(pp);
+    const pHi = on - Math.round(0.06 * fs);
+    // Local floor per P lead over this window: the P bump is scored as a
+    // deviation from the window's own baseline, so a sustained STE
+    // plateau does not win the argmax.
+    const locBase = availP.map((l) => {
+      const w = Array.from(signal[l]!.slice(Math.max(0, pLo), Math.max(pLo + 1, pHi))).sort(
+        (a, b) => a - b,
+      );
+      return w[Math.floor(w.length * 0.25)] ?? 0;
+    });
+    const pScore = (i: number) =>
+      Math.hypot(
+        ...availP.map((l, k) => Math.abs(signal[l]![i]! - locBase[k]!) / (P_SCALE[l] ?? 0.1)),
+      );
+    // Largest in-range P score wins; samples scoring above the T-wave
+    // ceiling (STE plateau, discordant T) are skipped, not allowed to win.
+    let pp = -1;
+    for (let i = pLo; i < pHi; i++) {
+      const s = pScore(i);
+      if (s > 2.9) continue;
+      if (pp < 0 || s > pScore(pp)) pp = i;
+    }
+    const pAmpScore = pp >= 0 && availP.length ? pScore(pp) : 0;
+    const pMag = pp >= 0 ? magnitude(pp) : 0;
     const pOn =
-      pAmp > Math.max(0.035, amp * 0.035) ? Math.max(pLo, pp - Math.round(0.055 * fs)) : undefined;
+      pAmpScore > 0.8 && pMag > 0.035 ? Math.max(pLo, pp - Math.round(0.055 * fs)) : undefined;
     const tLo = off + Math.round(0.04 * fs);
     const tHi = Math.min(
       next - Math.round(0.08 * fs),
       p + Math.round(Math.min(0.85, rr * 0.8) * fs),
     );
-    let tp = tLo;
-    for (let i = tLo; i < tHi; i++) if (magnitude(i) > magnitude(tp)) tp = i;
-    let te = tp;
-    const tThreshold = Math.max(0.01, magnitude(tp) * 0.16);
-    for (let i = tp; i < tHi; i++)
-      if (magnitude(i) < tThreshold && slope(i) < 0.08 * fs) {
-        te = i;
+    // T peak: the last local maximum of magnitude — under STE the ST
+    // plateau is elevated early, so a global argmax lands on the plateau.
+    let gMax = 0;
+    for (let i = tLo; i < tHi; i++) gMax = Math.max(gMax, magnitude(i));
+    let tp = -1;
+    for (let i = tHi - 2; i > tLo + 2; i--) {
+      if (
+        magnitude(i) > 0.45 * gMax &&
+        magnitude(i) >= magnitude(i - 1) &&
+        magnitude(i) >= magnitude(i + 1)
+      ) {
+        tp = i;
         break;
       }
-    if (te <= tp + 2) te = Math.min(tHi, tp + Math.round(0.2 * fs));
+    }
+    if (tp < 0) {
+      tp = tLo;
+      for (let i = tLo; i < tHi; i++) if (magnitude(i) > magnitude(tp)) tp = i;
+    }
+    // T end — tangent method on the T downslope: take the steepest
+    // descent after tp, then intersect its slope with the isoelectric
+    // baseline. Robust where the T merges with an elevated ST plateau.
+    let md = tp;
+    let dMin = 0;
+    for (let i = tp + 2; i < tHi - 2; i++) {
+      const dS = magnitude(i + 2) - magnitude(i - 2); // per 4 samples
+      if (dS < dMin) {
+        dMin = dS;
+        md = i;
+      }
+    }
+    // T foot floor: lowest magnitude between J and the T peak — under STE
+    // the tangent must aim at the floor, not absolute zero.
+    let floor = Infinity;
+    for (let i = tLo; i <= md; i++) floor = Math.min(floor, magnitude(i));
+    if (!Number.isFinite(floor)) floor = 0;
+    let te = tp;
+    if (dMin < 0) {
+      const vAboveBase = Math.max(0, magnitude(md) - floor);
+      // samples until the tangent crosses the floor: v / slope-per-sample
+      te = md + Math.round((4 * vAboveBase) / Math.abs(dMin));
+      if (te > tHi) te = tHi;
+      if (te < tp) te = tp + Math.round(0.02 * fs);
+    } else {
+      const tThreshold = Math.max(0.01, magnitude(tp) * 0.16);
+      for (let i = tp; i < tHi; i++)
+        if (magnitude(i) < tThreshold && slope(i) < 0.08 * fs) {
+          te = i;
+          break;
+        }
+      if (te <= tp + 2) te = Math.min(tHi, tp + Math.round(0.2 * fs));
+    }
     const iVal = signal.I![p]! - b[0]!;
     const iiVal = signal.II![p]! - b[1]!;
     qrsAxes.push(axis(iVal, iiVal));
@@ -271,14 +340,31 @@ export function delineate(input: DelineationInput, opts: { windowS?: number } = 
   }
   const rrMs = peaks.slice(1).map((p, i) => ((p - peaks[i]!) * 1000) / fs);
   const hr = rrMs.length ? 60000 / median(rrMs) : null;
+  // Regularity: CV < 0.08 regular; ≥ 0.12 irregular; between → 'regular'
+  // unless the RR sequence repeats (autocorr lag 2–4 > 0.6 → patterned).
+  const rrAuto = (lag: number) => {
+    if (rrMs.length <= lag + 2) return 0;
+    const m = rrMs.reduce((s, x) => s + x, 0) / rrMs.length;
+    let xy = 0;
+    let xx = 0;
+    for (let i = lag; i < rrMs.length; i++) {
+      xy += (rrMs[i]! - m) * (rrMs[i - lag]! - m);
+      xx += (rrMs[i - lag]! - m) ** 2;
+    }
+    return xx > 0 ? xy / xx : 0;
+  };
+  const cv = spreadCv(rrMs);
+  const patterned = rrMs.length >= 5 && [2, 3, 4].some((lag) => Math.abs(rrAuto(lag)) > 0.6);
   const regularity =
     rrMs.length < 2
       ? 'none'
-      : spreadCv(rrMs) < 0.06
-        ? 'regular'
-        : spreadCv(rrMs) >= 0.12
-          ? 'irregular'
-          : 'regularly-irregular';
+      : cv >= 0.12
+        ? 'irregular'
+        : cv < 0.08
+          ? 'regular'
+          : patterned
+            ? 'regularly-irregular'
+            : 'regular';
   const pr = prs.length ? median(prs) : null;
   const qrs = qrses.length ? median(qrses) : null;
   const qt = qts.length ? median(qts) : null;
@@ -389,6 +475,18 @@ export function delineate(input: DelineationInput, opts: { windowS?: number } = 
   const noiseMv = noiseVals.length
     ? Math.sqrt(noiseVals.reduce((s, x) => s + x * x, 0) / noiseVals.length)
     : 0;
+  // PR evidence tiers: 'usable' needs a P associated in ≥80% of beats and
+  // spread (p90−p10) ≤ 30 ms; 'review' for 50–80% coverage or ≤60 ms
+  // spread; otherwise 'unavailable' and prMs is null.
+  const prCoverage = beats.length ? prs.length / beats.length : 0;
+  const prSpread = prs.length > 1 ? spread(prs) : 0;
+  const prUsable = prs.length >= 3 && prCoverage >= 0.8 && prSpread <= 30;
+  const prReview = !prUsable && prs.length > 0 && (prCoverage >= 0.5 || prSpread <= 60);
+  const prEvidence: Evidence = prUsable
+    ? { status: 'usable', note: 'P y QRS reproducibles.' }
+    : prReview
+      ? { status: 'review', note: 'Relación P–QRS parcial: revisa el trazado.' }
+      : unavailable('P no reconocible o sin relación AV estable.');
   const ev = {
     hr: evidence(
       rrMs.map((x) => x / 1000),
@@ -396,7 +494,7 @@ export function delineate(input: DelineationInput, opts: { windowS?: number } = 
       0.15,
       'Frecuencia media entre complejos detectados.',
     ),
-    pr: evidence(prs, beats.length, 25, 'P y QRS reproducibles.'),
+    pr: prEvidence,
     qrs: evidence(qrses, beats.length, 20, 'Límites QRS reproducibles.'),
     qt: evidence(qts, beats.length, 40, 'Final de T reconocible.'),
     axis: evidence(qrsAxes, beats.length, 25, 'Eje QRS reproducible.'),
@@ -410,7 +508,7 @@ export function delineate(input: DelineationInput, opts: { windowS?: number } = 
     beats,
     rrMs,
     hrBpm: hr,
-    prMs: pr,
+    prMs: prUsable || prReview ? pr : null,
     qrsMs: qrs,
     qtMs: qt,
     qtc: {

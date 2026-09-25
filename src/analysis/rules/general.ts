@@ -8,7 +8,11 @@ export const heartRate: Rule = (ctx) => {
   const positive = hr !== null && (hr < 50 || hr > 100);
   return finding(
     'heart-rate',
-    hr !== null && hr < 50 ? 'Bradicardia' : 'Taquicardia',
+    hr === null || (hr >= 50 && hr <= 100)
+      ? 'Frecuencia cardíaca'
+      : hr < 50
+        ? 'Bradicardia'
+        : 'Taquicardia',
     positive,
     [],
     { hr: hr ?? 0 },
@@ -79,7 +83,7 @@ export const bundleBranchMorphology: Rule = (ctx) => {
     mmOf(ctx, 'V6', 'rAmp') > mmOf(ctx, 'V6', 'qAmp');
   return finding(
     'bundle-branch-morphology',
-    rbbb ? 'Morfología de BRD' : 'Morfología de BRI',
+    rbbb ? 'Morfología de BRD' : lbbb ? 'Morfología de BRI' : 'Morfología de bloqueo de rama',
     rbbb || lbbb,
     ['V1', 'V6'],
     { rbbb: rbbb ? 1 : 0, lbbb: lbbb ? 1 : 0 },
