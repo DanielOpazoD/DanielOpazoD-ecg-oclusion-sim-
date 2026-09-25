@@ -5,6 +5,9 @@ test('beat reader card: steps beats, lead select changes svg, calipers toggle', 
 }) => {
   await page.goto('/');
   const card = page.locator('#beat-card');
+  // Collapsed = fully hidden; the measurements-line link is the entry point.
+  await expect(card).toBeHidden();
+  await page.locator('#meas-beat').click();
   await expect(card).toBeVisible();
   await expect(card).toContainText(/Latido 1 \/ \d+/);
   await expect(card.locator('.br-plot svg')).toBeVisible();
@@ -27,7 +30,7 @@ test('beat reader card: steps beats, lead select changes svg, calipers toggle', 
 test('monitor strip only visible inside the Monitor tab', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('#monitor-strip')).toBeHidden();
-  await expect(page.locator('#beat-card')).toBeVisible();
+  await expect(page.locator('#meas-beat')).toBeVisible();
   await page.getByRole('tab', { name: 'Monitor' }).click();
   await expect(page.locator('#monitor-strip')).toBeVisible();
   await expect(page.locator('#beat-card')).toBeHidden();

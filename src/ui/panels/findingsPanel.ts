@@ -1,6 +1,6 @@
 import type { AnalysisReport, Finding } from '../../analysis/index.js';
 import { bib } from '../data/bibliography.js';
-import type { LeadId } from '../../engine/index.js';
+import { LEAD_IDS, type LeadId } from '../../engine/index.js';
 import { store } from '../state/appState.js';
 
 const OMI_IDS = new Set([
@@ -48,7 +48,75 @@ function groupOf(f: Finding): string {
 
 const NA_RATIONALE = 'No aplicable';
 
-/** Findings panel: OMI verdict badge, grouped finding chips, N/A section. */
+// Findings that actually drive the OMI composite (mirrors
+// src/analysis/rules/omi-composite.ts); only these may "support occlusion".
+const OMI_TRIGGERS = new Set([
+  'de-winter',
+  'hyperacute-t',
+  'posterior-std',
+  'aslanger',
+  'sgarbossa-modified',
+  'barcelona',
+  'south-african-flag',
+  'terminal-qrs-distortion',
+  'wellens',
+]);
+const isOmiTrigger = (f: Finding) =>
+  OMI_TRIGGERS.has(f.id) || (f.id === 'smith-4v' && (f.score ?? 0) >= 18.2);
+
+// Persist the «criterios evaluados» expansion across re-renders (playback ticks).
+let allOpen = false;
+
+const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+const upper = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/**
+ * One-sentence verdict: STEMI criteria line + up to two positive OMI-group
+ * findings as supporting evidence. Pure — unit-tested.
+ */
+export function verdictSentence(report: AnalysisReport): string {
+  const stemi = report.findings.find((f) => f.id === 'stemi-udmi4')?.positive;
+  let s = stemi ? 'Cumple criterios STEMI.' : 'No cumple criterios STEMI.';
+  const posOmi = report.findings.filter((f) => f.positive && isOmiTrigger(f));
+  if (posOmi.length) {
+    const names = posOmi
+      .slice(0, 2)
+      .map((f) => lower(f.label))
+      .join(' y ');
+    s += ` ${upper(names)} apoyan oclusión.`;
+  }
+  return s;
+}
+
+/**
+ * Compress a lead list for display: consecutive leads in standard order
+ * become `V2–V4`; otherwise a comma list. At most 4 items, then «…».
+ */
+export function leadRange(leads: LeadId[]): string {
+  if (!leads.length) return '';
+  const idx = (l: LeadId) => LEAD_IDS.indexOf(l);
+  // Ranges never cross lead families (limb · V1–V9 · right-sided).
+  const family = (l: LeadId) => (idx(l) < 6 ? 0 : idx(l) < 15 ? 1 : 2);
+  const sorted = [...leads].sort((a, b) => idx(a) - idx(b));
+  const parts: string[] = [];
+  let run: LeadId[] = [sorted[0]!];
+  const flush = () => {
+    parts.push(run.length >= 2 ? `${run[0]}–${run[run.length - 1]}` : (run[0] as string));
+    run = [];
+  };
+  for (const l of sorted.slice(1)) {
+    const prev = run[run.length - 1]!;
+    if (idx(l) === idx(prev) + 1 && family(l) === family(prev)) run.push(l);
+    else {
+      flush();
+      run = [l];
+    }
+  }
+  flush();
+  return parts.length > 4 ? `${parts.slice(0, 4).join(', ')}…` : parts.join(', ');
+}
+
+/** «Lectura» tab: verdict card + positive findings + expandable criteria. */
 export function findingsPanel(
   el: HTMLElement,
   report: AnalysisReport | null,
@@ -60,38 +128,58 @@ export function findingsPanel(
     return;
   }
 
-  const head = document.createElement('div');
-  head.className = 'card';
-  const stemi = report.findings.find((f) => f.id === 'stemi-udmi4');
+  // 1. Verdict card.
+  const verd = document.createElement('div');
+  verd.className = 'card verd';
   const audit = report.measurementAudit;
-  head.innerHTML = `
-    <h3>Veredicto <span class="badge muted blind-chip" title="Mediciones obtenidas solo de la señal y la delineación independiente">Medido en señal (ciego)</span></h3>
+  verd.innerHTML = `
+    <span class="kicker" title="Mediciones obtenidas solo de la señal y la delineación independiente">Veredicto · medido en la señal</span>
+    <h2 class="${report.omi.positive ? 'danger' : 'ok'}">
+      ${report.omi.positive ? 'OMI probable' : 'Sin criterios de oclusión'}</h2>
+    <p>${verdictSentence(report)}</p>
     ${
       audit && audit.status !== 'usable'
-        ? `<p><span class="ev-badge ev-${audit.status === 'review' ? 'review' : 'na'}" title="${audit.note}">⚠ medición</span> <small>${audit.note}</small></p>`
+        ? `<p class="audit" title="${audit.note}">⚠ Medición con reservas — ${audit.note}</p>`
         : ''
     }
-    <p>
-      <span class="badge ${report.omi.positive ? 'danger' : 'ok'}">${
-        report.omi.positive ? 'OMI probable' : 'Sin criterios de oclusión'
-      }</span>
-      <span class="badge ${stemi?.positive ? 'warn' : 'muted'}">${
-        stemi?.positive ? 'Criterios STEMI' : 'No STEMI'
-      }</span>
-    </p>
-    <label style="font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;margin-top:6px">
+    <label class="src-row">
       <input type="checkbox" id="an-src" ${store.get().analysisSource === 'acquired' ? 'checked' : ''}>
       Analizar señal adquirida (con ruido/filtros)
     </label>`;
-  head.querySelector('#an-src')?.addEventListener('change', (e) => {
+  verd.querySelector('#an-src')?.addEventListener('change', (e) => {
     store.update({ analysisSource: (e.target as HTMLInputElement).checked ? 'acquired' : 'clean' });
   });
-  el.appendChild(head);
+  el.appendChild(verd);
 
+  // 2. Positive findings as quiet rows.
   const na = report.findings.filter((f) => f.rationale.startsWith(NA_RATIONALE));
   const applicable = report.findings.filter(
     (f) => f.id !== 'omi-composite' && !f.rationale.startsWith(NA_RATIONALE),
   );
+  const positives = applicable.filter((f) => f.positive);
+
+  const find = document.createElement('div');
+  find.className = 'card find';
+  find.innerHTML = `<span class="kicker">Hallazgos</span>`;
+  if (!positives.length) {
+    find.insertAdjacentHTML('beforeend', '<p class="none-pos">Sin hallazgos positivos.</p>');
+  }
+  for (const f of positives) find.appendChild(findRow(f, onHighlight));
+  el.appendChild(find);
+
+  // 3. Full evaluated-criteria list, collapsed by default (N/A last).
+  const more = document.createElement('button');
+  more.className = 'more';
+  more.id = 'find-all';
+  const all = document.createElement('div');
+  all.id = 'find-all-list';
+  all.hidden = !allOpen;
+  const moreLabel = () =>
+    all.hidden
+      ? `Ver los ${applicable.length + na.length} criterios evaluados ›`
+      : 'Ocultar criterios ‹';
+  more.setAttribute('aria-expanded', String(allOpen));
+  more.textContent = moreLabel();
   const groups = new Map<string, Finding[]>();
   for (const f of applicable) {
     const g = groupOf(f);
@@ -108,35 +196,48 @@ export function findingsPanel(
     const items = groups.get(g);
     if (!items?.length) continue;
     const h = document.createElement('div');
-    h.className = 'section-title';
+    h.className = 'grp';
     h.textContent = g;
-    el.appendChild(h);
-    const list = document.createElement('div');
-    list.className = 'finding-list';
-    for (const f of items) list.appendChild(findingRow(f, onHighlight));
-    el.appendChild(list);
+    all.appendChild(h);
+    for (const f of items) all.appendChild(findRow(f, onHighlight));
   }
   if (na.length) {
-    const det = document.createElement('details');
-    det.className = 'na-group';
-    det.innerHTML = `<summary>No aplicables en este contexto · ${na.length}</summary>`;
-    const list = document.createElement('div');
-    list.className = 'finding-list';
-    for (const f of na) list.appendChild(findingRow(f, onHighlight));
-    det.appendChild(list);
-    el.appendChild(det);
+    const h = document.createElement('div');
+    h.className = 'grp';
+    h.textContent = 'No aplicables en este contexto';
+    all.appendChild(h);
+    for (const f of na) all.appendChild(findRow(f, onHighlight, true));
   }
+  more.addEventListener('click', () => {
+    all.hidden = !all.hidden;
+    allOpen = !all.hidden;
+    more.setAttribute('aria-expanded', String(allOpen));
+    more.textContent = moreLabel();
+  });
+  find.appendChild(more);
+  find.appendChild(all);
 }
 
-function findingRow(f: Finding, onHighlight: (leads: LeadId[] | null) => void): DocumentFragment {
+/** One quiet finding row: status dot · label · leads; click toggles detail. */
+function findRow(
+  f: Finding,
+  onHighlight: (leads: LeadId[] | null) => void,
+  na = false,
+): DocumentFragment {
   const frag = document.createDocumentFragment();
-  const chip = document.createElement('button');
-  chip.className = `finding-chip ${f.positive ? 'pos' : 'neg'}`;
-  chip.innerHTML = `<span>${f.label}</span><span class="mono">${f.positive ? '✓' : '·'}${
-    f.score !== undefined ? ` ${f.score.toFixed(1)}` : ''
-  }</span>`;
+  const btn = document.createElement('button');
+  btn.className = 'f';
+  // Borderline evidence (score < 1 or rationale says so) gets a warning dot.
+  const borderline =
+    f.positive && ((f.score !== undefined && f.score < 1) || /l[íi]mite/i.test(f.rationale));
+  const dot = na || !f.positive ? 'n' : borderline ? 'w' : '';
+  const leadsTxt = na ? 'N/A' : borderline && !f.leads.length ? 'límite' : leadRange(f.leads);
+  // Long lead lists get their own muted line under the label.
+  if (leadsTxt.length > 10) btn.classList.add('wide');
+  btn.innerHTML = `<i class="${dot}"></i><span>${f.label}</span>
+    <span class="leads">${leadsTxt}</span>`;
   const detail = document.createElement('div');
-  detail.className = 'finding-detail';
+  detail.className = 'f-detail';
   detail.hidden = true;
   detail.innerHTML = `<p>${f.rationale}</p>
     <p class="vals">${Object.entries(f.values)
@@ -145,18 +246,16 @@ function findingRow(f: Finding, onHighlight: (leads: LeadId[] | null) => void): 
     <p>${f.refs
       .map((n) => {
         const b = bib(n);
-        return b?.url
-          ? `<a href="${b.url}" target="_blank" rel="noreferrer" style="color:var(--accent)">[${n}]</a>`
-          : `[${n}]`;
+        return b?.url ? `<a href="${b.url}" target="_blank" rel="noreferrer">[${n}]</a>` : `[${n}]`;
       })
       .join(' ')}</p>`;
-  chip.setAttribute('aria-expanded', 'false');
-  chip.addEventListener('click', () => {
+  btn.setAttribute('aria-expanded', 'false');
+  btn.addEventListener('click', () => {
     detail.hidden = !detail.hidden;
-    chip.setAttribute('aria-expanded', String(!detail.hidden));
+    btn.setAttribute('aria-expanded', String(!detail.hidden));
     onHighlight(detail.hidden ? null : f.leads);
   });
-  frag.appendChild(chip);
+  frag.appendChild(btn);
   frag.appendChild(detail);
   return frag;
 }

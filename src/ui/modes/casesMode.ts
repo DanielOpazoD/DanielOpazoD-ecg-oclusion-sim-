@@ -63,24 +63,25 @@ export function renderCaseBrowser(el: HTMLElement, onSelect: (c: CaseDefinition)
     head = document.createElement('div');
     head.className = 'case-head';
     head.innerHTML = `
-      <div class="case-head-row">
-        <input type="search" id="case-search" placeholder="Buscar caso…" aria-label="Buscar caso">
+      <input type="search" id="case-search" placeholder="⌕ Buscar caso" aria-label="Buscar caso">
+      <div class="filt">
+        <label>Filtrar: <select id="cat-filter" aria-label="Filtrar por categoría"></select></label>
         <label class="switch"><input type="checkbox" id="blind" aria-label="Modo ciego"
-          ${state.blind ? 'checked' : ''}> Ciego</label>
-      </div>
-      <div class="cat-chips" id="cat-chips"></div>`;
+          ${state.blind ? 'checked' : ''}> Modo ciego</label>
+      </div>`;
     const cats = Object.keys(CATEGORY_LABELS) as CaseCategory[];
-    const chipsEl = head.querySelector('#cat-chips')!;
+    const sel = head.querySelector<HTMLSelectElement>('#cat-filter')!;
     const mk = (id: CaseCategory | 'all', label: string) => {
-      const b = document.createElement('button');
-      b.className = 'cat-chip';
-      b.dataset['cat'] = id;
-      b.textContent = label;
-      b.addEventListener('click', () => store.update({ caseFilter: id }));
-      chipsEl.appendChild(b);
+      const o = document.createElement('option');
+      o.value = id;
+      o.textContent = label;
+      sel.appendChild(o);
     };
-    mk('all', 'Todas');
+    mk('all', 'Todos');
     for (const c of cats) mk(c, CATEGORY_LABELS[c]);
+    sel.addEventListener('change', () =>
+      store.update({ caseFilter: sel.value as CaseCategory | 'all' }),
+    );
     head.querySelector('#blind')!.addEventListener('change', (e) => {
       store.update({ blind: (e.target as HTMLInputElement).checked });
     });
@@ -97,8 +98,8 @@ export function renderCaseBrowser(el: HTMLElement, onSelect: (c: CaseDefinition)
   if (document.activeElement !== search && search.value !== (state.caseSearch ?? ''))
     search.value = state.caseSearch ?? '';
   const filter = state.caseFilter ?? 'all';
-  for (const b of head.querySelectorAll<HTMLElement>('.cat-chip'))
-    b.setAttribute('aria-pressed', String(b.dataset['cat'] === filter));
+  const catSel = head.querySelector<HTMLSelectElement>('#cat-filter')!;
+  if (catSel.value !== filter) catSel.value = filter;
 
   // Rebuild only the list.
   let list = el.querySelector<HTMLElement>('.case-list');
@@ -135,8 +136,8 @@ export function renderCaseBrowser(el: HTMLElement, onSelect: (c: CaseDefinition)
     const cases = CASES.filter((x) => x.group === g && matches(x));
     if (!cases.length) continue;
     const h = document.createElement('div');
-    h.className = 'section-title';
-    h.innerHTML = `<span class="g-badge">${g}</span> ${GROUP_NAMES[g]}`;
+    h.className = 'grp';
+    h.textContent = GROUP_NAMES[g];
     list.appendChild(h);
     for (const c of cases) {
       const b = document.createElement('button');

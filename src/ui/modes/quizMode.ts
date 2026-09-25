@@ -118,7 +118,7 @@ export function renderQuizPanel(
   const card = document.createElement('div');
   card.className = 'card';
   const dxMode = NON_OCCLUSION(c);
-  card.innerHTML = `<h3 class="section-title">${dxMode ? 'Diagnóstico' : 'Decisión'}</h3>
+  card.innerHTML = `<h3 class="kicker">${dxMode ? 'Diagnóstico' : 'Decisión'}</h3>
     <p class="mono" style="color:var(--muted)">Caso ${q.idx + 1} / ${q.order.length} · ${c.vignette.age} años · ${c.vignette.sex}</p>
     <p class="mono" style="font-size:12px">Puntuación ${quizMetrics(q.results).correct}/${q.results.length}
       · racha ${currentStreak(q.results)}
@@ -164,7 +164,7 @@ export function renderQuizPanel(
 
   const fc = document.createElement('div');
   fc.className = 'card';
-  fc.innerHTML = '<h3 class="section-title">Hallazgos sospechados</h3>';
+  fc.innerHTML = '<h3 class="kicker">Hallazgos sospechados</h3>';
   for (const f of allFindings) {
     const b = document.createElement('button');
     b.className = 'quiz-chip';

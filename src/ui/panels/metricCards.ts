@@ -1,5 +1,6 @@
 import type { AnalysisReport } from '../../analysis/index.js';
 import type { Delineation } from '../../analysis/delineate/delineate.js';
+import { store } from '../state/appState.js';
 
 /** One metric card value + evidence state. */
 export interface MetricCard {
@@ -94,24 +95,50 @@ export function metricCards(
   ];
 }
 
-/** Render the metric-card row into `el` (below the ECG paper). */
+/**
+ * Render the measurements line into `el` (the `.card meas` below the paper):
+ * label over value with an evidence dot, then the «Un latido, de cerca ›»
+ * link that toggles the beat card (view.beatOpen).
+ */
 export function renderMetricCards(el: HTMLElement, cards: MetricCard[]): void {
   el.innerHTML = '';
+  const SHOWN = ['FC', 'PR', 'QRS', 'QT / QTcF', 'Eje QRS', 'Ritmo'];
+  const LABEL: Record<string, string> = {
+    FC: 'Frecuencia',
+    'Eje QRS': 'Eje',
+    'QT / QTcF': 'QT / QTc',
+  };
   for (const c of cards) {
-    const card = document.createElement('div');
-    card.className = `metric-card ev-${c.status}`;
-    const badge =
-      c.status === 'usable'
-        ? '<span class="ev-badge ev-usable" title="Evidencia utilizable">●</span>'
-        : c.status === 'review'
-          ? `<span class="ev-badge ev-review" title="${escapeAttr(c.note ?? 'revisar')}">◐</span>`
-          : `<span class="ev-badge ev-na" title="${escapeAttr(c.note ?? 'no disponible')}">—</span>`;
-    if (c.title) card.title = c.title;
-    card.innerHTML = `<div class="mc-label">${escapeHtml(c.label)} ${badge}</div>
-      <div class="mc-value num">${escapeHtml(c.value)}</div>
-      ${c.sub ? `<div class="mc-sub" title="${escapeAttr(c.sub)}">${escapeHtml(c.sub)}</div>` : ''}`;
-    el.appendChild(card);
+    if (!SHOWN.includes(c.label)) continue;
+    const m = document.createElement('div');
+    m.className = 'm';
+    const dot =
+      c.status === 'unavailable'
+        ? ''
+        : `<span class="ev-dot ${c.status}" title="${escapeAttr(c.note ?? c.status)}"></span>`;
+    // QT / QTc reads "374 / 432" — merge value and the QTcF sub.
+    const qtMs = c.value.match(/\d+/);
+    const qtcMs = c.sub?.match(/\d+/);
+    const display = c.label === 'QT / QTcF' && qtMs && qtcMs ? `${qtMs[0]} / ${qtcMs[0]}` : c.value;
+    const tip = [c.title, c.sub && c.label !== 'QT / QTcF' ? c.sub : null]
+      .filter(Boolean)
+      .join(' — ');
+    if (tip) m.title = tip;
+    m.innerHTML = `${escapeHtml(LABEL[c.label] ?? c.label)}<b>${escapeHtml(display)}${dot}</b>`;
+    el.appendChild(m);
   }
+  const link = document.createElement('button');
+  link.className = 'br-link';
+  link.id = 'meas-beat';
+  const open = store.get().view.beatOpen;
+  link.textContent = `Un latido, de cerca ${open ? '‹' : '›'}`;
+  link.setAttribute('aria-expanded', String(open));
+  link.setAttribute('aria-controls', 'beat-card');
+  link.addEventListener('click', () => {
+    const s = store.get();
+    store.update({ view: { ...s.view, beatOpen: !s.view.beatOpen } });
+  });
+  el.appendChild(link);
 }
 
 function escapeHtml(s: string): string {

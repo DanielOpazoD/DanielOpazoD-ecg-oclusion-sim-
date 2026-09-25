@@ -108,7 +108,7 @@ export const store = createStore<AppState>({
     beatIdx: null,
     beatLead: 'II',
     calipers: false,
-    beatOpen: true,
+    beatOpen: false,
   },
   playing: false,
   playSpeedMinPerS: 1,

@@ -12,5 +12,5 @@ test('app loads: tabs, sized canvas with A01 label, metric cards', async ({ page
   expect(box!.width).toBeGreaterThan(100);
   expect(box!.height).toBeGreaterThan(100);
   await expect(canvas).toHaveAttribute('aria-label', /A01/);
-  await expect(page.locator('.metric-row')).toContainText('lpm');
+  await expect(page.locator('#metric-row')).toContainText('lpm');
 });
