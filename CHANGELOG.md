@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026
+
+### Added
+
+- **Engine**: schedule de eventos atriales/ventriculares con memoria QT, ESV/ESA con reset
+  sinusal, bloqueos AV (Mobitz I/II, 2:1, alto grado, completo con escape), FA con suelo
+  refractario 260 ms, flutter fijo/variable, TSV, ritmo de la unión, bigeminismo/trigeminismo,
+  dupla, TV, torsades, FV, asistolia, marcapasos AAI/VVI/DDD con spikes suprimibles,
+  WPW/hemibloqueos/bifascicular, electrolitos (K, Ca), efecto digitálico, QT largo/corto,
+  Osborn, Brugada tipo 1, dextrocardia, alternans, `ModelScopeError`.
+- **Analysis**: delineación independiente de muestras (picos, bordes QRS por energía de
+  pendiente, P multiderivación polaridad-agnóstica, T-end por tangente, autocorrelación
+  auricular, ejes por área integrada), auditoría contra fiduciales con retirada de métricas,
+  evidencia usable/revisión/no disponible, `qrsContext` (narrow/rbbb/lbbb/paced/ventricular),
+  gating `notApplicable` de las 14 reglas OMI, 16 reglas generales clínicas.
+- **Cases**: 53 casos nuevos (grupos G–N, total 103), campos `category`, `diagnosis` y
+  `distractors` para quiz, bibliografía unificada 1–128.
+- **UI**: shell ECG Lab con modos Casos/Laboratorio/Monitor/Quiz, renderer min/max con
+  Cabrera, secuencial/simultáneo, tiras 10/30/60 s, tarjetas de métricas con insignias de
+  evidencia, monitor de barrido con FC y bip, detalle de latido con fiduciales, quiz por
+  diagnóstico para casos no isquémicos.
+- **Persistence**: estado en URL `?s=`, importar/exportar escenario JSON, casos guardados en
+  `localStorage`, PNG 300 dpi con pHYs.
+
+### Changed
+
+- Producto renombrado a **ECG Lab**; OMI Lab es el módulo de isquemia.
+- ST discordante de BRI/marcapasos calibrado al 5 % de la S (no satisface Sgarbossa sin
+  lesión); eje QRS delineado por área integrada; evidencia de PR en tres niveles con veto
+  en contexto ventricular; regularidad por CV/autocorrelación con 'irregular organizado'.
+- `beats[].kind` con tipos de evento (`sinus`, `pvc`, `paced`, `conducted`…); `Ecg12` lleva
+  `schedule`, `beats` fiduciales y spikes.
+
+### Fixed
+
+- AF rápida ya no lanza `qrs-overlap` (suelo RR 260 ms); onda U requiere `uAmp ≥ 35 %·tAmp`;
+  detección de P bajo STE/T hiperaguda; eje QRS estable en FA rápida; PR nunca 'usable' en
+  ritmo ventricular; `heart-rate`/`bundle-branch-morphology` con etiquetas negativas neutras;
+  dropdown de exportación cerrado por defecto; modo Monitor renderiza y oculta toolbar/
+  timeline; riel de laboratorio sin scroll horizontal; línea de tiempo oculta sin isquemia;
+  quiz itera el conjunto filtrado; subetiqueta FC solo cuando la FC auricular aporta.
+
 ## [0.1.0] - 2026
 
 ### Added

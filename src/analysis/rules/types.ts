@@ -1,5 +1,6 @@
 import type { LeadId, ConductionSpec } from '../../engine/index.js';
 import type { Measurements } from '../measure.js';
+import type { Delineation } from '../delineate/delineate.js';
 import { mm } from '../measure.js';
 
 /**
@@ -21,11 +22,16 @@ export interface Finding {
 /** Context handed to every rule (§8). */
 export interface RuleContext {
   measurements: Measurements;
+  delineation: Delineation;
   patient: { sex: 'M' | 'F'; age: number };
   /** Leads actually acquired (V7–V9/V3R–V4R optional). */
   leadsAvailable: readonly LeadId[];
   /** Conduction variant (for Sgarbossa family). */
   conduction: ConductionSpec;
+  /** QRS context derived from the schedule (paced/ventricular beats) and the
+   *  declared conduction. Wide-complex contexts disable plain ST/OMI rules —
+   *  only Sgarbossa-family criteria apply. */
+  qrsContext: 'narrow' | 'rbbb' | 'lbbb' | 'paced' | 'ventricular';
 }
 
 export type Rule = (ctx: RuleContext) => Finding;
@@ -42,7 +48,7 @@ export function st60mm(ctx: RuleContext, lead: LeadId): number {
 export function mmOf(
   ctx: RuleContext,
   lead: LeadId,
-  key: 'stJ' | 'st60' | 'st80' | 'tAmp' | 'tTerminal' | 'rAmp' | 'sAmp' | 'qAmp',
+  key: 'stJ' | 'st60' | 'st80' | 'tAmp' | 'tTerminal' | 'rAmp' | 'sAmp' | 'qAmp' | 'uAmp',
 ): number {
   return mm(ctx.measurements.perLead[lead][key]);
 }

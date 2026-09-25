@@ -48,7 +48,8 @@ describe('bibliography', () => {
       expect(e!.n).toBe(n);
       expect(e!.text.length).toBeGreaterThan(20);
     }
-    expect(bib(107)).toBeUndefined();
+    expect(bib(107)).toBeDefined();
+    expect(bib(129)).toBeUndefined();
   });
 });
 

@@ -1,29 +1,36 @@
-# OMI Lab — Simulador ECG de oclusión coronaria
+# ECG Lab — Simulador clínico de ECG
 
-Simulador web de ECG de 12 derivaciones para el diagnóstico de oclusión coronaria aguda (OMI).
-Un motor vectorial 3D genera latidos fisiológicos con lesión isquémica direccionada, evolución
-temporal y artefactos de adquisición; una capa de análisis aplica reglas cuantitativas
-STEMI/OMI reales sobre la señal medida. Pensado para docencia y entrenamiento diagnóstico.
-
-![OMI Lab](docs/img/screenshot.png)
+Simulador web de ECG de 12 derivaciones para docencia y entrenamiento diagnóstico.
+Un motor vectorial 3D genera latidos fisiológicos —ritmos, bloqueos, ectopía, marcapasos,
+electrolitos— y una capa de análisis delineada mide la señal y aplica reglas diagnósticas
+cuantitativas reales. El módulo de isquemia (**OMI Lab**) añade lesión coronaria aguda
+direccionada con evolución temporal.
 
 ## Qué incluye
 
 - **Motor vectorial 3D** → proyección a 12+ derivaciones (V7–V9, V3R–V4R) vía matriz tipo Dower.
-- **50 casos clínicos** en 6 series (STEMI evidente, OMI sutil/equivalentes, subendocárdica/aVR,
-  imitadores, seriados dinámicos, artefactos de adquisición).
-- **Reglas cuantitativas**: stemi-udmi4, de Winter, T hiperaguda, STD posterior, Aslanger,
-  bandera sudafricana, aVR/STD difusa, afectación VD, Sgarbossa original y modificado,
-  BARCELONA, Smith 3v/4v, distorsión terminal del QRS, Wellens, Q patológica y un
-  compuesto `omi-composite`.
-- **Evolución temporal**: línea de tiempo con oclusión, reperfusión y reoclusión.
-- **Adquisición realista**: wander, EMG, red 50/60 Hz, artefactos de movimiento, filtros
-  paso-alto/bajo y errores de colocación de electrodos.
-- **Laboratorio**: editor completo del escenario (fuentes de lesión, ritmo, conducción,
-  adquisición, semilla) con importación/exportación JSON.
-- **Quiz ciego**: decisiones secuenciales con puntuación, racha y sensibilidad/especificidad.
-- **Calipers** de medición sobre el papel, **vista vectorial** (ejes QRS/T y vectores de lesión),
-  exportación PNG e informe Markdown.
+- **103 casos clínicos** en 14 series y 9 categorías: oclusión (A–F), ritmo (G), ectopía (H),
+  bloqueo AV (I), conducción intraventricular (J), ventricular/paro (K), marcapasos (L),
+  electrolitos/fármacos/QT (M) y estructural/otros (N).
+- **Ritmos**: sinusal, FA, flutter (fijo/variable), TSV, unión, ectopía auricular y
+  ventricular, bigeminismo/trigeminismo, TV, torsades, FV, asistolia, marcapasos AAI/VVI/DDD.
+- **Conducción**: BRD (e incompleto), BRI, hemibloqueos, bifascicular, WPW, dextrocardia.
+- **Electrolitos**: hiper/hipopotasemia, hiper/hipocalcemia, efecto digitálico, QT largo/corto,
+  onda de Osborn, patrón Brugada tipo 1.
+- **Reglas cuantitativas**: 14 reglas STEMI/OMI (stemi-udmi4, de Winter, T hiperaguda, STD
+  posterior, Aslanger, bandera sudafricana, aVR difuso, VD, Sgarbossa original/modificado,
+  BARCELONA, Smith 3v/4v, distorsión terminal, Wellens, Q patológica) + 16 reglas generales
+  (FC, regularidad, PR, QRS ancho, morfología de rama, QTc, ejes, HV, bajo voltaje, T picuda,
+  onda U, disociación AV, flutter, marcapasos).
+- **Delineación honesta**: pipeline independiente de muestras (sin trampas del generador)
+  con auditoría contra la verdad del motor; cada métrica lleva evidencia
+  (usable / revisión / no disponible) y se retira si se desvía de los fiduciales.
+- **Monitor** de barrido en tiempo real con FC numérica, congelado y bip opcional.
+- **Laboratorio**: editor completo del escenario (ritmo, conducción, isquemia, repolarización,
+  adquisición) con presets y sliders.
+- **Quiz**: decisión OMI para casos de isquemia y diagnóstico de 4 opciones para el resto.
+- **Persistencia**: estado en la URL (`?s=`), JSON de escenario, casos guardados en
+  `localStorage`, PNG a 300 dpi con chunk pHYs y pie "Simulación educativa".
 
 ## Inicio rápido
 
@@ -37,12 +44,13 @@ npm run check      # format + lint + typecheck + tests + build
 ## Arquitectura
 
 ```
-src/engine    Simulación: dipolo del latido, lesión, ritmo, adquisición (MODEL.md)
-src/analysis  Medición por latido dominante + reglas diagnósticas (Finding)
-src/cases     Biblioteca de 50 casos con viñetas, expectativas y referencias
-src/ui        Vanilla TS + Canvas 2D: store, renderer, paneles, modos
-tools         CLI de inspección (dump-beat, dump-cases)
-docs          MODEL.md (especificación del motor), CASES.md, research/ (revisión científica)
+src/engine       Simulación: schedule → dipolo del latido → derivaciones → adquisición
+src/analysis     Delineación de muestras → auditoría contra fiduciales → reglas → informe
+src/cases        Biblioteca de 103 casos (A–N) con viñetas, expectativas y referencias
+src/ui           Vanilla TS + Canvas 2D: shell, renderer, monitor, paneles, modos
+src/persistence  Estado en URL, JSON de escenario, casos guardados
+tools            CLI de inspección (dump-beat, dump-cases)
+docs             MODEL.md · CASES.md · ARCHITECTURE.md · research/ (revisión científica)
 ```
 
 Ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/MODEL.md](docs/MODEL.md),
@@ -57,18 +65,22 @@ Ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/MODEL.md](docs/MODEL.md)
 | `Shift` + `←`/`→` | t −10 / +10 minutos                       |
 | `c`               | Alternar traza limpia (verdad)            |
 | `[` / `]`         | Caso anterior / siguiente                 |
-| `Esc`             | Limpiar calipers                          |
+| `Esc`             | Limpiar calipers / cerrar menús           |
 
 ## Calidad
 
-TypeScript estricto, ESLint, Prettier, Vitest (+ fast-check en propiedades), tests de
-aceptación por caso y por regla, CI en GitHub Actions y despliegue estático en Pages.
+TypeScript estricto (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`), ESLint 9,
+Prettier, Vitest (+ fast-check en propiedades), tests de aceptación por caso y por regla,
+CI en GitHub Actions y despliegue estático en Pages.
 
-## Limitaciones y aviso
+## Limitaciones y honestidad
 
-Herramienta **educativa**: no es un dispositivo médico. Las señales son sintéticas (modelo
-dipolar de corazón único); las reglas solo están validadas en sus poblaciones originales.
-No usar para decisiones clínicas.
+Herramienta **educativa**: no es un dispositivo médico. Las señales son sintéticas (dipolo
+de corazón único); la delineación puede fallar en trazados extremos y entonces la métrica
+se marca como _revisión_ o _no disponible_ en lugar de mostrarse como válida — la auditoría
+compara cada métrica con los fiduciales del generador y la retira si se desvía más allá de
+las tolerancias (FC 5 %, PR 25 ms, QRS 20 ms, QT 40 ms, eje 25°). Las reglas solo están
+validadas en sus poblaciones originales. No usar para decisiones clínicas.
 
 ## Licencia
 

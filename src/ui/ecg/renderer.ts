@@ -1,5 +1,6 @@
 import type { Ecg12, LeadId } from '../../engine/index.js';
 import type { ViewState } from '../state/appState.js';
+import { strokeMinMax } from './downsample.js';
 
 /** Render options beyond the view state. */
 export interface RenderOpts {
@@ -22,44 +23,63 @@ const LAYOUT_3x4: LeadId[][] = [
   ['II', 'aVL', 'V2', 'V5'],
   ['III', 'aVF', 'V3', 'V6'],
 ];
+// Cabrera order: aVL, I, −aVR, II, aVF, III — −aVR drawn negated, labelled '−aVR'.
+const LAYOUT_3x4_CABRERA: LeadId[][] = [
+  ['aVL', 'aVF', 'V1', 'V4'],
+  ['I', 'III', 'V2', 'V5'],
+  ['aVR', 'II', 'V3', 'V6'],
+];
+const CABRERA_INVERT: ReadonlySet<LeadId> = new Set(['aVR']);
 const LAYOUT_6x2: LeadId[][] = [
   ['I', 'II', 'III', 'aVR', 'aVL', 'aVF'],
   ['V1', 'V2', 'V3', 'V4', 'V5', 'V6'],
 ];
+const LAYOUT_6x2_CABRERA: LeadId[][] = [
+  ['aVL', 'I', 'aVR', 'II', 'aVF', 'III'],
+  ['V1', 'V2', 'V3', 'V4', 'V5', 'V6'],
+];
+const STRIPS_3: LeadId[] = ['II', 'V1', 'V5'];
 
-/** mm → px scale is derived from the canvas width so the strip fits. */
+/** Export for tests: the lead order a view produces (limb grid). */
+export function leadOrderFor(view: Pick<ViewState, 'layout' | 'cabrera'>): LeadId[][] {
+  switch (view.layout) {
+    case '6x2':
+      return view.cabrera ? LAYOUT_6x2_CABRERA : LAYOUT_6x2;
+    case '12x1':
+      return [view.cabrera ? LAYOUT_6x2_CABRERA[0]! : STD12.slice(0, 6), STD12.slice(6)];
+    default:
+      return view.cabrera ? LAYOUT_3x4_CABRERA : LAYOUT_3x4;
+  }
+}
+
 interface Cell {
   x: number; // mm
   y: number; // mm
   w: number; // mm
   h: number; // mm
   lead: LeadId;
+  /** seconds into the recording this cell starts at (sequential mode). */
+  tStartS: number;
+  invert: boolean;
 }
 
-function cellsForLayout(
-  layout: ViewState['layout'],
-  extra: boolean,
-): { cols: number; rows: number; grid: LeadId[][]; strip: boolean } {
+function layoutCellSeconds(layout: ViewState['layout']): number {
   switch (layout) {
     case '3x4':
-      return { cols: 3, rows: 4, grid: LAYOUT_3x4, strip: false };
     case '3x4+II':
-      return { cols: 3, rows: 4, grid: LAYOUT_3x4, strip: true };
+    case '3x4+3strips':
+      return 2.5;
     case '6x2':
-      return { cols: 6, rows: 2, grid: LAYOUT_6x2, strip: false };
+      return 5;
     case '12x1':
-      return {
-        cols: 1,
-        rows: extra ? STD12.length + EXTRA.length : STD12.length,
-        grid: [...STD12, ...(extra ? EXTRA : [])].map((l) => [l]),
-        strip: false,
-      };
+      return 10;
   }
 }
 
 /**
  * Render the full ECG sheet onto `canvas` (paper + grid + traces).
- * DPI-aware; mm geometry is square (grid true).
+ * DPI-aware; mm geometry is square (grid true). Traces are rasterized with
+ * per-column min/max so narrow spikes survive downsampling.
  */
 export function renderEcg(
   canvas: HTMLCanvasElement,
@@ -78,53 +98,81 @@ export function renderEcg(
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const styles = getComputedStyle(document.documentElement);
-  const paper = styles.getPropertyValue('--paper').trim() || '#fbfbf7';
+  const paper = styles.getPropertyValue('--paper').trim() || '#fbf7ef';
   const minor = styles.getPropertyValue('--grid-minor').trim() || '#f3c9c9';
   const major = styles.getPropertyValue('--grid-major').trim() || '#e39a9a';
+  const trace = styles.getPropertyValue('--trace').trim() || '#111';
 
   ctx.fillStyle = paper;
   ctx.fillRect(0, 0, cssW, cssH);
 
   const marginMm = 8;
   const footerMm = 8;
-  const { grid, strip } = cellsForLayout(view.layout, view.extraLeads);
-  const cols = grid[0]?.length ?? 1;
-  const rows = grid.length;
-  const totalWidthMm = view.speedMmS * (layoutCellSeconds(view.layout) * cols);
-  const pxPerMm = (cssW - marginMm * pxGuess(view.speedMmS)) / totalWidthMm;
+  const cellSec = layoutCellSeconds(view.layout);
+  const grid = leadOrderFor(view);
+  const cols = view.layout === '12x1' ? 1 : (grid[0]?.length ?? 1);
+  const rows =
+    view.layout === '12x1' ? STD12.length + (view.extraLeads ? EXTRA.length : 0) : grid.length;
+  const stripRows = view.layout === '3x4+II' ? 1 : view.layout === '3x4+3strips' ? 3 : 0;
+  const stripLead =
+    view.layout === '3x4+II' ? ['II' as LeadId] : view.layout === '3x4+3strips' ? STRIPS_3 : [];
+
+  const totalWidthMm = view.speedMmS * cellSec * cols;
+  const pxPerMm = (cssW - marginMm * 2 * pxGuess(view.speedMmS)) / totalWidthMm;
   const ppm = Math.max(2, pxPerMm);
   const mx = marginMm * ppm;
 
-  // Grid for the whole paper area.
   const gridW = totalWidthMm * ppm;
   const gridH = cssH - footerMm * ppm - mx;
   drawGrid(ctx, mx, mx, gridW, gridH, ppm, minor, major);
 
-  const cellWMm = layoutCellSeconds(view.layout) * view.speedMmS;
-  const cellHMm = gridH / ppm / (strip ? rows + 1 : rows);
+  const cellWMm = cellSec * view.speedMmS;
+  const extraRows = view.extraLeads && view.layout !== '12x1' ? 1 : 0;
+  const cellHMm = gridH / ppm / (rows + stripRows + extraRows);
   const cells: Cell[] = [];
+
+  const rowLead = (r: number, c: number): LeadId | null => {
+    if (view.layout === '12x1') {
+      const seq = [...STD12, ...(view.extraLeads ? EXTRA : [])];
+      return seq[r] ?? null;
+    }
+    return grid[r]?.[c] ?? null;
+  };
+
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const lead = grid[r]?.[c];
+      const lead = rowLead(r, c);
       if (!lead) continue;
-      cells.push({ x: c * cellWMm, y: r * cellHMm, w: cellWMm, h: cellHMm, lead });
+      // Sequential: columns march through time (2.5 s each from t=0).
+      // Simultaneous: every column shows the same window from t=0.
+      const tStartS = view.simultaneous ? 0 : c * cellSec;
+      const invert = view.cabrera && CABRERA_INVERT.has(lead);
+      cells.push({ x: c * cellWMm, y: r * cellHMm, w: cellWMm, h: cellHMm, lead, tStartS, invert });
     }
   }
-  if (strip) {
-    cells.push({ x: 0, y: rows * cellHMm, w: cellWMm * cols, h: cellHMm, lead: 'II' });
-  }
-  if (view.extraLeads && view.layout === '3x4') {
-    // extra row appended (no strip in this layout)
-  }
-  if (view.extraLeads && (view.layout === '3x4' || view.layout === '3x4+II')) {
-    const baseR = strip ? rows + 1 : rows;
+  // Rhythm strips: full-width, configurable 10/30/60 s.
+  stripLead.forEach((lead, i) => {
+    cells.push({
+      x: 0,
+      y: (rows + i) * cellHMm,
+      w: Math.min(cellWMm * cols, view.stripS * view.speedMmS),
+      h: cellHMm,
+      lead,
+      tStartS: 0,
+      invert: false,
+    });
+  });
+  if (view.extraLeads && view.layout !== '12x1') {
+    const baseR = rows + stripRows;
     EXTRA.forEach((lead, i) => {
       cells.push({
         x: i * (cellWMm * 0.6),
-        y: baseR * cellHMm * 0.8,
+        y: baseR * cellHMm * 0.85,
         w: cellWMm * 0.6,
-        h: cellHMm * 0.8,
+        h: cellHMm * 0.85,
         lead,
+        tStartS: i * cellSec * 0.6,
+        invert: false,
       });
     });
   }
@@ -140,37 +188,37 @@ export function renderEcg(
     const h = cell.h * ppm;
     const baseline = y0 + h * 0.55;
     const sPerCell = cell.w / view.speedMmS;
-    const n = Math.min(sig[cell.lead].length, Math.round(sPerCell * ecg.fs));
+    const i0 = Math.round(cell.tStartS * ecg.fs);
+    const n = Math.min(sig[cell.lead].length - i0, Math.round(sPerCell * ecg.fs));
 
     if (hi.has(cell.lead)) {
-      ctx.fillStyle = 'rgb(45 212 191 / 0.10)';
+      ctx.fillStyle = 'rgb(15 139 141 / 0.10)';
       ctx.fillRect(x0, y0, w, h);
     }
-    // Lead label.
-    ctx.fillStyle = '#444';
+    ctx.fillStyle = trace;
     ctx.font = `600 ${Math.max(10, 2.8 * ppm)}px ${styles.getPropertyValue('--font') || 'sans-serif'}`;
     ctx.textBaseline = 'top';
-    ctx.fillText(cell.lead, x0 + 1.5 * ppm, y0 + 1 * ppm);
+    const label = cell.invert ? `−${cell.lead}` : cell.lead;
+    ctx.fillText(label, x0 + 1.5 * ppm, y0 + 1 * ppm);
 
-    // Trace.
-    ctx.strokeStyle = '#111';
-    ctx.lineWidth = 1.4;
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    const yScale = view.gainMmMv * ppm;
-    for (let i = 0; i < n; i++) {
-      const px = x0 + (i / ecg.fs) * view.speedMmS * ppm;
-      const py = baseline - sig[cell.lead][i]! * yScale;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
+    if (n > 0) {
+      ctx.strokeStyle = trace;
+      ctx.lineWidth = 1.3;
+      ctx.lineJoin = 'round';
+      const yScale = view.gainMmMv * ppm * (cell.invert ? -1 : 1);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x0, y0, w, h);
+      ctx.clip();
+      strokeMinMax(ctx, sig[cell.lead], ecg.fs, x0, baseline, view.speedMmS * ppm, yScale, n, i0);
+      ctx.restore();
     }
-    ctx.stroke();
 
-    // 1 mV calibration pulse at the left edge of the first cell column.
-    if (cell.x === 0) {
+    // 1 mV calibration pulse at the left edge of the first column.
+    if (cell.x === 0 && !cell.invert) {
       const px = x0 + 0.8 * ppm;
-      const mv = yScale;
-      ctx.strokeStyle = '#111';
+      const mv = view.gainMmMv * ppm;
+      ctx.strokeStyle = trace;
       ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.moveTo(px, baseline);
@@ -182,10 +230,10 @@ export function renderEcg(
 
     // J markers.
     for (const b of jTicks) {
-      const tS = b.j / ecg.fs;
-      if (tS > sPerCell) continue;
+      const tS = b.j / ecg.fs - cell.tStartS;
+      if (tS < 0 || tS > sPerCell) continue;
       const px = x0 + tS * view.speedMmS * ppm;
-      ctx.strokeStyle = 'rgb(45 212 191 / 0.8)';
+      ctx.strokeStyle = 'rgb(15 139 141 / 0.8)';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(px, baseline - 3 * ppm);
@@ -194,27 +242,14 @@ export function renderEcg(
     }
   }
 
-  // Footer.
-  ctx.fillStyle = '#555';
+  ctx.fillStyle = trace;
   ctx.font = `${Math.max(9, 2.2 * ppm)}px ${styles.getPropertyValue('--font') || 'sans-serif'}`;
   ctx.textBaseline = 'bottom';
   ctx.fillText(
-    `${view.speedMmS} mm/s   ${view.gainMmMv} mm/mV   ${opts.footerExtra ?? '0.05–150 Hz'}`,
+    `${view.speedMmS} mm/s   ${view.gainMmMv} mm/mV   ${opts.footerExtra ?? '0.05–150 Hz'}   ${view.cabrera ? 'Cabrera' : 'estándar'} · ${view.simultaneous ? 'simultáneo' : 'secuencial'}`,
     mx,
     cssH - 1.5 * ppm,
   );
-}
-
-function layoutCellSeconds(layout: ViewState['layout']): number {
-  switch (layout) {
-    case '3x4':
-    case '3x4+II':
-      return 2.5;
-    case '6x2':
-      return 5;
-    case '12x1':
-      return 10;
-  }
 }
 
 function pxGuess(speed: number): number {

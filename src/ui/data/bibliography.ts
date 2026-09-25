@@ -8,6 +8,8 @@ export interface BibEntry {
   url?: string;
 }
 
+import { BIBLIOGRAPHY_GENERAL } from './bibliographyGeneral.js';
+
 export const BIBLIOGRAPHY: readonly BibEntry[] = [
   {
     n: 1,
@@ -539,7 +541,10 @@ export const BIBLIOGRAPHY: readonly BibEntry[] = [
   },
 ];
 
-/** Lookup by reference number (1-based, as in the doc). */
+/** All references: SCA review (1–106) + general bibliography (107–128). */
+export const ALL_BIBLIOGRAPHY: readonly BibEntry[] = [...BIBLIOGRAPHY, ...BIBLIOGRAPHY_GENERAL];
+
+/** Lookup by reference number (1-based, as in the docs). */
 export function bib(n: number): BibEntry | undefined {
-  return BIBLIOGRAPHY[n - 1];
+  return ALL_BIBLIOGRAPHY.find((e) => e.n === n);
 }

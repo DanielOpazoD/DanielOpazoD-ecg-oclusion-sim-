@@ -30,7 +30,12 @@ export type LeadId = (typeof LEAD_IDS)[number];
 
 /** Electrode placement presets (§7 `placement`). */
 export type Placement =
-  'standard' | 'la-ra-swap' | 'la-ll-swap' | 'v1v2-high' | 'precordial-lateral-shift';
+  | 'standard'
+  | 'la-ra-swap'
+  | 'la-ll-swap'
+  | 'v1v2-high'
+  | 'precordial-lateral-shift'
+  | 'dextrocardia';
 
 /** Dower inverse matrix coefficients (§1, Dower 1980). */
 const DOWER: Record<'I' | 'II' | 'V1' | 'V2' | 'V3' | 'V4' | 'V5' | 'V6', Vec3> = {
@@ -101,6 +106,19 @@ export function createLeadSystem(placement: Placement): LeadSystem {
     V5: DOWER.V5,
     V6: DOWER.V6,
   };
+  if (placement === 'dextrocardia') {
+    // Situs inversus: sagittal mirror of the dipole (x → −x on every lead
+    // vector). That alone inverts lead I, turns aVR upright and produces
+    // reverse precordial progression (the right-sided heart sits under V1).
+    const mirror = (w: Vec3): Vec3 => [-w[0], w[1], w[2]];
+    i = mirror(i);
+    ii = mirror(ii);
+    for (const id of ['V1', 'V2', 'V3', 'V4', 'V5', 'V6'] as const) {
+      v[id] = mirror(v[id]);
+    }
+    const derived = withDerived(i, ii);
+    return { I: i, II: ii, ...derived, ...v, ...EXTRA };
+  }
   if (placement === 'v1v2-high') {
     v.V1 = add(v.V1, [0, -0.35, 0.25]);
     v.V2 = add(v.V2, [0, -0.35, 0.25]);

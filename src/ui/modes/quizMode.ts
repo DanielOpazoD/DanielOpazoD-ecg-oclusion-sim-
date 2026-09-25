@@ -38,13 +38,22 @@ export function currentStreak(results: readonly QuizResult[]): number {
   return n;
 }
 
-/** Shuffle (seeded) the case ids and start a quiz session. */
+/** Shuffle (seeded) the filtered case ids and start a quiz session. */
 export function startQuiz(seed = Math.floor(Math.random() * 1e6)): void {
-  const order = CASES.map((c) => c.id);
-  let s = seed;
+  const s = store.get();
+  const query = (s.caseSearch ?? '').toLowerCase().trim();
+  const order = CASES.filter(
+    (c) =>
+      (s.caseFilter === 'all' || c.category === s.caseFilter) &&
+      (!query ||
+        c.id.toLowerCase().includes(query) ||
+        c.title.toLowerCase().includes(query) ||
+        (c.expected.diagnosis ?? '').toLowerCase().includes(query)),
+  ).map((c) => c.id);
+  let rng = seed;
   for (let i = order.length - 1; i > 0; i--) {
-    s = (s * 1664525 + 1013904223) % 4294967296;
-    const j = s % (i + 1);
+    rng = (rng * 1664525 + 1013904223) % 4294967296;
+    const j = rng % (i + 1);
     [order[i], order[j]] = [order[j]!, order[i]!];
   }
   store.update({
@@ -52,6 +61,20 @@ export function startQuiz(seed = Math.floor(Math.random() * 1e6)): void {
   });
   loadQuizCase();
 }
+
+/** Deterministic shuffle of the 4 diagnosis options for a non-ischaemia case. */
+export function diagnosisOptions(c: CaseDefinition): string[] {
+  const opts = [c.expected.diagnosis!, ...c.expected.distractors!];
+  let s = c.scenario.seed;
+  for (let i = opts.length - 1; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) % 4294967296;
+    const j = s % (i + 1);
+    [opts[i], opts[j]] = [opts[j]!, opts[i]!];
+  }
+  return opts;
+}
+
+const NON_OCCLUSION = (c: CaseDefinition): boolean => c.category !== 'oclusion';
 
 function loadQuizCase(): void {
   const q = store.get().quiz;
@@ -94,26 +117,48 @@ export function renderQuizPanel(
 
   const card = document.createElement('div');
   card.className = 'card';
-  card.innerHTML = `<h3>Decisión</h3>
+  const dxMode = NON_OCCLUSION(c);
+  card.innerHTML = `<h3>${dxMode ? 'Diagnóstico' : 'Decisión'}</h3>
     <p class="mono" style="color:var(--muted)">Caso ${q.idx + 1} / ${q.order.length} · ${c.vignette.age} años · ${c.vignette.sex}</p>
     <p class="mono" style="font-size:12px">Puntuación ${quizMetrics(q.results).correct}/${q.results.length}
       · racha ${currentStreak(q.results)}
       · sens ${(quizMetrics(q.results).sensitivity * 100).toFixed(0)} % / esp ${(quizMetrics(q.results).specificity * 100).toFixed(0)} %</p>
     <p>${escapeHtml(c.vignette.history)}</p>`;
-  for (const d of DECISIONS) {
-    const b = document.createElement('button');
-    b.className = 'quiz-chip';
-    b.setAttribute('aria-pressed', String(q.decision === d.id));
-    b.textContent = d.label;
-    b.style.display = 'block';
-    b.style.width = '100%';
-    b.style.margin = '6px 0';
-    b.disabled = q.submitted;
-    b.addEventListener('click', () => {
-      store.update({ quiz: { ...store.get().quiz, decision: d.id } });
-      onChanged();
-    });
-    card.appendChild(b);
+  if (dxMode) {
+    // Diagnosis MCQ: diagnosis + 3 distractors, seed-shuffled.
+    for (const opt of diagnosisOptions(c)) {
+      const b = document.createElement('button');
+      b.className = 'quiz-chip';
+      b.setAttribute('aria-pressed', String(q.picked.has(`dx:${opt}`)));
+      b.textContent = opt;
+      b.style.display = 'block';
+      b.style.width = '100%';
+      b.style.margin = '6px 0';
+      b.disabled = q.submitted;
+      b.addEventListener('click', () => {
+        store.update({
+          quiz: { ...store.get().quiz, decision: 'not-ischemic', picked: new Set([`dx:${opt}`]) },
+        });
+        onChanged();
+      });
+      card.appendChild(b);
+    }
+  } else {
+    for (const d of DECISIONS) {
+      const b = document.createElement('button');
+      b.className = 'quiz-chip';
+      b.setAttribute('aria-pressed', String(q.decision === d.id));
+      b.textContent = d.label;
+      b.style.display = 'block';
+      b.style.width = '100%';
+      b.style.margin = '6px 0';
+      b.disabled = q.submitted;
+      b.addEventListener('click', () => {
+        store.update({ quiz: { ...store.get().quiz, decision: d.id } });
+        onChanged();
+      });
+      card.appendChild(b);
+    }
   }
   el.appendChild(card);
 
@@ -142,7 +187,7 @@ export function renderQuizPanel(
     go.className = 'primary';
     go.style.width = '100%';
     go.textContent = 'Confirmar';
-    go.disabled = q.decision === undefined;
+    go.disabled = q.decision === undefined || (NON_OCCLUSION(c) && q.picked.size === 0);
     go.addEventListener('click', () => {
       submitQuiz(c);
       onChanged();
@@ -168,7 +213,10 @@ export function renderQuizPanel(
 function submitQuiz(c: CaseDefinition): void {
   const q = store.get().quiz;
   const decidedActivate = q.decision === 'activate';
-  const correct = decidedActivate === c.expected.activateCathLab;
+  const pickedDx = [...q.picked].find((p) => p.startsWith('dx:'))?.slice(3);
+  const correct = NON_OCCLUSION(c)
+    ? pickedDx === c.expected.diagnosis
+    : decidedActivate === c.expected.activateCathLab;
   const results = [
     ...q.results,
     { caseId: c.id, correct, expectedOmi: c.expected.omi, decidedActivate },
@@ -186,6 +234,7 @@ function renderVerdict(el: HTMLElement, c: CaseDefinition): void {
     <h3>Resultado</h3>
     <p><span class="badge ${last?.correct ? 'ok' : 'danger'}">${last?.correct ? 'Correcto' : 'Incorrecto'}</span>
     <span class="badge ${c.expected.omi ? 'danger' : 'ok'}">${c.expected.omi ? 'OMI' : 'No OMI'}</span></p>
+    ${c.expected.diagnosis ? `<p class="mono">Diagnóstico: ${escapeHtml(c.expected.diagnosis)}</p>` : ''}
     <p class="mono">Arteria culpable: ${escapeHtml(c.expected.culprit ?? c.angiography)}</p>
     <p class="mono">Hallazgos esperados: ${c.expected.positiveFindings.join(', ') || '—'}</p>
     <p class="mono">Tus hallazgos: ${[...q.picked].join(', ') || '—'}</p>

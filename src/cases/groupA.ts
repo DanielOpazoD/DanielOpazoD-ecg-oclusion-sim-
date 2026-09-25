@@ -5,6 +5,7 @@ export const GROUP_A: CaseDefinition[] = [
   {
     id: 'A01',
     group: 'A',
+    category: 'oclusion',
     title: 'DA proximal clásica',
     difficulty: 1,
     vignette: {
@@ -52,6 +53,7 @@ export const GROUP_A: CaseDefinition[] = [
   {
     id: 'A02',
     group: 'A',
+    category: 'oclusion',
     title: 'DA media',
     difficulty: 1,
     vignette: {
@@ -95,6 +97,7 @@ export const GROUP_A: CaseDefinition[] = [
   {
     id: 'A03',
     group: 'A',
+    category: 'oclusion',
     title: 'CD con BAV completo',
     difficulty: 2,
     vignette: {
@@ -108,7 +111,7 @@ export const GROUP_A: CaseDefinition[] = [
     scenario: {
       seed: 103,
       durationS: 5,
-      rhythm: { type: 'av-block-3', atrialBpm: 80, escapeBpm: 38, escapeWide: true },
+      rhythm: { type: 'av-block-3', atrialBpm: 80, escapeBpm: 38, escapeOrigin: 'junctional' },
       conduction: 'normal',
       sources: [
         { territory: 'inferior-rca', st: 0.3, refLead: 'III', shape: 'straight' },
@@ -140,6 +143,7 @@ export const GROUP_A: CaseDefinition[] = [
   {
     id: 'A04',
     group: 'A',
+    category: 'oclusion',
     title: 'CD con bradicardia y VD',
     difficulty: 2,
     vignette: {
@@ -153,7 +157,7 @@ export const GROUP_A: CaseDefinition[] = [
     scenario: {
       seed: 104,
       durationS: 5,
-      rhythm: { type: 'sinus-bradycardia', hrBpm: 48 },
+      rhythm: { type: 'sinus', hrBpm: 48 },
       conduction: 'normal',
       sources: [
         { territory: 'inferior-rca', st: 0.2, refLead: 'III', shape: 'straight' },
@@ -185,6 +189,7 @@ export const GROUP_A: CaseDefinition[] = [
   {
     id: 'A05',
     group: 'A',
+    category: 'oclusion',
     title: 'Inferior por CX',
     difficulty: 2,
     vignette: {
@@ -231,6 +236,7 @@ export const GROUP_A: CaseDefinition[] = [
   {
     id: 'A06',
     group: 'A',
+    category: 'oclusion',
     title: 'Tombstoning',
     difficulty: 2,
     vignette: {
@@ -283,6 +289,7 @@ export const GROUP_A: CaseDefinition[] = [
   {
     id: 'A07',
     group: 'A',
+    category: 'oclusion',
     title: 'Lateral alto / D1 (bandera sudafricana)',
     difficulty: 3,
     vignette: {
@@ -326,6 +333,7 @@ export const GROUP_A: CaseDefinition[] = [
   {
     id: 'A08',
     group: 'A',
+    category: 'oclusion',
     title: 'DA envolvente',
     difficulty: 2,
     vignette: {
@@ -372,6 +380,7 @@ export const GROUP_A: CaseDefinition[] = [
   {
     id: 'A09',
     group: 'A',
+    category: 'oclusion',
     title: 'Posterior aislado con V7–V9',
     difficulty: 2,
     vignette: {
@@ -415,6 +424,7 @@ export const GROUP_A: CaseDefinition[] = [
   {
     id: 'A10',
     group: 'A',
+    category: 'oclusion',
     title: 'STEMI inferior post‑ROSC',
     difficulty: 2,
     vignette: {
@@ -428,7 +438,8 @@ export const GROUP_A: CaseDefinition[] = [
     scenario: {
       seed: 110,
       durationS: 5,
-      rhythm: { type: 'pvc', hrBpm: 100, pvcPerMin: 6 },
+      rhythm: { type: 'sinus', hrBpm: 100 },
+      ectopy: { kind: 'pvc', pattern: 'isolated', perMin: 6 },
       conduction: 'normal',
       sources: [{ territory: 'inferior-rca', st: 0.3, refLead: 'III', shape: 'straight' }],
       acquisition: { emg: { sigmaMv: 0.03 } },

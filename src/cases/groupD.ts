@@ -6,6 +6,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D01',
     group: 'D',
+    category: 'oclusion',
     title: 'Repolarización precoz',
     difficulty: 2,
     vignette: {
@@ -51,6 +52,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D02',
     group: 'D',
+    category: 'oclusion',
     title: 'Pericarditis',
     difficulty: 2,
     vignette: {
@@ -67,11 +69,11 @@ export const GROUP_D: CaseDefinition[] = [
       variability: false,
       conduction: 'normal',
       sources: [
-        { territory: 'anterior', st: 0.05, refLead: 'V3', shape: 'concave' },
-        { territory: 'inferior-lcx', st: 0.05, refLead: 'II', shape: 'concave' },
-        { territory: 'lateral', st: 0.03, refLead: 'V6', shape: 'concave' },
+        { territory: 'anterior', st: 0.03, refLead: 'V3', shape: 'concave' },
+        { territory: 'inferior-lcx', st: 0.04, refLead: 'II', shape: 'concave' },
+        { territory: 'lateral', st: 0.02, refLead: 'V6', shape: 'concave' },
       ],
-      beatOverrides: { prDepressionMv: 0.08 },
+      beatOverrides: { prDepressionMv: 0.08, qtc: 380 },
     },
     expected: {
       omi: false,
@@ -95,6 +97,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D03',
     group: 'D',
+    category: 'oclusion',
     title: 'HVI con strain',
     difficulty: 2,
     vignette: {
@@ -137,6 +140,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D04',
     group: 'D',
+    category: 'oclusion',
     title: 'LBBB sin isquemia',
     difficulty: 2,
     vignette: {
@@ -175,6 +179,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D05',
     group: 'D',
+    category: 'oclusion',
     title: 'Hiperpotasemia',
     difficulty: 2,
     vignette: {
@@ -215,6 +220,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D06',
     group: 'D',
+    category: 'oclusion',
     title: 'Brugada tipo 1',
     difficulty: 3,
     vignette: {
@@ -257,6 +263,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D07',
     group: 'D',
+    category: 'oclusion',
     title: 'Takotsubo',
     difficulty: 3,
     vignette: {
@@ -300,6 +307,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D08',
     group: 'D',
+    category: 'oclusion',
     title: 'Miocarditis',
     difficulty: 2,
     vignette: {
@@ -313,12 +321,14 @@ export const GROUP_D: CaseDefinition[] = [
     scenario: {
       seed: 408,
       durationS: 5,
-      rhythm: { type: 'pvc', hrBpm: 85, pvcPerMin: 4 },
+      rhythm: { type: 'sinus', hrBpm: 85 },
+      ectopy: { kind: 'pvc', pattern: 'isolated', perMin: 4 },
       conduction: 'normal',
       sources: [
-        { territory: 'anterior', st: 0.06, refLead: 'V3', shape: 'concave' },
-        { territory: 'lateral', st: 0.05, refLead: 'V6', shape: 'concave' },
+        { territory: 'anterior', st: 0.03, refLead: 'V3', shape: 'concave' },
+        { territory: 'lateral', st: 0.03, refLead: 'V6', shape: 'concave' },
       ],
+      beatOverrides: { qtc: 380 },
     },
     expected: {
       omi: false,
@@ -342,6 +352,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D09',
     group: 'D',
+    category: 'oclusion',
     title: 'Embolia pulmonar',
     difficulty: 3,
     vignette: {
@@ -383,6 +394,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D10',
     group: 'D',
+    category: 'oclusion',
     title: 'Aneurisma VI (STE persistente)',
     difficulty: 3,
     vignette: {
@@ -431,6 +443,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D11',
     group: 'D',
+    category: 'oclusion',
     title: 'Hipotermia (Osborn)',
     difficulty: 2,
     vignette: {
@@ -444,10 +457,10 @@ export const GROUP_D: CaseDefinition[] = [
     scenario: {
       seed: 411,
       durationS: 5,
-      rhythm: { type: 'sinus-bradycardia', hrBpm: 45 },
+      rhythm: { type: 'sinus', hrBpm: 45 },
       conduction: 'normal',
-      sources: [{ territory: 'lateral', st: 0.06, refLead: 'V4', shape: 'concave' }],
-      beatOverrides: { osbornMv: 0.25 },
+      sources: [{ territory: 'lateral', st: 0.04, refLead: 'V4', shape: 'concave' }],
+      beatOverrides: { osbornMv: 0.18 },
       acquisition: { emg: { sigmaMv: 0.08 }, baselineWander: { amplitudeMv: 0.2, hz: 0.3 } },
     },
     expected: {
@@ -472,6 +485,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D12',
     group: 'D',
+    category: 'oclusion',
     title: 'WPW',
     difficulty: 2,
     vignette: {
@@ -510,6 +524,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D13',
     group: 'D',
+    category: 'oclusion',
     title: 'Atleta',
     difficulty: 2,
     vignette: {
@@ -522,7 +537,7 @@ export const GROUP_D: CaseDefinition[] = [
     scenario: {
       seed: 413,
       durationS: 5,
-      rhythm: { type: 'sinus-bradycardia', hrBpm: 46 },
+      rhythm: { type: 'sinus', hrBpm: 46 },
       conduction: 'normal',
       sources: [{ territory: 'anterior', st: 0.1, refLead: 'V3', shape: 'concave' }],
       beatOverrides: { aTScale: 1.2, qtc: 380 },
@@ -549,6 +564,7 @@ export const GROUP_D: CaseDefinition[] = [
   {
     id: 'D14',
     group: 'D',
+    category: 'oclusion',
     title: 'Inversión LA‑RA',
     difficulty: 1,
     vignette: {

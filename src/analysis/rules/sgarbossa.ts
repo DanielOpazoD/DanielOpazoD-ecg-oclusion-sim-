@@ -6,7 +6,7 @@ import { finding, stJmm, type Rule } from './types.js';
  * Positive (original) at score ≥ 3.
  */
 export const sgarbossa: Rule = (ctx) => {
-  const applicable = ctx.conduction === 'lbbb' || ctx.conduction === 'paced';
+  const applicable = ctx.qrsContext === 'lbbb' || ctx.qrsContext === 'paced';
   const m = ctx.measurements.perLead;
   const concordant = (['I', 'aVL', 'V5', 'V6', 'II', 'III', 'aVF'] as const).filter(
     (l) => stJmm(ctx, l) >= 1 && m[l].rAmp > m[l].sAmp, // STE where QRS positive

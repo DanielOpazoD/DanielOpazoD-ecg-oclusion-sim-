@@ -88,6 +88,99 @@ Si no se indica: ritmo sinusal 60–95 lpm, conducción normal, adquisición dia
 | F03 | V1–V2 altos | normal con v1v2-high | rSr′ y T neg V1–V2 (mimic) | 99 |
 | F04 | Powerline 60 Hz + LP 40 Hz | A03 con powerline 0.08 | efecto del filtro sobre espigas/ruido | 33 |
 
+## G. Ritmo supraventricular (`category: 'ritmo'`)
+
+| id | título | scenario | esperado | refs |
+|---|---|---|---|---|
+| G01 | Ritmo sinusal normal | sinus 72 | control negativo | 126,112 |
+| G02 | Bradicardia sinusal | sinus 44 | heart-rate | 107,125 |
+| G03 | Taquicardia sinusal | sinus 118 | heart-rate | 126,112 |
+| G04 | Arritmia sinusal respiratoria | sinus-arrhythmia 66 | control negativo | 126,107 |
+| G05 | FA respuesta rápida | afib 140 | heart-rate, rr-irregular | 113,116 |
+| G06 | FA respuesta lenta | afib 46 | heart-rate, rr-irregular | 113,128 |
+| G07 | Flutter 2:1 | flutter 300/2 | heart-rate, flutter-waves | 116,108 |
+| G08 | Flutter variable | flutter 300/3 variable | heart-rate, flutter-waves | 116,113 |
+| G09 | TSV/TRNAV | svt 180 | heart-rate | 108,116 |
+| G10 | Ritmo de la unión | junctional 48 | heart-rate | 107,126 |
+
+## H. Ectopia (`category: 'ectopia'`)
+
+| id | título | scenario | esperado | refs |
+|---|---|---|---|---|
+| H01 | ESA aislada | sinus + ectopy pac isolated | pausa no compensatoria | 126,112 |
+| H02 | ESV aislada | sinus + ectopy pvc isolated | pausa compensatoria | 109,126 |
+| H03 | Bigeminismo | sinus + pvc bigeminy | patrón alternante | 109,126 |
+| H04 | Trigeminismo | sinus + pvc trigeminy | patrón 2+1 | 109,126 |
+| H05 | Dupla ventricular | sinus + pvc couplet | dos ESV seguidos | 109,122 |
+
+## I. Bloqueo AV (`category: 'bloqueo-av'`)
+
+| id | título | scenario | esperado | refs |
+|---|---|---|---|---|
+| I01 | BAV 1.º | av-block-1 PR 260 | pr-prolonged | 107,125 |
+| I02 | Mobitz I 4:3 | av-block-2-mobitz1 | grupos Wenckebach | 107,125 |
+| I03 | Mobitz II 3:2 | av-block-2-mobitz2 | PR constante, caída | 107,125 |
+| I04 | BAV 2:1 | av-block-2-mobitz2 2:1 | heart-rate | 107,125 |
+| I05 | Alto grado 3:1 | av-block-2-mobitz2 3:1 | heart-rate | 107,125 |
+| I06 | BAV completo (escape ventricular) | av-block-3 ventricular | av-dissociation | 107,125 |
+| I07 | BAV completo (escape juntoral) | av-block-3 junctional | av-dissociation | 107,125 |
+
+## J. Conducción intraventricular (`category: 'conduccion'`)
+
+| id | título | scenario | esperado | refs |
+|---|---|---|---|---|
+| J01 | BRD | rbbb | wide-qrs, BRD | 110,126 |
+| J02 | BRD incompleto | irbbb | morfología sin ≥120 | 110,126 |
+| J03 | BRI sin isquemia | lbbb | wide-qrs, BRI; Sgarbossa neg | 110,52,53 |
+| J04 | HBAI | lafb | axis-deviation | 110,126 |
+| J05 | HBPI | lpfb | axis-deviation | 110,126 |
+| J06 | Bifascicular | rbbb-lafb | wide-qrs + eje | 110,125 |
+| J07 | Trifascicular | rbbb-lafb + BAV 1.º | + pr-prolonged | 110,125 |
+| J08 | WPW | wpw | pr-short | 110,108 |
+
+## K. Ventricular / paro (`category: 'ventricular'`)
+
+| id | título | scenario | esperado | refs |
+|---|---|---|---|---|
+| K01 | RIVA | idioventricular 72 | wide-qrs | 109,122 |
+| K02 | TV monomórfica | vt 170 | wide-qrs, heart-rate | 109,114,122 |
+| K03 | Torsades | torsades 190 | heart-rate | 109,122,123 |
+| K04 | FV gruesa | vf coarse | ritmo no medible | 109,114,122 |
+| K05 | FV fina | vf fine | ritmo no medible | 109,114,122 |
+| K06 | Asistolia | asystole | sin ritmo | 109,114,122 |
+
+## L. Marcapasos (`category: 'marcapasos'`)
+
+| id | título | scenario | esperado | refs |
+|---|---|---|---|---|
+| L01 | AAI | paced AAI 60 | pacing | 115,126 |
+| L02 | VVI | paced VVI 60 | pacing | 115,126 |
+| L03 | DDD | paced DDD 70 | pacing | 115,126 |
+
+## M. Electrolitos / fármacos / QT (`category: 'electrolitos'`)
+
+| id | título | scenario | esperado | refs |
+|---|---|---|---|---|
+| M01 | HiperK moderada | hyperkalemiaOverrides | peaked-t | 117,112 |
+| M02 | HiperK severa | severeHyperkalemiaOverrides | peaked-t, wide-qrs | 117,118 |
+| M03 | HipoK | hypokalemiaOverrides | u-wave | 117,112 |
+| M04 | HipoCa | hypocalcemiaOverrides | qtc-prolonged | 118,112 |
+| M05 | HiperCa | hypercalcemiaOverrides | qtc-short | 118,112 |
+| M06 | Efecto digitálico | digoxinOverrides + afib | ST en cubeta | 128,112 |
+| M07 | QT largo | longQtOverrides | qtc-prolonged | 119,121 |
+| M08 | QT corto | shortQtOverrides | qtc-short | 119,121 |
+
+## N. Estructural / otros (`category: 'estructural'`)
+
+| id | título | scenario | esperado | refs |
+|---|---|---|---|---|
+| N01 | HVI voltaje | lvh | lvh-voltage | 111,124 |
+| N02 | HVD | rvh | axis-deviation | 111,124 |
+| N03 | Bajo voltaje + tachy | lowVoltage + alternans | low-voltage, heart-rate | 111,124 |
+| N04 | Dextrocardia | placement dextrocardia | axis-deviation | 126,112 |
+| N05 | Onda de Osborn | osbornMv + sinus 40 | heart-rate | 127,112 |
+| N06 | Brugada tipo 1 | rvot convex + T inv | patrón en V1–V3 | 119,120 |
+
 ## Campos por caso (`CaseDefinition`)
 
 ```ts

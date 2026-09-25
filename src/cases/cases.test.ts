@@ -18,9 +18,19 @@ function reportFor(id: string) {
 }
 
 describe('case library metadata', () => {
-  it('has all 50 cases with unique ids', () => {
-    expect(CASES.length).toBe(50);
-    expect(new Set(CASES.map((c) => c.id)).size).toBe(50);
+  it('has all 103 cases with unique ids', () => {
+    expect(CASES.length).toBe(103);
+    expect(new Set(CASES.map((c) => c.id)).size).toBe(103);
+  });
+  it('every case carries a category and every G–N case has diagnosis + 3 distractors', () => {
+    for (const c of CASES) {
+      expect(c.category, c.id).toBeDefined();
+    }
+    for (const c of CASES.filter((c) => c.group >= 'G')) {
+      expect(c.expected.diagnosis, c.id).toBeTruthy();
+      expect(c.expected.distractors?.length, c.id).toBe(3);
+      expect(new Set([c.expected.diagnosis, ...(c.expected.distractors ?? [])]).size, c.id).toBe(4);
+    }
   });
   it('every case has ≥4 teachingPoints, ≥2 pitfalls and non-empty refs', () => {
     for (const c of CASES) {

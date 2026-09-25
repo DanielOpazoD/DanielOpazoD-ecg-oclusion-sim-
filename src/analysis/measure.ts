@@ -46,6 +46,8 @@ export interface LeadMeasurement {
   tWidth50Ms: number;
   /** Terminal T (max |v| in last 120 ms of T), signed mV. */
   tTerminal: number;
+  /** U-wave peak after T end, signed mV. */
+  uAmp: number;
   /** Early-T positive deflection before a negative peak (Wellens A), mV (0 if none). */
   tBiphasic: number;
   /** Minimum value in the terminal 30 ms of QRS relative to baseline, mV.
@@ -95,11 +97,11 @@ function dominantBeat(
   // measured on their own beats, §8).
   const counts = new Map<string, number>();
   for (const b of ecg.beats) {
-    if (b.type === 'pvc') continue;
-    counts.set(b.type, (counts.get(b.type) ?? 0) + 1);
+    if (b.kind === 'pvc') continue;
+    counts.set(b.kind, (counts.get(b.kind) ?? 0) + 1);
   }
   const dominantType = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
-  const beats = ecg.beats.filter((b) => b.type === dominantType);
+  const beats = ecg.beats.filter((b) => b.kind === dominantType);
   if (beats.length === 0) return null;
   const fs = ecg.fs;
   const pre = msToSamples(220, fs);
@@ -119,8 +121,15 @@ function dominantBeat(
   // Representative fiducials: median durations relative to qrsOnset.
   const jMed = Math.round(median(beats.map((b) => b.j - b.qrsOnset)));
   const tMed = Math.round(median(beats.map((b) => b.tEnd - b.qrsOnset)));
-  const pMed = Math.round(median(beats.map((b) => b.qrsOnset - b.pOnset)));
-  return { wave, qrsOnset: pre, j: pre + jMed, tEnd: pre + tMed, pOnset: pre - pMed };
+  const pDeltas = beats.filter((b) => b.pOnset >= 0).map((b) => b.qrsOnset - b.pOnset);
+  const pMed = pDeltas.length ? Math.round(median(pDeltas)) : -1;
+  return {
+    wave,
+    qrsOnset: pre,
+    j: pre + jMed,
+    tEnd: pre + tMed,
+    pOnset: pMed < 0 ? -1 : pre - pMed,
+  };
 }
 
 function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): LeadMeasurement {
@@ -145,6 +154,7 @@ function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): Le
       tQrsAreaRatio: 0,
       tWidth50Ms: 0,
       tTerminal: 0,
+      uAmp: 0,
       tBiphasic: 0,
       terminalMin: 0,
     };
@@ -177,7 +187,16 @@ function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): Le
     }
     if (x < -sAmp) sAmp = -x;
   }
+  // A Q wave is negativity before the FIRST positive deflection — in an
+  // rSR′ complex (RBBB) the S between r and R′ must not count as Q.
+  let firstR = rIdx;
   for (let i = qrsOnset; i < rIdx; i++) {
+    if (rel(i) > Math.max(0.04, rAmp * 0.1)) {
+      firstR = i;
+      break;
+    }
+  }
+  for (let i = qrsOnset; i < firstR; i++) {
     const x = rel(i);
     if (x < -qAmp) {
       qAmp = -x;
@@ -236,6 +255,13 @@ function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): Le
   while (wStart < tPeak && Math.abs(rel(wStart)) < half) wStart++;
   while (wEnd > tPeak && Math.abs(rel(wEnd)) < half) wEnd--;
   const tWidth50Ms = ((wEnd - wStart) / fs) * 1000;
+  let uAmp = 0;
+  const uLo = Math.min(wave.length - 1, tEnd + msToSamples(40, fs));
+  const uHi = Math.min(wave.length - 1, tEnd + msToSamples(220, fs));
+  for (let i = uLo; i <= uHi; i++) {
+    const x = rel(i);
+    if (Math.abs(x) > Math.abs(uAmp)) uAmp = x;
+  }
   let tTerminal = 0;
   for (let i = Math.max(junction, tEnd - msToSamples(120, fs)); i <= tEnd; i++) {
     const x = rel(i);
@@ -270,6 +296,7 @@ function measureLead(ecg: Ecg12, lead: LeadId, source: 'clean' | 'acquired'): Le
     tQrsAreaRatio: qrsArea > 1e-6 ? tArea / qrsArea : 0,
     tWidth50Ms,
     tTerminal,
+    uAmp,
     tBiphasic,
     terminalMin,
   };
@@ -285,11 +312,11 @@ export function measureEcg(ecg: Ecg12, source: 'clean' | 'acquired' = 'clean'): 
 
   const counts = new Map<string, number>();
   for (const b of ecg.beats) {
-    if (b.type === 'pvc') continue;
-    counts.set(b.type, (counts.get(b.type) ?? 0) + 1);
+    if (b.kind === 'pvc') continue;
+    counts.set(b.kind, (counts.get(b.kind) ?? 0) + 1);
   }
   const dominantType = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'sinus';
-  const sinus = ecg.beats.filter((b) => b.type === dominantType);
+  const sinus = ecg.beats.filter((b) => b.kind === dominantType);
   const rrMs = median(
     sinus.slice(1).map((b, i) => (b.qrsOnset - sinus[i]!.qrsOnset) / (ecg.fs / 1000)),
   );
@@ -297,7 +324,7 @@ export function measureEcg(ecg: Ecg12, source: 'clean' | 'acquired' = 'clean'): 
   const rep = sinus[Math.floor(sinus.length / 2)] ?? ecg.beats[0];
   const qt = rep ? ((rep.tEnd - rep.qrsOnset) / ecg.fs) * 1000 : 0;
   const qtcBazett = rrMs > 0 ? qt / Math.sqrt(rrMs / 1000) : qt;
-  const prMs = rep ? ((rep.qrsOnset - rep.pOnset) / ecg.fs) * 1000 : -1;
+  const prMs = rep && rep.pOnset >= 0 ? ((rep.qrsOnset - rep.pOnset) / ecg.fs) * 1000 : -1;
   const qrsWide = LEAD_IDS.some((l) => perLead[l].qrsDurMs >= 120);
 
   const net = (l: LeadId) => perLead[l].rAmp - perLead[l].sAmp;

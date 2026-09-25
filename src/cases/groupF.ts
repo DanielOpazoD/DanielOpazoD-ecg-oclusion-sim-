@@ -5,6 +5,7 @@ export const GROUP_F: CaseDefinition[] = [
   {
     id: 'F01',
     group: 'F',
+    category: 'oclusion',
     title: 'Filtro monitor 0.5 Hz',
     difficulty: 1,
     vignette: {
@@ -48,6 +49,7 @@ export const GROUP_F: CaseDefinition[] = [
   {
     id: 'F02',
     group: 'F',
+    category: 'oclusion',
     title: 'Ruido EMG y wander',
     difficulty: 1,
     vignette: {
@@ -95,6 +97,7 @@ export const GROUP_F: CaseDefinition[] = [
   {
     id: 'F03',
     group: 'F',
+    category: 'oclusion',
     title: 'V1–V2 altos',
     difficulty: 1,
     vignette: {
@@ -135,6 +138,7 @@ export const GROUP_F: CaseDefinition[] = [
   {
     id: 'F04',
     group: 'F',
+    category: 'oclusion',
     title: 'Powerline 60 Hz + LP 40 Hz',
     difficulty: 1,
     vignette: {
@@ -148,7 +152,7 @@ export const GROUP_F: CaseDefinition[] = [
     scenario: {
       seed: 604,
       durationS: 5,
-      rhythm: { type: 'av-block-3', atrialBpm: 80, escapeBpm: 40 },
+      rhythm: { type: 'av-block-3', atrialBpm: 80, escapeBpm: 40, escapeOrigin: 'junctional' },
       conduction: 'normal',
       sources: [
         { territory: 'inferior-rca', st: 0.3, refLead: 'III', shape: 'straight' },
