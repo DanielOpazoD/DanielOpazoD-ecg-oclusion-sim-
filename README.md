@@ -26,6 +26,8 @@ direccionada con evolución temporal.
   con auditoría contra la verdad del motor; cada métrica lleva evidencia
   (usable / revisión / no disponible) y se retira si se desvía de los fiduciales.
 - **Monitor** de barrido en tiempo real con FC numérica, congelado y bip opcional.
+- **Tema claro único**: interfaz premium-minimal con papel ECG clásico de rejilla rojo
+  pálido sobre blanco cálido (sin modo oscuro).
 - **Laboratorio**: editor completo del escenario (ritmo, conducción, isquemia, repolarización,
   adquisición) con presets y sliders.
 - **Quiz**: decisión OMI para casos de isquemia y diagnóstico de 4 opciones para el resto.

@@ -22,11 +22,11 @@ export function renderVectorView(
   canvas.height = h * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const styles = getComputedStyle(document.documentElement);
-  const border = styles.getPropertyValue('--border').trim() || '#26303a';
-  const muted = styles.getPropertyValue('--muted').trim() || '#8b98a5';
-  const accent = styles.getPropertyValue('--accent').trim() || '#2dd4bf';
-  const danger = styles.getPropertyValue('--danger').trim() || '#f87171';
-  const warning = styles.getPropertyValue('--warning').trim() || '#fbbf24';
+  const border = styles.getPropertyValue('--border').trim() || '#dbe1e8';
+  const muted = styles.getPropertyValue('--muted').trim() || '#64717f';
+  const accent = styles.getPropertyValue('--accent').trim() || '#0f8b8d';
+  const danger = styles.getPropertyValue('--danger').trim() || '#c8102e';
+  const warning = styles.getPropertyValue('--warning').trim() || '#a86a12';
 
   ctx.clearRect(0, 0, w, h);
   const half = w / 2;

@@ -98,10 +98,10 @@ export function renderEcg(
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const styles = getComputedStyle(document.documentElement);
-  const paper = styles.getPropertyValue('--paper').trim() || '#fbf7ef';
-  const minor = styles.getPropertyValue('--grid-minor').trim() || '#f3c9c9';
-  const major = styles.getPropertyValue('--grid-major').trim() || '#e39a9a';
-  const trace = styles.getPropertyValue('--trace').trim() || '#111';
+  const paper = styles.getPropertyValue('--paper').trim() || '#fffaf8';
+  const minor = styles.getPropertyValue('--grid-minor').trim() || '#f7d9d9';
+  const major = styles.getPropertyValue('--grid-major').trim() || '#eaa9a9';
+  const trace = styles.getPropertyValue('--trace').trim() || '#16191d';
 
   ctx.fillStyle = paper;
   ctx.fillRect(0, 0, cssW, cssH);

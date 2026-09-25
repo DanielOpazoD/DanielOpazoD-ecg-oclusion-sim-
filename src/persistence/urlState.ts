@@ -39,6 +39,8 @@ export function decodeShareState(encoded: string): ShareState | null {
     if (typeof obj.scenario.seed !== 'number' || !Array.isArray(obj.scenario.sources)) return null;
     if (!obj.view || typeof obj.view.speedMmS !== 'number') return null;
     if (!obj.patient || (obj.patient.sex !== 'M' && obj.patient.sex !== 'F')) return null;
+    // Tolerate keys dropped from the schema (e.g. the removed `theme` flag).
+    delete (obj.view as { theme?: unknown }).theme;
     return obj as ShareState;
   } catch {
     return null;

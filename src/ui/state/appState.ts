@@ -19,7 +19,6 @@ export interface ViewState {
   showClean: boolean;
   /** Show V7–V9 / V3R–V4R extra row. */
   extraLeads: boolean;
-  theme: 'dark' | 'light';
   /** Tiny J-point ticks. */
   markers: boolean;
 }
@@ -77,8 +76,6 @@ export function isBlind(s: AppState): boolean {
   return s.mode === 'quiz' || (s.blind && !s.revealedCaseIds.includes(s.caseId ?? ''));
 }
 
-const savedTheme = (globalThis.localStorage?.getItem('omilab.theme') ?? 'dark') as 'dark' | 'light';
-
 // Casos mode opens on a real case (A01) instead of the bare default scenario.
 const initialCase = getCase('A01');
 
@@ -100,7 +97,6 @@ export const store = createStore<AppState>({
     stripS: 10,
     showClean: false,
     extraLeads: false,
-    theme: savedTheme,
     markers: false,
   },
   playing: false,
@@ -119,8 +115,3 @@ export const store = createStore<AppState>({
   caseFilter: 'all',
   caseSearch: '',
 });
-
-export function setTheme(theme: 'dark' | 'light'): void {
-  store.update({ view: { ...store.get().view, theme } });
-  globalThis.localStorage?.setItem('omilab.theme', theme);
-}

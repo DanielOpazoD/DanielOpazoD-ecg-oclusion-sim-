@@ -64,9 +64,9 @@ export function renderBeatDetailSvg(
   }
 
   return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="Detalle del latido ${lead}">
-    <rect width="${w}" height="${h}" fill="var(--paper,#fbf7ef)"/>
-    <polyline points="${pts.trim()}" fill="none" stroke="var(--trace,#111)" stroke-width="1.3"/>
+    <rect width="${w}" height="${h}" fill="var(--paper,#fffaf8)"/>
+    <polyline points="${pts.trim()}" fill="none" stroke="var(--trace,#16191d)" stroke-width="1.3"/>
     ${marks.join('')}
-    <text x="4" y="11" font-size="10" fill="#444">${lead}</text>
+    <text x="4" y="11" font-size="10" fill="var(--muted,#64717f)">${lead}</text>
   </svg>`;
 }
