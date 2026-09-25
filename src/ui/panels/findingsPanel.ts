@@ -209,6 +209,8 @@ function findRow(
     f.positive && ((f.score !== undefined && f.score < 1) || /l[íi]mite/i.test(f.rationale));
   const dot = na || !f.positive ? 'n' : borderline ? 'w' : '';
   const leadsTxt = na ? 'N/A' : borderline && !f.leads.length ? 'límite' : leadRange(f.leads);
+  // Long lead lists get their own muted line under the label.
+  if (leadsTxt.length > 10) btn.classList.add('wide');
   btn.innerHTML = `<i class="${dot}"></i><span>${f.label}</span>
     <span class="leads">${leadsTxt}</span>`;
   const detail = document.createElement('div');

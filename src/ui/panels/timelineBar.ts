@@ -59,9 +59,12 @@ export function timelineBar(el: HTMLElement, onChange: () => void): void {
     (isBlind(state) || evs.some((e) => e.kind === 'reperfusion') ? '' : ' · sin reperfusión');
   el.innerHTML = `
     <div class="tl-head">
-      <div><h3>Evolución · ${state.tMin.toFixed(0)} min${
-        isBlind(state) ? '' : ` · ${phaseLabel(state.scenario, state.tMin)}`
-      }</h3><span class="tl-sub">${sub}</span></div>
+      <div><h3>Evolución · ${state.tMin.toFixed(0)} min</h3>
+      <span class="tl-sub">${sub}${
+        isBlind(state)
+          ? ''
+          : ` <span class="tl-phase">${phaseLabel(state.scenario, state.tMin)}</span>`
+      }</span></div>
       <div class="seg" role="group" aria-label="Evolución">
         <button id="tl-play" aria-label="${state.playing ? 'Pausar' : 'Reproducir'}">${
           state.playing ? '⏸' : '▶'

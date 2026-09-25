@@ -130,8 +130,9 @@ export function renderMetricCards(el: HTMLElement, cards: MetricCard[]): void {
   const link = document.createElement('button');
   link.className = 'br-link';
   link.id = 'meas-beat';
-  link.textContent = 'Un latido, de cerca ›';
-  link.setAttribute('aria-expanded', String(store.get().view.beatOpen));
+  const open = store.get().view.beatOpen;
+  link.textContent = `Un latido, de cerca ${open ? '‹' : '›'}`;
+  link.setAttribute('aria-expanded', String(open));
   link.setAttribute('aria-controls', 'beat-card');
   link.addEventListener('click', () => {
     const s = store.get();

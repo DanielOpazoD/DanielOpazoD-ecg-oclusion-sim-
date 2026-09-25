@@ -32,6 +32,8 @@ export function renderBeatReader(
   const beats = delineation?.beats ?? [];
   const open = s.view.beatOpen;
   el.innerHTML = '';
+  // Collapsed = fully hidden; the meas-line link is the only entry point.
+  el.style.display = open ? '' : 'none';
   el.className = `card beat-reader${open ? '' : ' collapsed'}`;
   el.innerHTML = `
     <div class="br-head">

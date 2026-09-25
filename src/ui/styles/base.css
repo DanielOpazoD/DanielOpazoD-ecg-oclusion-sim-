@@ -243,6 +243,9 @@ input[type='search'] {
 .panel-body {
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .card {
@@ -339,7 +342,7 @@ input[type='search'] {
   display: flex;
   align-items: baseline;
   gap: 14px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .ctx h1 {
   font-size: var(--fs-xl);
@@ -354,6 +357,8 @@ input[type='search'] {
 .ctx .view {
   margin-left: auto;
   position: relative;
+  align-self: center;
+  flex: none;
 }
 .vista-pop {
   position: absolute;
@@ -429,9 +434,18 @@ input[type='search'] {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 8px;
   color: var(--muted);
   font-size: var(--fs-sm);
   padding: 0 4px;
+}
+.filt label:first-child {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
 }
 .filt select {
   border: none;
@@ -467,7 +481,7 @@ input[type='search'] {
 }
 .case-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   width: 100%;
   text-align: left;
@@ -496,9 +510,12 @@ input[type='search'] {
   flex: none;
 }
 .case-item .case-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 .case-item .dots {
   margin-left: auto;
@@ -769,6 +786,16 @@ input[type='search'] {
   margin-left: auto;
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.f.wide {
+  flex-wrap: wrap;
+}
+.f.wide .leads {
+  flex-basis: 100%;
+  margin-left: 18px;
+  margin-top: 2px;
+  text-align: left;
 }
 .f-detail {
   padding: 0 0 10px 18px;
@@ -903,6 +930,15 @@ table.meas td.lo {
   color: var(--muted);
   font-size: var(--fs-sm);
   padding: 0;
+}
+.timeline-bar .tl-phase {
+  display: inline-block;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  vertical-align: 1px;
 }
 .timeline-bar input[type='range'] {
   width: 100%;
@@ -1087,6 +1123,12 @@ table.meas td.lo {
   }
 }
 @media (max-width: 900px) {
+  .brand .sub {
+    display: none;
+  }
+  .ctx {
+    flex-wrap: wrap;
+  }
   .app-main {
     flex-direction: column;
     overflow-y: auto;
@@ -1117,12 +1159,13 @@ table.meas td.lo {
   }
 }
 @media (max-width: 600px) {
-  .brand .sub {
-    display: none;
-  }
   .app-header {
     padding: 0 14px;
     gap: 12px;
+  }
+  .app-header .btn {
+    white-space: nowrap;
+    padding: 7px 10px;
   }
   .app-main {
     padding: 14px;
@@ -1130,6 +1173,10 @@ table.meas td.lo {
   .mode-tabs {
     overflow-x: auto;
     white-space: nowrap;
+  }
+  .mode-tabs button {
+    font-size: var(--fs-sm);
+    padding: 6px 10px;
   }
   .meas {
     gap: 16px;
