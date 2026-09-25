@@ -24,7 +24,7 @@ export function attachCalipers(
       overlay = document.createElement('div');
       overlay.className = 'caliper-overlay';
       overlay.style.cssText =
-        'position:absolute;pointer-events:none;background:#111;color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;font-variant-numeric:tabular-nums;z-index:5;';
+        'position:absolute;pointer-events:none;background:var(--text);color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;font-variant-numeric:tabular-nums;z-index:5;';
       canvas.parentElement?.appendChild(overlay);
     }
     return overlay;

@@ -76,7 +76,7 @@ export class Monitor {
       this.canvas.height = Math.round(h * dpr);
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = '#0a0e12';
+    ctx.fillStyle = '#0b1116';
     ctx.fillRect(0, 0, w, h);
 
     const dt = Math.min(ts - this.lastTs, 100);
@@ -96,7 +96,7 @@ export class Monitor {
     for (const { lead, y0 } of rows) {
       const sig = ecg.leads[lead];
       const n = Math.min(sig.length, Math.round(10 * ecg.fs));
-      ctx.strokeStyle = '#3ef0c8';
+      ctx.strokeStyle = '#2bbf9e';
       ctx.lineWidth = 1.4;
       ctx.beginPath();
       for (let i = 0; i < n; i++) {
@@ -106,7 +106,7 @@ export class Monitor {
         else ctx.lineTo(x, y);
       }
       ctx.stroke();
-      ctx.fillStyle = '#3ef0c8';
+      ctx.fillStyle = '#2bbf9e';
       ctx.font = '10px system-ui';
       ctx.fillText(lead, 4, y0 - h * 0.16);
     }
@@ -115,11 +115,11 @@ export class Monitor {
     if (!this.reducedMotion) {
       ctx.fillStyle = 'rgb(10 14 18 / 0.85)';
       ctx.fillRect(this.sweepX, 0, w * 0.06, h);
-      ctx.fillStyle = '#3ef0c8';
+      ctx.fillStyle = '#2bbf9e';
       ctx.fillRect(this.sweepX, 0, 2, h);
     }
     if (this.frozen) {
-      ctx.fillStyle = '#fbbf24';
+      ctx.fillStyle = '#f0b429';
       ctx.font = '600 11px system-ui';
       ctx.fillText('CONGELADO', w - 82, h - 8);
     }
@@ -132,7 +132,7 @@ export class Monitor {
     const tw = ctx.measureText(label).width;
     ctx.fillStyle = 'rgb(10 14 18 / 0.55)';
     ctx.fillRect(w - tw - hrFs * 0.9 - 20, 8, tw + hrFs * 0.9 + 14, hrFs + 26);
-    ctx.fillStyle = '#3ef0c8';
+    ctx.fillStyle = '#2bbf9e';
     ctx.textAlign = 'right';
     ctx.fillText(label, w - 14, hrFs + 6);
     ctx.font = '11px system-ui';

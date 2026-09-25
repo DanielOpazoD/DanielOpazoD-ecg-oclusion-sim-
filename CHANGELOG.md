@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Tema claro único**: papel ECG clásico rojo pálido sobre blanco cálido; se retira el
+  modo oscuro (pantalla del monitor conserva metáfora de dispositivo oscuro).
+
 ### Added
 
 - **Análisis 100 % ciego**: las reglas OMI/ST leen `measureFromDelineation` — mediciones

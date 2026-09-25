@@ -76,9 +76,9 @@ export async function exportPng300(
   const ctx = off.getContext('2d');
   if (ctx) {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = '#fbf7ef';
+    ctx.fillStyle = '#fffaf8';
     ctx.fillRect(0, off.height - 80, off.width, 80);
-    ctx.fillStyle = '#444';
+    ctx.fillStyle = '#64717f';
     ctx.font = `${Math.round(11 * scale)}px system-ui`;
     ctx.textBaseline = 'middle';
     ctx.fillText(footer, Math.round(12 * scale), off.height - 40);

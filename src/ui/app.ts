@@ -1,7 +1,7 @@
 import { generateEcg, type Ecg12 } from '../engine/index.js';
 import { analyzeEcg, type AnalysisReport } from '../analysis/index.js';
 import { getCase, CASES } from '../cases/index.js';
-import { store, setTheme, isBlind, type AppState, type ViewState } from './state/appState.js';
+import { store, isBlind, type AppState, type ViewState } from './state/appState.js';
 import { renderEcg } from './ecg/renderer.js';
 import { Monitor } from './ecg/monitor.js';
 import { renderVectorView } from './ecg/vectorView.js';
@@ -41,7 +41,6 @@ export function mount(root: HTMLElement): void {
           <button id="btn-copy-report" aria-label="Copiar informe">Copiar informe</button>
         </div>
       </div>
-      <button id="btn-theme" aria-label="Cambiar tema">◐</button>
       <button id="btn-about" aria-label="Ayuda">?</button>
     </header>
     <div class="app-main">
@@ -62,8 +61,6 @@ export function mount(root: HTMLElement): void {
         <div class="panel-body" id="panel-body"></div>
       </aside>
     </div>`;
-
-  document.documentElement.dataset.theme = store.get().view.theme;
 
   const canvas = root.querySelector<HTMLCanvasElement>('#ecg-canvas')!;
   const monitorCanvas = root.querySelector<HTMLCanvasElement>('#monitor-canvas')!;
@@ -300,7 +297,6 @@ export function mount(root: HTMLElement): void {
 
   const render = () => {
     const s = store.get();
-    document.documentElement.dataset.theme = s.view.theme;
     for (const b of root.querySelectorAll<HTMLButtonElement>('.mode-tabs button')) {
       b.setAttribute('aria-selected', String(b.dataset.mode === s.mode));
     }
@@ -339,9 +335,6 @@ export function mount(root: HTMLElement): void {
       store.update({ mode, playing: false, ...(mode === 'lab' ? { panelTab: 'findings' } : {}) });
     });
   }
-  root.querySelector('#btn-theme')!.addEventListener('click', () => {
-    setTheme(store.get().view.theme === 'dark' ? 'light' : 'dark');
-  });
   const pop = root.querySelector<HTMLElement>('#export-pop')!;
   const closePop = () => {
     pop.hidden = true;

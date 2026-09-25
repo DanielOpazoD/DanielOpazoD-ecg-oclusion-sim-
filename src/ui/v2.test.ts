@@ -25,7 +25,6 @@ const view: ViewState = {
   stripS: 30,
   showClean: false,
   extraLeads: false,
-  theme: 'dark',
   markers: true,
 };
 
@@ -44,6 +43,17 @@ describe('urlState', () => {
     expect(dec.view.cabrera).toBe(true);
     expect(dec.view.stripS).toBe(30);
     expect(dec.patient.age).toBe(62);
+  });
+  it('decodes an old payload that still carries a theme key', () => {
+    const legacy = { ...state, view: { ...state.view, theme: 'dark' } };
+    const enc = btoa(JSON.stringify(legacy))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    const dec = decodeShareState(enc);
+    expect(dec).not.toBeNull();
+    expect(dec!.view.speedMmS).toBe(state.view.speedMmS);
+    expect('theme' in dec!.view).toBe(false);
   });
   it('rejects malformed payloads', () => {
     expect(decodeShareState('not-base64!!')).toBeNull();
